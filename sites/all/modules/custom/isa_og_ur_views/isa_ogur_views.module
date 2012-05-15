@@ -1,0 +1,21 @@
+<?php
+/**
+ * @defgroup isa_ogur_views
+ * @brief Provides a Views 2 field related to og user roles.
+ * @file 
+ * Warning: while this Views field is enough for the ISA project views, it may
+ * not be robust enough for another real-world usage.
+ * @ingroup isa_ogur_views
+ */
+
+
+/**
+ * Implement of hook_views_api().
+ */
+function isa_ogur_views_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'isa_ogur_views'),
+  );
+}
+

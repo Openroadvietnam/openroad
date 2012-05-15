@@ -1,0 +1,184 @@
+<?php
+/**
+ * @defgroup isa_federated_forges
+ * @brief Handles Federated Forges
+ * @file 
+ * Modules main file
+ * @ingroup isa_federated_forges
+ */
+
+define('RECEIVE_FORGES_MAIL', 'receive forges mail');
+
+/**
+ *
+ * @param type $op
+ * @param type $forge
+ * @param type $list 
+ */
+function isa_federated_forges_check_changes($op, $forge, &$list) {
+  $ops = array('added', 'changed', 'deleted');
+
+  if (in_array($op, $ops) && !empty($forge->$op)) {
+    foreach ($forge->$op as $title => $item) {
+      $list[$forge->title][] = $item;
+    }
+  }
+}
+
+/**
+ * Implement hook_cron().
+ */
+function isa_federated_forges_cron() {
+  $hour = date('G');
+  $cron_done = variable_get('federated_forges_cron_done', FALSE);
+  // ------------------
+  // uncomment for tests
+  //  $hour = 23;
+  //  $cron_done = FALSE;
+  // -------------------
+  if ($hour > 5 && $hour < 22) { // It's between 5am and 10pm
+    if ($cron_done) {
+      variable_del('federated_forges_cron_done');
+    }
+  }
+  elseif (!$cron_done) { // It's between 10pm and 5am
+    $data = _isa_federated_forges_get_cron_data();
+
+    $forges_start_offset = variable_get('federated_forges_cron_progress', 0);
+    $forges_max_count    = variable_get('federated_forges_cron_limit', 6);
+
+    $forges = isa_federated_forges_get_forges($forges_max_count, $forges_start_offset);
+
+    if (count($forges)) {
+      // we have retrieved forges
+      foreach ($forges as $forge) {
+        $forge->process_xml();
+        isa_federated_forges_check_changes('added',   $forge, $data['added']);
+        isa_federated_forges_check_changes('changed', $forge, $data['changed']);
+        isa_federated_forges_check_changes('deleted', $forge, $data['deleted']);
+        // It may look suboptimal to store data and progress after each processed
+        // forge but it is actually safer since we are time-limited...
+        variable_set('federated_forges_cron_data', $data);
+        variable_set('federated_forges_cron_progress', ++ $forges_start_offset);
+      }
+    }
+    else {
+      // there is no more forges to process, we can now send the mail
+      if (!empty($data['added']) || !empty($data['changed']) || !empty($data['deleted'])) {
+        module_load_include('inc', 'isa_federated_forges', 'isa_federated_forges_mail');
+        isa_federated_forges_send_mails($data);
+        //var_dump($data);
+        variable_set('federated_forges_cron_done', TRUE);
+        variable_set('federated_forges_cron_progress', 0);
+        variable_set('federated_forges_cron_data', _isa_federated_forges_get_cron_default_data());
+      }
+    }
+  }
+}
+
+/**
+ * @return the default/empty array used to gather added/changed/deleted items in
+ * isa_federated_forges_cron().
+ */
+function _isa_federated_forges_get_cron_default_data() {
+  $default_data = array(
+    'added'   => array(),
+    'changed' => array(),
+    'deleted' => array(),
+  );
+  return $default_data;
+}
+
+/**
+ * Equivalent to variable_get('federated_forges_cron_data', $default_data).
+ * Avoid loading forge and project classes every time.
+ * @return data stored by isa_federated_forges_cron().
+ */
+function _isa_federated_forges_get_cron_data() {
+  $data_variable_name = 'federated_forges_cron_data';
+  // we need to "know" the forge and project classes before unserializing data
+  module_load_include('class', 'isa_federated_forges', 'isa_federated_forges_forge');
+  module_load_include('class', 'isa_federated_forges', 'isa_federated_forges_project');
+  
+  $data = db_result(db_query('SELECT value FROM {variable} WHERE name = \'%s\';', $data_variable_name));
+  return $data ? unserialize($data) : _isa_federated_forges_get_cron_default_data();
+}
+
+/**
+ * Implement hook_menu().
+ */
+function isa_federated_forges_menu() {
+  $path = drupal_get_path('module', 'isa_federated_forges');
+
+  $items['admin/isa/mail/forge'] = array(
+      'page callback' => 'drupal_get_form',
+      'access arguments' => array('edit forges mail'),
+      'page arguments' => array('isa_federated_forges_mail_form'),
+      'title' => t('Federated Forges'),
+      'description' => t('Change federated forges template messages.'),
+      'file' => 'isa_federated_forges_mail.inc',
+      'file path' => $path,
+      'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * @param $limit maximum number of forges to fetch
+ * @param $start Start offset to fetch a specific range of forges
+ * @return an array of federated_forge objects
+ */
+function isa_federated_forges_get_forges($limit = -1, $start = -1) {
+  $sql = "SELECT nid FROM {node} WHERE type = '%s' ORDER BY nid ASC";
+  if ($limit != -1) {
+    if ($start != -1) {
+      $tail = sprintf(' LIMIT %d, %d', $start, $limit);
+    }
+    else {
+      $tail = sprintf(' LIMIT %d', $limit);
+    }
+    $sql .= $tail;
+  }
+  
+  $sql = db_query($sql, FEDERATED_FORGE_TYPE);
+
+  $forges = array();
+  while ($nid = db_result($sql)) {
+    $forge = new federated_forge();
+    $forge->load_from_nid($nid);
+    $forges[] = $forge;
+  }
+
+  return $forges;
+}
+
+/**
+ * Implement hook_perm().
+ */
+function isa_federated_forges_perm() {
+  return array(
+      'edit forges mail',
+      'receive forges mail',
+  );
+}
+
+/**
+ * Implement hook_nodeapi
+ *
+ * @param type $node
+ * @param type $op
+ * @param type $a3
+ * @param type $a4 
+ */
+function isa_federated_forges_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  module_load_include('class', 'isa_federated_forges', 'isa_federated_forges_forge');
+  if ($op == 'delete') {
+    //delete federated forges when the related federated project is deleted
+    if ($node->nid && $node->type == ISA_FEDERATED_FORGE_TYPE) {
+      $forge = new federated_forge();
+      $forge->load($node);
+      $forge->delete_all_projects();
+    }
+  }
+}

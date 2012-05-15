@@ -1,0 +1,64 @@
+<?php
+
+/**
+ * @defgroup isa_subscriptions
+ * @brief Alter subscriptions features for the needs of joinup project
+ * @file 
+ * Modules main file
+ * @ingroup isa_subscriptions
+ */
+
+/**
+ * Implementations of hook_menu_alter
+ *
+ * @param array $items Associative array of menu router definitions returned from hook_menu().
+ */
+function isa_subscriptions_menu_alter(&$items) {
+  $items['user/%user/subscriptions']['title'] = 'My subscriptions';
+  if (isset($items['user/%user/subscriptions/node'])) {
+    $items['user/%user/subscriptions/node']['title'] = 'Content';
+  }
+}
+
+/**
+ * Implementation of hook_form_alter ()
+ * 
+ * @param array $form Nested array of form elements that comprise the form. 
+ * The arguments that drupal_get_form() was originally called with are available
+ *            in the array $form['#parameters'].
+ * @param array $form_state A keyed array containing the current state of the form.
+ * @param array $form_id String representing the name of the form itself. 
+ *            Typically this is the name of the function that generated the form.
+ */
+function isa_subscriptions_form_alter(&$form, $form_state, $form_id) {
+  switch ($form_id) {
+    case 'subscriptions_ui_node_form':
+      // changes text of subscriptions form
+      $form['wrapper']['#title'] = t('I would like to subscribe and receive e-mail notifications of');
+      foreach ($form['wrapper']['subscriptions']['#options'] as $key => $value) {
+        $form['wrapper']['subscriptions']['#options'][$key] = str_replace('Subscribe to content in', 'Changes to content in', $value);
+      }
+      break;
+    case 'subscriptions_user_suspend_form':
+      if (isset($form['suspend']) && isset($form['suspend']['state'])) {
+        $form['suspend']['state']['#title'] = t('Receive e-mail notifications');
+      }
+      break;
+  }
+}
+
+/**
+ * Process variables for page.tpl.php
+ * 
+ * Implements template_preprocess_page().
+ *
+ * @param string $vars 
+ * @see template_process_page()
+ * @see joinup_preprocess_page
+ */
+function isa_subscriptions_preprocess_page(&$vars) {
+  if (arg(0) == 'user' && is_numeric(arg(1)) && arg(2) == 'subscriptions') {
+    $username = strip_tags(theme('username', arg(1)));
+    $vars['title'] = 'Subscriptions for ' . $username;
+  }
+}

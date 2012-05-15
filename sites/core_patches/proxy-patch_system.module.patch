@@ -1,0 +1,21 @@
+Index: modules/system/system.module
+===================================================================
+--- modules/system/system.module	(revision 470)
++++ modules/system/system.module	(working copy)
+@@ -318,6 +318,16 @@
+     'access arguments' => array('administer site configuration'),
+     'file' => 'system.admin.inc',
+   );
++  //PROXYHACK
++  $items['admin/settings/proxy'] = array(
++    'title' => 'Proxy Server',
++    'description' => 'Configure settings when the site is behind a proxy server.',
++    'page callback' => 'drupal_get_form',
++    'page arguments' => array('system_proxy_settings'),
++    'access arguments' => array('administer site configuration'),
++    'file' => 'system.admin.inc',
++  );
++  ///PROXY_HACK
+   $items['admin/build/modules/list'] = array(
+     'title' => 'List',
+     'type' => MENU_DEFAULT_LOCAL_TASK,

@@ -1,0 +1,5 @@
+name = Views Remember Pager
+description = This module allows to remember last clicked pager by user
+package = Views
+core = 6.x
+dependencies[] = views

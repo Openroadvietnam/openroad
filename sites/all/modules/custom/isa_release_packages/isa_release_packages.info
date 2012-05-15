@@ -1,0 +1,5 @@
+; $Id
+core            = "6.x"
+description     = "Allows to manage taxonomy 'release package' for users who have permission 'administer taxonomy package'"
+name            = "Release packages"
+package         = "ISA Toolbox"

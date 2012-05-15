@@ -1,0 +1,87 @@
+Index: includes/common.inc
+===================================================================
+--- includes/common.inc	(revision 470)
++++ includes/common.inc	(working copy)
+@@ -458,7 +458,19 @@
+     case 'feed':
+       $port = isset($uri['port']) ? $uri['port'] : 80;
+       $host = $uri['host'] . ($port != 80 ? ':'. $port : '');
++      //PROXYHACK
++      $proxy_not_required = is_in_no_proxy_list($uri['host']);
++      if ((variable_get('proxy_server', '') != '') && (FALSE == $proxy_not_required)) {
++        $proxy_server = variable_get('proxy_server', '');
++        $proxy_port = variable_get('proxy_port', 8080);
++        $fp = @fsockopen($proxy_server, $proxy_port, $errno, $errstr, 15);
++      }
++      else {
++      ///PROXYHACK
+       $fp = @fsockopen($uri['host'], $port, $errno, $errstr, 15);
++      //PROXYHACK
++      }
++      ///PROXYHACK
+       break;
+     case 'https':
+       // Note: Only works for PHP 4.3 compiled with OpenSSL.
+@@ -489,10 +501,19 @@
+   }
+ 
+   // Construct the path to act on.
++  //PROXYHACK
++  if ((variable_get('proxy_server', '') != '') && (FALSE == $proxy_not_required)) {
++    $path = $url;
++  }
++  else {
++  ///PROXYHACK
+   $path = isset($uri['path']) ? $uri['path'] : '/';
+   if (isset($uri['query'])) {
+     $path .= '?'. $uri['query'];
+   }
++  //PROXYHACK
++  }
++  ///PROXYHACK
+ 
+   // Create HTTP request.
+   $defaults = array(
+@@ -527,6 +548,15 @@
+     $defaults['User-Agent'] = 'User-Agent: ' . drupal_generate_test_ua($matches[0]);
+   }
+ 
++  //PROXYHACK
++  if ((variable_get('proxy_username', '') != '') && (FALSE == $proxy_not_required)) {
++    $username = variable_get('proxy_username', '');
++    $password = variable_get('proxy_password', '');
++    $auth_string = base64_encode($username . ($password != '' ? ':'. $password : ''));
++    $defaults['Proxy-Authorization'] = 'Proxy-Authorization: Basic '. $auth_string ."\r\n";
++  }
++  ///PROXYHACK
++
+   foreach ($headers as $header => $value) {
+     $defaults[$header] = $header .': '. $value;
+   }
+@@ -606,6 +636,26 @@
+   $result->code = $code;
+   return $result;
+ }
++
++//PROXY_HACK
++function is_in_no_proxy_list($host) {
++  $rv = FALSE;
++
++  $proxy_exceptions = variable_get('proxy_exceptions', '');
++  if (FALSE == empty($proxy_exceptions)) {
++    $patterns = explode(",",$proxy_exceptions);
++    foreach ($patterns as $pattern) {
++      $pattern = trim($pattern, " ");
++      if (strstr($host,$pattern)) {
++        $rv = TRUE;
++        break;
++      }
++    }
++  }
++  return $rv;
++}
++///PROXY_HACK
++
+ /**
+  * @} End of "HTTP handling".
+  */

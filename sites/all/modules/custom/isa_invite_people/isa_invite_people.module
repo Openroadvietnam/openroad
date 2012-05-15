@@ -1,0 +1,258 @@
+<?php
+/**
+ * @defgroup isa_invite_people
+ * @brief Module invite users on site or group
+ * @file 
+ * Modules main file
+ * @ingroup isa_highlight
+ */
+
+/**
+ *
+ * @return string 
+ */
+function isa_invite_people_form() {
+  $form = array();
+  if (user_is_anonymous ()) {
+    $form['anonymous'] = array(
+    '#type' => 'item',
+    '#title' => t('You are not logged in'),
+    '#value' => 'Please ' . l('log in', 'user/login') . ' to invite others to Joinup.',
+    );
+    return $form;
+  }
+
+  $form['group'] = array('#type' => 'value', '#value' => $_GET['gid']);
+
+  $form['email'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Email'),
+      '#default_value' => '',
+      '#required' => TRUE,
+      '#description' => 'Enter the email adress of the person that you want to invite',
+  );
+
+  $form['message'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Message'),
+      '#default_value' => '',
+      '#required' => FALSE,
+      '#description' => 'Enter a message for the person that you want to invite',
+  );
+
+  $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Invite'),
+  );
+  $form['submit']['#submit'] = array('isa_invite_people_form_submit');
+  $form['#validate'] = array('isa_invite_people_form_validate');
+
+  return $form;
+}
+
+/**
+ * Validate the email
+ * @param $form
+ * @param $form_state
+ */
+function isa_invite_people_form_validate($form, &$form_state) {
+  $values = $form_state['values'];
+  if (valid_email_address($values['email']) == 0) {
+    form_set_error('email', 'The email is invalid.');
+  }
+  if (!isa_toolbox_valid_email_adress($values['email'])) {
+    return form_set_error('mail', t('Your email must be valid'));
+  }
+
+
+  $query = "SELECT uid FROM {users} WHERE mail = '%s' ";
+  $uid = db_result(db_query($query, $values['email']));
+  if ($values['group'] == NULL) {
+    if ($uid != NULL) {
+      form_set_error('email', 'This email is already in ' . variable_get('site_name', 'Joinup'));
+    }
+  }
+  else {
+    $query = "SELECT count(*) FROM {og_uid} WHERE nid = %d AND uid = %d ";
+    $result = db_result(db_query($query, $values['group'], $uid));
+    if ($result < 1) {
+      $form_state['values']['uid'] = $uid;
+    }
+    else {
+      form_set_error('email', 'This user is already a member of this group.');
+    }
+  }
+}
+
+/**
+ *
+ * @global type $language
+ * @global type $user
+ * @global type $base_url
+ * @param type $form
+ * @param type $form_state 
+ */
+function isa_invite_people_form_submit(&$form, $form_state) {
+  global $language;
+  global $user;
+  global $base_url;
+  if (isset($user->node_profile)) {
+    $params['user'] = $user;
+  }
+  else {
+    $user->node_profile = content_profile_load('profile', $user->uid);
+    $params['user'] = $user;
+  }
+
+  $values = $form_state['values'];
+
+  // E-mail address of the sender: as the form field is a text field,
+  // all instances of \r and \n have been automatically stripped from it.
+  $from = $user->mail;
+  $to = $values['email'];
+
+  // prepare personal message
+  if (!empty($values['message'])) {
+    $values['message'] = '<p>' . $user->node_profile->field_firstname[0]['value'] . ' enclosed the following message for your intention:</p><p>' . $values['message'] . '</p>';
+  }
+  $params['invite_message'] = $values['message'];
+  $params['recipient-firstname'] = 'future user';
+  $params['about_us_link'] = l('About us', $base_url . '/page/about_us');
+
+  // Send the e-mail to the recipients using the site default language.
+  if ($values['group'] != NULL) {
+    $params['group'] = node_load($values['group']);
+    if ($values['uid'] != NULL) {
+      $recipient = content_profile_load('profile', $values['uid']);
+      $params['recipient-firstname'] = $recipient->field_firstname[0]['value'];
+    }
+    drupal_mail('isa_invite_people', 'invite_group', $to, language_default(), $params, $from);
+  }
+  else {
+    $params['invite_link'] = l($base_url . "/user/register", $base_url . '/user/register');
+    drupal_mail('isa_invite_people', 'invite_joinup', $to, language_default(), $params, $from);
+  }
+
+  flood_register_event('invite-people');
+  //watchdog('mail', '%name-from invite %name-to.', array('%name-from' => $user->name, '%name-to' => $to));
+  drupal_set_message(t('Your message has been sent.'));
+}
+
+/**
+ * Implement hook_mail()
+ */
+function isa_invite_people_mail($key, &$message, $params) {
+  $language = $message['language'];
+
+// add HTML text
+  $message['headers'] = array(
+      'MIME-Version' => '1.0',
+      'Content-Type' => 'text/html; charset=UTF-8;',
+      'Content-Transfer-Encoding' => '8Bit',
+      'X-Mailer' => 'Drupal',
+      'From' => variable_get('site_mail', NULL),
+  );
+
+  if ($key == 'invite_group') {
+    $message['subject'] = token_replace(variable_get('invite_group_mail_title', 'subject...'), 'node', $params['group']);
+    $message['body'] = token_replace(variable_get('invite_group_mail_body', 'message...'), 'node', $params['group']);
+    $message['body'] = token_replace($message['body'], 'node', $params['user']->node_profile);
+    $message['body'] = token_replace($message['body'], 'invite', $params);
+  }
+  if ($key == 'invite_joinup') {
+    $message['subject'] = token_replace(variable_get('invite_joinup_mail_title', 'subject...'), 'invite', $params);
+    $message['body'] = token_replace(variable_get('invite_joinup_mail_body', 'message...'), 'invite', $params);
+    $message['body'] = token_replace($message['body'], 'node', $params['user']->node_profile);
+  }
+}
+
+/**
+ * Page callback of the page for edit template messages for contact user/page
+ * @return string the html page
+ */
+function isa_invite_people_template_message() {
+  $form_fields = array(
+      array(
+          'name' => 'invite_joinup',
+          'title_title' => t('Invite title'),
+          'title_body' => t('Invite body'),
+          'description_title' => t('The subject of the message sent to join Joinup.'),
+          'description_body' => t('The body of the message sent to join Joinup'),
+          'fieldset_title' => t('Invite people in Joinup'),
+          'default_title' => '',
+          'default_body' => t('<p>Dear future user,</p><p>[invite_firsname] [invite_lastname] <span class="Apple-style-span"><span class="Apple-style-span">(</span></span>[invite_company]<span class="Apple-style-span"><span class="Apple-style-span">) wants to invite you to join [site-name].'),
+      ),
+      array(
+          'name' => 'invite_group',
+          'title_title' => t('Invite in group title'),
+          'title_body' => t('Invite in group body'),
+          'description_title' => t('The subject of the message sent to join a group.'),
+          'description_body' => t('The body of the message sent to join a group.'),
+          'fieldset_title' => t('Invite people in a group'),
+          'default_title' => '',
+          'default_body' => t('<p>Dear [recipient-firstname],</p><p>[invite_firsname] [invite_lastname]<span class="Apple-style-span"><span class="Apple-style-span">(</span></span>[invite_company]<span class="Apple-style-span"><span class="Apple-style-span">) wants to invite you in the group [invite_group] in [site-name].'),
+      ),
+  );
+  $form = isa_toolbox_get_form_template_message($form_fields, array('invite', 'node', 'global'));
+  return system_settings_form($form);
+}
+
+/**
+ * Implement hook_token_list
+ *
+ * @param string $type the token type
+ * @return array token list
+ */
+function isa_invite_people_token_list($type = 'all') {
+  if ($type == 'invite' || $type == 'all') {
+    $tokens['ISA custom']['invite_message'] = t('Invite: Message');
+    $tokens['ISA custom']['about_us_link'] = t('Link to page about us');
+    $tokens['ISA custom']['invite_link'] = t('Link to register');
+  }
+  return $tokens;
+}
+
+/**
+ * Implement hook_token_values
+ *
+ * @param string $type
+ * @param object $object
+ * @param array $options
+ * @return array tokens values
+ */
+function isa_invite_people_token_values($type, $object = NULL, $options = array()) {
+  $values = array();
+  if ($type == 'invite') {
+    $params = $object;
+    $account = $params['account'];
+    $values['recipient-firstname'] = $params['recipient-firstname'];
+    $values['invite_link'] = $params['invite_link'];
+    $values['invite_message'] = $params['invite_message'];
+    $values['about_us_link'] = $params['about_us_link'];
+  }
+  return $values;
+}
+
+/**
+ * Implement hook_menu().
+ */
+function isa_invite_people_menu() {
+  $items['invite'] = array(
+      'title' => 'Invite People',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('isa_invite_people_form'),
+      'access callback' => TRUE,
+      'access arguments' => array(),
+      'type' => MENU_CALLBACK,
+  );
+  $items['admin/isa/mail/invite'] = array(
+      'title' => t('Invite'),
+      'description' => t('Change invite template messages.'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('isa_invite_people_template_message'),
+      'access arguments' => array('administer ISA mails'),
+      'type' => MENU_LOCAL_TASK,
+  );
+
+  return ($items);
+}

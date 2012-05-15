@@ -1,0 +1,181 @@
+<?php
+
+/**
+ * @defgroup isa_release_packages 
+ * @brief 
+ * 
+ */
+
+/**
+ * @file
+ * 
+ * Modules main file
+ * 
+ * @ingroup isa_release_packages
+ */
+
+/**
+ * Implmentation of hook_form_alter
+ * 
+ */
+function isa_release_packages_form_alter(&$form, &$form_state, $form_id) {
+  global $user;
+  if ($form_id == 'taxonomy_form_term') {
+    if ($form['vid']['#value'] == variable_get('package_vid', 66)) {
+      $form["#validate"][] = 'isa_release_packages_term_form_validate';
+      
+      $form ['tvi']['#access'] = $user->uid == 1;
+      $form ['xmlsitemap']['#access'] = $user->uid == 1;
+      
+      $form ['advanced']['relations']['#access'] = $user->uid == 1;
+      $form ['advanced']['parent']['#access'] = $user->uid == 1;
+      $form ['advanced']['synonyms']['#access'] = $user->uid == 1;
+      $form['identification']['name']['#title'] = t('Package name');
+      //edit
+      if (isset($form['tid'])) {
+        $res = taxonomy_select_nodes($form['tid']);
+        while ($node = db_fetch_object($res)) {
+          $nodes[] = $node;
+        }
+
+        if ($nodes) {
+          // disable delete button if some release use this term (package)
+          $form ['delete']['#access'] = $user->uid == 1;
+
+          // display a short message to inform that the term cannot be deleted
+          if (count($nodes) > 1) {
+            foreach ($nodes as $id => $node) {
+              $node_txt[] = l($node->title, 'node/' . $node->nid);
+            }
+            $node_txt = implode(', ', $node_txt);
+          }
+          $message = format_plural(count($nodes),
+                  t('You cannot delete this release package because the release @node use this package.', array('@node' => l($nodes[0]->title, 'node/' . $nodes[0]->nid))),
+                  t('You cannot delete this release package because releases @nodes use this package.', array('@nodes' => $node_txt)));
+          $form['info_no_delete'] = array(
+              '#type' => 'item',
+              '#value' => html_entity_decode($message),
+          );
+        }
+        
+         drupal_set_title (t('Edit the release package %package_title',array ('%package_title' => $form['#term']['name'])));
+        //add
+      } elseif (isset($_GET['gid'])) {
+        $node = node_load ($_GET['gid']);
+        if (!$node){
+          drupal_not_found();
+        }
+        $term = nat_get_term($_GET['gid'], array(variable_get('package_vid', 66)));
+   
+        $form ['advanced']['parent']['#default_value'][] = $term->tid;
+        unset ($form['destination']);
+        
+        drupal_set_title (t('Add a release package for %group_title @group_type', array('%group_title' => $node->title,'@group_type' => isa_toolbox_get_node_type_name($node))));
+      }
+    }
+  }elseif ($form_id == 'project_release_node_form'){
+    $group_id = variable_get ('current_group',  isa_toolbox_get_community_nid());
+  
+    $term = nat_get_term($group_id, array(variable_get('package_vid', 66)));
+    if ($term){
+      $vocabulary = taxonomy_vocabulary_load($term->vid);
+      $terms_children = taxonomy_get_children($term->tid, $term->vid);
+      if (!$vocabulary->multiple) {
+        $options[''] = ($vocabulary->required) ? t('- Please choose -') : t('- None selected -');
+        }
+        else {
+        $options[''] = ($vocabulary->required) ? 0 : t('- None -');
+      }
+
+      foreach ($terms_children as $id => $term_children){
+        $choice = new stdClass();
+        $choice->option = array($term_children->tid => $term_children->name);
+        $options[] = $choice;
+      }
+      $form['taxonomy'][variable_get ('package_vid',66)]['#options'] = $options;
+    }else{
+      $form['taxonomy'][variable_get ('package_vid',66)]['#access'] = FALSE;
+    }
+  }
+}
+
+/**
+ * 
+ * Validate handler for form_id: taxonomy_form_term & vid: release_package id
+ * Validate the unique term name (for the current project)
+ * 
+ * @return type 
+ * @see isa_release_packages_form_alter
+ */
+function isa_release_packages_term_form_validate($form, &$form_state) {
+  $name = $form_state['values']['name'];
+  $parent = $form_state['values']['parent'];
+  $tid = $form_state['values']['tid'];
+  $parent = array_shift($parent);
+  $terms = taxonomy_get_children($parent);
+  foreach ($terms as $id => $term){
+    if (strtolower($term->name) == strtolower($name) && $term->tid != $tid){
+      return form_set_error('name', t('The package name %name is already used, please use another name.', array('%name' => $form_state['values']['name'])));
+    }
+  }
+}
+
+
+/**
+ * Implmentation of  hook_menu_alter
+ */
+function isa_release_packages_menu_alter(&$items) {
+  $items['admin/content/taxonomy/%taxonomy_vocabulary/add/term']['access callback'] = 'isa_release_packages_add_term_access_callback';
+  $items['admin/content/taxonomy/edit/term']['access callback'] = 'isa_release_packages_edit_term_access_callback';
+  $items['admin/content/taxonomy/%taxonomy_vocabulary/add/term']['access arguments'] = array (3);
+  unset ($items['admin/content/taxonomy/edit/term']['access arguments']);
+}
+
+/**
+ * Access callback of admin/content/taxonomy/%taxonomy_vocabulary/add/term
+ * 
+ * Use permission "administer taxonomy package" for taxonomy "release package" (add term page)
+ * @return boolean
+ * @see isa_release_packages_menu_alter
+ */
+function isa_release_packages_add_term_access_callback() {
+  $vocabulary = taxonomy_vocabulary_load(arg(3));
+  if ($vocabulary){
+    if ($vocabulary->vid == variable_get('package_vid', 66)) {
+      return user_access('administer taxonomy package') || user_access('administer taxonomy');
+    } else {
+      return user_access('administer taxonomy');
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Access callback of admin/content/taxonomy/edit/term
+ * Use permission "administer taxonomy package" for taxonomy "release package" (edit term page)
+ * @return boolean
+ * @see isa_release_packages_menu_alter
+ */
+function isa_release_packages_edit_term_access_callback() {
+  $tid = arg(5);
+  if ($tid){
+    if ($term = (array) taxonomy_get_term($tid)) {
+      if ($term['vid'] == variable_get('package_vid', 66)) {
+        return user_access('administer taxonomy package') || user_access('administer taxonomy');
+      } else {
+        return user_access('administer taxonomy');
+      }
+    }
+  }
+  return FALSE;
+}
+
+
+/**
+ * implementation of hook_perm
+ *
+ * @return type 
+ */
+function isa_release_packages_perm(){
+  return array ('administer taxonomy package');
+}
