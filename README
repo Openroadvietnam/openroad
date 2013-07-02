@@ -1,7 +1,7 @@
 Về Openroad
 ========
 
-Openroad là một phiên bản được phát triển dựa trên nền tảng Openray, một nền tảng cộng tác và chia sẻ các công nghệ mởi nói chung và các  ứng dụng nguồn mở nói riêng dành cho khu vực công của Úc và Newzeland.
+Openroad là một phiên bản được phát triển dựa trên nền tảng Joinup, một nền tảng cộng tác và chia sẻ các công nghệ mở nói chung và các ứng dụng nguồn mở nói riêng dành cho khu vực công Châu Âu.
 
 Openroad cung cấp các dịch vụ cho phép những người tham gia có thể chia sẻ tài sản, kinh nghiệm của họ với công nghệ mở bằng cách tìm kiếm, lựa chọn, phát triển và sử dụng lại những dự án đã có sẵn.
 
@@ -11,6 +11,4 @@ Openroad bao gồm các chức năng chính:
 * Quyền truy cập không giới hạn tới các tài nguyên đã được chia sẻ;
 * Một phương pháp để thử nghiệm việc chia sẻ và phát triển các công nghệ mở.
 
-Openray là một dự án cũng dựa trên nền tảng gốc là Joinup của liên minh Châu Âu được phát triển bởi Ủy Ban Châu Âu (EC) và phát triển trong chương trình [Interoperability Solutions for Public Administrations](http://ec.europa.eu/isa/) (ISA). Nền tảng Joinup đuợc phát triển và phát hành theo giấy phép GNU GPL 2.0.
-
-Xem thêm: [Joinup project](http://joinup.ec.europa.eu/software/joinup/home).
+Xem thêm: https://github.com/Openroadvietnam/openroad/wiki.
