@@ -1,0 +1,408 @@
+<?php
+/**
+ * @defgroup isa_contact_form
+ * @brief Enables the use of both personal and site-wide contact forms
+ * @file 
+ * Modules main file
+ * @ingroup isa_contact_form
+ */
+
+/**
+ * Implement of hook_form_alter
+ * 
+ */
+function isa_contact_form_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == "contact_mail_page") { //Insert or update
+    isa_contact_form_settings_page_form($form);
+  }
+  if ($form_id == "contact_mail_user") {
+    isa_contact_form_settings_user_form($form);
+  }
+}
+
+/**
+ * Alter the form : contact mail page
+ *
+ * @global object $user
+ * @param array $form
+ * @return array the form
+ *
+ * @see isa_contact_form_page_submit
+ * 
+ */
+function isa_contact_form_settings_page_form(&$form) {
+  global $user;
+  $profile = NULL;
+  $attributes = array();
+
+  if ($user->uid != 0) {
+    if (isset($user->node_profile)) {
+      $profile = $user->node_profile;
+    } else {
+      $profile = content_profile_load('profile', $user->uid);
+    }
+    //$profile = content_profile_load('profile', $user->uid);
+    $attributes = array('readonly' => 'readonly');
+  }
+
+  $form['name'] = array('#type' => 'textfield',
+      '#title' => t('Lastname'),
+      '#weight' => -5,
+      '#maxlength' => 255,
+      '#default_value' => $profile ? $profile->field_lastname[0]['value'] : '',
+      '#required' => TRUE,
+      '#attributes' => $attributes,
+  );
+
+  $form['firstname'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Firstname'),
+      '#maxlength' => 255,
+      '#default_value' => $profile ? $profile->field_firstname[0]['value'] : '',
+      '#required' => TRUE,
+      '#weight' => -4,
+      '#attributes' => $attributes,
+  );
+  $form['company'] = array('#type' => 'textfield',
+      '#title' => t('Organisation/Company'),
+      '#maxlength' => 255,
+      '#default_value' => $profile ? $profile->field_company_name[0]['value'] : '',
+      '#weight' => -3,
+      '#attributes' => $attributes,
+  );
+  $form['mail'] = array('#type' => 'textfield',
+      '#title' => t('E-mail address'),
+      '#maxlength' => 255,
+      '#default_value' => $user->uid ? $user->mail : '',
+      '#required' => TRUE,
+      '#weight' => -2,
+      '#attributes' => $attributes,
+  );
+
+
+  $default_options = array(
+      'TECH' => 'Technical problems/bug reporting',
+      'USAGE' => 'Questions on usage',
+      'FEATURE' => 'Feature requests',
+      'LEGAL' => 'Questions on legal issues',
+      'OTHER' => 'other',
+  );
+  $options = array_merge(array('' => '- Please choose -'), variable_get('contact_form_categories_terms', $default_options));
+
+  $form['category'] = array(
+      '#type' => 'select',
+      '#title' => t('Category'),
+      '#options' => $options,
+      '#description' => variable_get('contact_form_categories_help', ''),
+      '#weight' => 0,
+      '#required' => TRUE,
+      '#default_value' => '',
+  );
+  $form['categoriy_info'] = array(
+      '#type' => 'item',
+      '#value' => 'Please select the nature of the problem / request you would like the Joinup team to help with:',
+      '#weight' => -1,
+      '#title' => t('Category'),
+      '#required' => TRUE,
+  );
+  $form['contact_information']['#weight'] = -10;
+
+  $form['submit']['#submit'] = array('isa_contact_form_page_submit');
+  return $form;
+}
+
+/**
+ * Process the personal contact page form submission.
+ * Submit function of the form : contact mail page
+ * @see isa_contact_form_settings_page_form
+ *
+ * @param array $form
+ * @param array $form_state
+ * 
+ * @see isa_contact_form_settings_page_form
+ */
+function isa_contact_form_page_submit($form, &$form_state) {
+  global $language;
+
+  $values = $form_state['values'];
+
+  // E-mail address of the sender: as the form field is a text field,
+  // all instances of \r and \n have been automatically stripped from it.
+  $from = $values['mail'];
+
+  // Load category properties and save form values for email composition.
+  $contact = contact_load($values['cid']);
+  $values['contact'] = $contact;
+  $values['subject'] = "[{$values['category']}] " . $values['subject'];
+  //$values['to'] = $contact['recipients'];
+  // Send the e-mail to the recipients using the site default language.
+  drupal_mail('isa_contact_form', 'page_mail', $contact['recipients'], language_default(), $values, $from);
+
+  // If the user requests it, send a copy using the current language.
+  if ($values['copy']) {
+    drupal_mail('isa_contact_form', 'page_copy', $from, $language, $values, $from);
+  }
+
+  // Send an auto-reply if necessary using the current language.
+  if ($contact['reply']) {
+    drupal_mail('isa_contact_form', 'page_autoreply', $from, $language, $values, $contact['recipients']);
+  }
+
+  flood_register_event('contact');
+  watchdog('mail', '%name-from sent an e-mail regarding %category.', array('%name-from' => $values['name'] . " [$from]", '%category' => $contact['category']));
+  drupal_set_message(t('Your message has been sent.'));
+
+  // Jump to home page rather than back to contact page to avoid
+  // contradictory messages if flood control has been activated.
+  $form_state['redirect'] = '';
+}
+
+/**
+ * Implement hook_mail()
+ */
+function isa_contact_form_mail($key, &$message, $params) {
+  $language = $message['language'];
+
+// add HTML text
+  $message['headers'] = array(
+      'MIME-Version' => '1.0',
+      'Content-Type' => 'text/html; charset=UTF-8;',
+      'Content-Transfer-Encoding' => '8Bit',
+      'X-Mailer' => 'Drupal',
+      'From' => $message['from'],
+  );
+  switch ($key) {
+    case 'page_mail':
+    case 'page_copy':
+      $contact = $params['contact'];
+      $message['subject'] = token_replace(variable_get('contact_page_mail_title', 'subject...'), 'contact_form', $params);
+      $message['body'] = token_replace(variable_get('contact_page_mail_body', 'message...'), 'contact_form', $params);
+      break;
+    case 'page_autoreply':
+      $contact = $params['contact'];
+      $message['subject'] .= t('[!category] !subject', array('!category' => $contact['category'], '!subject' => $params['subject']), $language->language);
+      $message['body'][] = $contact['reply'];
+      break;
+    case 'user_mail':
+    case 'user_copy':
+      $account = $params['account'];
+      $message['subject'] = token_replace(variable_get('contact_user_mail_title', 'subject...'), 'contact_form', $params);
+      $message['body'] = token_replace(variable_get('contact_user_mail_body', 'subject...'), 'contact_form', $params);
+      break;
+  }
+}
+
+/**
+ * Implement hook_menu()
+ */
+function isa_contact_form_menu() {
+  $items['admin/isa/mail/contact'] = array(
+      'title' => t('Contact'),
+      'description' => t('Change contact template messages.'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('isa_contact_form_template_message'),
+      'access arguments' => array('administer ISA mails'),
+      'type' => MENU_LOCAL_TASK,
+  );
+  //define the path for manage the static texts in ISA
+  $items['admin/isa/contact_form_categories'] = array(
+      'title' => 'Manage categories of contact form',
+      'description' => 'Manage categories of contact form',
+      'access arguments' => array('administer ISA'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('isa_contact_form_manages_categories_form'),
+      'weight' => 0,
+          //'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+
+/**
+ *
+ * @return type 
+ * 
+ * @see isa_contact_form_manages_categories_submit
+ */
+function isa_contact_form_manages_categories_form() {
+  $default_categories = '';
+  $default = variable_get("contact_form_categories_terms", "");
+
+  if (!empty($default)) {
+    foreach ($default as $key => $value) {
+      $default_categories .= $key . '|' . $value . PHP_EOL;
+    }
+  }
+  $form['contact_form_categories_terms'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Categories'),
+      '#default_value' => $default_categories,
+      '#description' => t('The possible values this field can contain. Enter one value per line, in the format key|label. The key is the value that will be displayed in the mail subject, and the label is the value displayed in the select list in the admin contact form.')
+  );
+  $form['contact_form_categories_help'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Help text'),
+      '#default_value' => variable_get("contact_form_categories_help", ""),
+      '#description' => t('Define the help text that appears below the select list')
+  );
+
+  $form = system_settings_form($form);
+  array_unshift($form['#submit'], 'isa_contact_form_manages_categories_submit');
+  return $form;
+}
+
+/**
+ *
+ * @param type $form
+ * @param array $form_state 
+ * 
+ * @see isa_contact_form_manages_categories_form
+ */
+function isa_contact_form_manages_categories_submit($form, &$form_state) {
+
+  // see content_allowed_values()
+  if (!empty($form_state['values']['contact_form_categories_terms'])) {
+    $list = explode(PHP_EOL, $form_state['values']['contact_form_categories_terms']);
+    $list = array_map('trim', $list);
+    $list = array_filter($list, 'strlen');
+    foreach ($list as $opt) {
+      // Sanitize the user input with a permissive filter.
+      $opt = content_filter_xss($opt);
+      if (strpos($opt, '|') !== FALSE) {
+        list($key, $value) = explode('|', $opt);
+        $allowed_values[$key] = (isset($value) && $value !== '') ? $value : $key;
+      } else {
+        $allowed_values[$opt] = $opt;
+      }
+    }
+  }
+  $form_state['values']['contact_form_categories_terms'] = $allowed_values;
+}
+
+/**
+ * Page callback of the page for edit template messages for contact user/page
+ *
+ * @return string the html page
+ * @see isa_contact_form_menu
+ */
+function isa_contact_form_template_message() {
+  $form_fields = array(
+      array(
+          'name' => 'contact_page',
+          'title_title' => t('Contact moderator title'),
+          'title_body' => t('Contact moderator body'),
+          'description_title' => t('The subject of the message sent to moderators when user use the contact form.'),
+          'description_body' => t('The body of the message sent to moderators when user use the contact form.'),
+          'fieldset_title' => t('Contact moderator form'),
+          'default_title' => '[contact_subject]',
+          'default_body' => t('<p>Dear all,</p><p>[contact_firsname] [contact_lastname] <span class="Apple-style-span"><span class="Apple-style-span">(</span></span>[contact_page_company]<span class="Apple-style-span"><span class="Apple-style-span">) has sent you a message on<span class="Apple-converted-space"> </span></span></span>[site-name]</p><p>Message:</p><p>[contact_body]</p><p>ISA-ICP&nbsp;Team</p>'),
+      ),
+      array(
+          'name' => 'contact_user',
+          'title_title' => t('Email title from contact profile'),
+          'title_body' => t('Email body from Contact profile'),
+          'description_title' => t('The subject of the message sent to user by the contact form in profile.'),
+          'description_body' => t('The body of the message sent to user by the contact form in profile.'),
+          'fieldset_title' => t('Contact profile form'),
+          'default_title' => '[contact_subject]',
+          'default_body' => t('<p>Dear [recipient-firstname],</p><p>[contact_firsname] [contact_lastname]&nbsp; <span class="Apple-style-span"><span class="Apple-style-span">has sent you a message via your contact form ([contact_form_url]) at </span></span>[site-name].</p><p><span class="Apple-style-span"><span class="Apple-style-span">If you don\'t want to receive such e-mails, you can change your settings at [edit_user_url]<span class="Apple-converted-space"> <br /></span></span></span></p><p>Message:</p><p>[contact_body]</p><p>ISA-ICP&nbsp;Team</p>'),
+      ),
+  );
+  $form = isa_toolbox_get_form_template_message($form_fields, 'contact_form', 'global');
+  return system_settings_form($form);
+}
+
+/**
+ * Process the personal contact user form submission..
+ * Submit function of the form : contact mail user
+ * @see isa_contact_form_settings_page_form
+ *
+ * @param array $form
+ * @param array $form_state
+ * 
+ * @see isa_contact_form_settings_user_form
+ */
+function isa_contact_form_user_submit($form, &$form_state) {
+  global $user, $language;
+
+  $account = $form_state['values']['recipient'];
+
+  // Send from the current user to the requested user.
+  $to = $account->mail;
+  $from = $user->mail;
+
+  // Save both users and all form values for email composition.
+  $values = $form_state['values'];
+  $values['account'] = $account;
+  $values['user'] = $user;
+
+  $profile = content_profile_load('profile', $user->uid);
+  $values['name'] = $profile->field_lastname['0']['value'];
+  $values['firstname'] = $profile->field_firstname['0']['value'];
+
+  // Send the e-mail in the requested user language.
+  drupal_mail('isa_contact_form', 'user_mail', $to, user_preferred_language($account), $values, $from);
+
+  // Send a copy if requested, using current page language.
+  if ($form_state['values']['copy']) {
+    drupal_mail('isa_contact_form', 'user_copy', $from, $language, $values, $from);
+  }
+
+  flood_register_event('contact');
+  watchdog('mail', '%name-from sent %name-to an e-mail.', array('%name-from' => $user->name, '%name-to' => $account->name));
+  drupal_set_message(t('The message has been sent.'));
+
+  // Back to the requested users profile page.
+  $form_state['redirect'] = "user/$account->uid";
+}
+
+/**
+ * Alter the form : contact mail user
+ *
+ * @param array $form the form
+ * @see isa_contact_form_user_submit
+ */
+function isa_contact_form_settings_user_form(&$form) {
+  $form['submit']['#submit'] = array('isa_contact_form_user_submit');
+}
+
+/**
+ * Implementation of hook_token_list()
+ *
+ * @param string $type the token type
+ * @return array token list
+ */
+function isa_contact_form_token_list($type = 'all') {
+  if ($type == 'contact_form' || $type == 'all') {
+    $tokens['ISA custom']['contact_page_company'] = t('Contact page form: company name');
+    $tokens['ISA custom']['contact_subject'] = t('Contact form: subject');
+    $tokens['ISA custom']['contact_body'] = t('Contact form: body');
+    $tokens['ISA custom']['contact_firsname'] = t('Contact form: sender firsname');
+    $tokens['ISA custom']['contact_lastname'] = t('Contact form: sender lastname');
+    $tokens['ISA custom']['contact_email'] = t('Contact form: sender email');
+    $tokens['ISA custom']['edit_user_url'] = t('Edit user url');
+    
+  }
+  return $tokens;
+}
+
+/**
+ * Implementation of hook_token_values
+ *
+ */
+function isa_membership_token_values($type, $object = NULL, $options = array()) {
+  $values = array();
+  if ($type == 'contact_form') {
+    $params = $object;
+    $account = $params['account'];
+    
+    $values['contact_page_company'] = ($params['company'] != '') ? $params['company'] . ' - ' : '';
+    $values['contact_firsname'] = $params['firstname'];
+    $values['contact_lastname'] = $params['name'];
+    $values['contact_email'] = $params['mail'];
+    $values['contact_body'] = $params['message'];
+    $values['contact_subject'] = $params['subject'];
+    $values['edit_user_url'] = url("user/{$account->uid}/edit", array('absolute' => TRUE));
+  }
+  return $values;
+}

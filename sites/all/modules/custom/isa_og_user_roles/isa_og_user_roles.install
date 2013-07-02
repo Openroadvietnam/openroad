@@ -1,0 +1,27 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the isa_og_user_roles module
+ * 
+ * @ingroup isa_og_user_roles
+ */
+
+/**
+ * Implement of hook_install().
+ */
+function isa_og_user_roles_install() {
+
+  $role = permissions_create_role("member guest");
+  variable_set("member_guest_rid", $role->rid);
+
+}
+
+/**
+ * @file
+ * Implement of hook_uninstall().
+ */
+function isa_og_user_roles_uninstall() {
+  variable_del("member_guest_rid");
+
+
+}

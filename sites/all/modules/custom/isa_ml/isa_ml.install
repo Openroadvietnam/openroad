@@ -1,0 +1,19 @@
+<?php
+/**
+ * @file 
+ * Install, update, and uninstall functions for the isa_ml module
+ * @ingroup isa_ml
+ */
+
+/**
+ * Implement hook_install
+ */
+function isa_ml_install() {
+}
+
+
+/**
+ * Implement hook_uninstall
+ */
+function isa_ml_uninstall() {
+}
