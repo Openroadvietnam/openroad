@@ -1,0 +1,166 @@
+/* HOME */
+
+/* Hidden HTML tags */
+#block-views-Editor_choice_view-block_4  > h3 , .layout-home #before-content-region .advertisement-banners > h3, #footer div.block  h3 { display:none !important}
+
+/* Layout*/
+.layout-home .slogan, .layout-home .views-label-nid { display:none}
+.layout-home div#content { padding:0}
+.layout-home #before-content-region, .layout-home #after-content-region {  clear:both;  padding:0 12px 20px;} 
+.layout-home #before-content-region {}
+.layout-home #after-content-region { padding-top:25px; border-top:1px solid #ddd; background:#fff url(../../images/misc/bkg_content_home.gif) 0 0 repeat-x}
+.layout-home div.block h3 { background:none; margin:0; padding:0}
+.layout-home .layout-wrapper { padding-top:10px; margin-top:0}
+.layout-home .layout-content { padding:0 0 15px}
+.layout-home.layout-noleft.layout-noright div#content { padding:0 !important}
+.layout-home.layout-noright .layout-content { padding-right:0}
+.layout-home.layout-noleft .layout-content { padding-left:0}
+
+/* Overwritten drupal styles */
+.layout-home #before-content-region .advertisement-banners.block { margin-bottom:0}
+.layout-home #after-content-region .editors-choice.block { margin-bottom:5px}
+
+/* Print and change font-size */
+/* .layout-home #additional-tools { position:relative; float:right; right:12px; top:0}*/
+
+/* Carousel */
+#block-views-home_carousel-block_1 { float:left; width:710px; margin-bottom:0}
+
+/* Advertisement banners */
+#block-views-Advertisement-block_1 { float:right; width:220px} 
+.layout-home #before-content-region .advertisement-banners { position:relative;}
+.layout-home #before-content-region .advertisement-banners .advertising-title  { position:absolute; top:0; left:0; width:214px; border-left:6px solid #FF8000; background-color:#D86232} 
+.layout-home #before-content-region .advertisement-banners .advertising-title h3 { margin:0; padding:5px 2px 5px 5px; font-size:120%;  line-height:1.2; color:#fff; font-weight:bold;  background:transparent url(../../images/misc/bkg_home.png) 0 0 repeat-x}
+.layout-home #before-content-region .advertisement-banners img { width:220px}
+.layout-home #before-content-region .advertisement-banners .views-field-title { background:none}
+.layout-home #before-content-region .advertisement-banners .views-field-title h4 { padding:10px 0; color:#CF3B00; font-size:120%; font-weight:bold; line-height:1.1; border-bottom:1px solid #ddd; background:none}
+.layout-home #before-content-region .advertisement-banners .views-field-body { padding-bottom:5px; color:#333; font-size:100%; line-height:1.2;  border-bottom:1px solid #ddd;}
+.layout-home #before-content-region .advertisement-banners .field-data-advertisement-url-advertisement-url-url, .layout-home #before-content-region .advertisement-banners .node-advertising-url{ float:right; margin:5px 0 0; padding-right:15px; background: url(../../images/links/link.gif) 100% 6px  no-repeat;} 
+.layout-home #before-content-region .advertisement-banners .field-data-advertisement-url-advertisement-url-url a, .layout-home #before-content-region .advertisement-banners .node-advertising-url a{ text-align:right; text-decoration:none} 
+
+/* Poll */
+.layout-home #before-content-region .advertisement-banners .advertising-title.poll-title { position:relative; background:#D86232}
+.layout-home #before-content-region .advertisement-banners  form.advpoll-vote, .layout-home #before-content-region .advertisement-banners  form#advpoll-cancel-form { margin:0 !important; }
+.layout-home #before-content-region .advertisement-banners .poll-box .poll  { position:relative; border-bottom:1px solid #ccc} 
+.layout-home #before-content-region .advertisement-banners .poll-box .poll br { display:none}
+.layout-home #before-content-region .advertisement-banners .poll-box.poll-voted  .poll { border-bottom:0}
+.layout-home #before-content-region .advertisement-banners .poll-box .views-field-title h4 { font-size:13px; padding:7px 0}
+.layout-home #before-content-region .advertisement-banners .poll-box .advpoll-results { padding-bottom:5px; margin-bottom:5px}
+.layout-home #before-content-region .advertisement-banners .poll-box .form-radios .form-radio { margin-right:5px; vertical-align:middle}
+.layout-home #before-content-region .advertisement-banners .poll-box .form-submit { display:block; padding:0 10px 3px; margin:0 0 10px; color:#fff; text-decoration:none; text-align:left; width:80px; height:30px;  background:#666 url(../../images/links/bkg_button_poll.png) 0 0 no-repeat}
+.layout-home #before-content-region .advertisement-banners .poll .bar .foreground { background-color:#DA6B3E} 
+.layout-home #before-content-region .advertisement-banners .poll .percent { text-align:left; padding:2px 0 5px; font-size:90%; color:#666}
+.layout-home #before-content-region .advertisement-banners #advpoll-available-choices .messages.status { display:none !important; }
+.layout-home #before-content-region .advertisement-banners .poll-box .total { text-align:left; display:block; padding:0 0 5px; font-size:95%;}
+.layout-home #before-content-region .advertisement-banners .poll-box .form-submit#edit-submit, .layout-home #before-content-region .advertisement-banners .poll-box .form-submit#edit-submit-1 { display:none}
+.layout-home #before-content-region .advertisement-banners  .poll #poll-loading { position:absolute; left:90px; bottom:18px; width:16px; height:16px }
+
+.layout-home.layout-noleft.layout-noright .layout-content #content #advpoll-available-choices div.messages, 
+.layout-home.layout-noleft.layout-noright .layout-content #content #advpoll-available-choices div.messages.status, 
+.layout-home.layout-noleft.layout-noright .layout-content #content #advpoll-available-choices div.messages.error, 
+.layout-home.layout-noleft.layout-noright .layout-content #content #advpoll-available-choices div.messages.warning { width:190px; margin:0} 
+
+
+
+/* Acctions*/ 
+	.layout-home #block-isa_links-home_buttons{ float:right; width:220px}
+	.layout-home #block-isa_links-buttons_actions { display:none}
+	/* actions titles */
+	.layout-home .title-box-sharing, .layout-home .title-box-joinup  { position:relative; margin-bottom:10px}
+	.layout-home .title-box-joinup { margin:20px 0 0}
+	.layout-home .title-box-sharing span { position:absolute; bottom:-1px; left:0; width:63px; height:3px; border-bottom:3px solid #D86232}
+	.layout-home .title-box-joinup span { position:absolute; bottom:-1px; left:0; width:42px; height:3px; border-bottom:3px solid #005597}
+	.layout-home .title-box-sharing h3, .layout-home .title-box-joinup h3 { display:block; padding-bottom:8px !important; font-size:14px; color:#D86132; border-bottom:1px solid #D86232}
+	.layout-home .title-box-joinup h3 { color:#005999;  border-bottom:1px solid #0064A3}
+	.layout-home .title-box-sharing h3 b, .layout-home .title-box-joinup h3 b { font-weight:bold}
+	
+/* Rounded buttons */
+.layout-home .rounded-box.share-this-button, .rounded-box.share-this-button .rounded-box-wrapper div, .rounded-box.share-this-button .corner { background:none}
+.layout-home .rounded-box.share-this-button { height:35px !important; overflow:hidden}
+	.layout-home .rounded-box.share-this-button .rounded-box-wrapper{ padding:0; height:100%}
+		.layout-home .rounded-box.share-this-button .rounded-box-wrapper div { padding:0}
+			.layout-home div.block div.buttons div.share-links div.share_button a { padding:0; width:220px; height:35px; background:url(../../images/links/sharethis_button.gif) 0 0 no-repeat} 
+			.layout-home div.block div.buttons div.share-links div.share_button a:hover {background:url(../../images/links/sharethis_button.gif) 0 0 no-repeat}
+			
+		.layout-home div.block div.buttons ul.links li div.quick-actions { background:none;}
+		.layout-home div.block div.buttons ul.links li div.quick-actions  ul { background:#fff; width:200px; padding-bottom:10px; border-top:7px solid #D86232; border-bottom:10px solid #BC562C} 
+
+		.layout-home div.block div.buttons ul.links li div.quick-actions  ul.links li { margin:0; padding:10px 0 0}
+		.layout-home div.block div.buttons ul.links li div.quick-actions ul.links li a{ padding-bottom:10px; background-color:transparent; width:160px; height:100%; line-height:1.3; background:url(../../images/links/bg_quick_actions_links.png) 10px 3px no-repeat;}
+		.layout-home div.block div.buttons ul.links li div.quick-actions ul.links li.last { border:0}
+		.layout-home div.block div.buttons ul.links li div.quick-actions ul.links li a  span{ color:#CF3B00}
+		.layout-home div.block div.buttons ul.links li div.quick-actions ul.links li a:hover span{ color:#fff}		
+		
+	/* Button propose your... */
+	.rounded-box.propose-button .rounded-box-wrapper { padding:2% 2% 0 5%} 
+	.rounded-box.propose-button .rounded-box-wrapper .icon-plus-sign { margin-top:2%}
+		.rounded-box.propose-button .rounded-box-wrapper div { padding-left:0}
+		.layout-home div.block div.buttons ul.links li a.action { background:none; color:#fff; padding-left:30px;}
+			.layout-home div.block div.buttons ul.links li a.action.propose-your { text-indent:0; }
+		
+	/* Button Share this */
+	.layout-home #block-isa_links-home_buttons { position:relative;/*margin-left:20px*/}
+	.layout-home div.block div.buttons ul.links li div.quick-actions  ul.links { position:absolute; /*bottom:38px; */right:0; width:410px; z-index:70000; padding:0 0 5px; background:#fff}
+	.layout-home div.block div.buttons ul.links li div.quick-actions ul.links li { float:left; width:44%; margin-left:3%; border-top:1px dotted #ccc; border-bottom:0; padding-top:0}
+	.layout-home div.block div.buttons ul.links li div.quick-actions ul.links li.last { padding-bottom:10px; border-top:1px dotted #ccc; border-bottom:0} 
+	.layout-home div.block div.buttons ul.links li div.quick-actions ul.links li a { width:95%; padding:10px 0 10px 20px; background: url(../../images/links/link.gif) 5px 14px  no-repeat; text-decoration:none} 
+	.layout-home div.block div.buttons ul.links li div.quick-actions ul.links li a:hover { background:#D86232; color:#fff; background:#D86232 url(../../images/links/button_arrow.png) 5px 12px no-repeat} 
+	.layout-home div.block div.buttons ul.links li div.quick-actions  ul { padding-bottom:10px; border:7px solid #D86232; } 
+	.layout-home .rounded-box.share-this-button .rounded-box-wrapper i { display:none}
+		
+		
+/* Whats new */
+#block-views-Editor_choice_view-block_4 h3 { line-height:1.2; padding:0; }
+.layout-content .editors-choice ul { margin-bottom:0}
+.layout-home .editors-choice { width:718px; border:1px solid #aaa; border-top:4px solid #DA6B3E; background:#fff}
+	.layout-home .editors-choice .news-list{ width:100%; background:#DA6B3E}
+		.layout-home .editors-choice .news-list li {  background:#fff}
+		.layout-home .editors-choice .news-list li .news-tab { min-height:60px; width:220px; padding:10px; margin-right:20px; cursor:pointer; background:#f8f8f8; border-right:1px solid #ddd; border-top:1px solid #ddd; border-bottom:1px solid #fff}
+		.layout-home .editors-choice .news-list li .news-body { display: none; position: absolute; left: 260px; top:8px; padding-right:20px; width:440px; height:390px; }
+		.layout-home  .editors-choice  .views-row-1 .views-field-nid  .news-body { display: block;}
+		
+		.layout-home .editors-choice .news-list li .content-type { display:block; padding:0 0 5px; font-size:90%; color:#666; font-style:normal}
+		.layout-home .editors-choice .news-list li .title { font-size:100%; color:#000; line-height:1.2; font-weight:normal}
+		
+		/* selected */
+		.layout-home .editors-choice .news-list li .news-tab.news-selected { background:#D86232 url(../../images/links/tab_selected.gif) 100% 45%  no-repeat; border-right:0; border-top:1px solid #D86232; border-bottom:1px solid #B05029} 
+		.layout-home .editors-choice .news-list li .news-tab.news-selected .content-type { color:#fff }
+		.layout-home .editors-choice .news-list li .news-tab.news-selected .title { color:#fff;}
+		
+		/* hover */
+		.layout-home .editors-choice .news-list li .news-tab.news-selected.news-hover { border-right:0; background:#F7E0D6 url(../../images/links/tab_hover.gif) 100% 45%  no-repeat; border-top:1px solid #F7E0D6 !important; border-bottom:1px solid #F7E0D6 !important}
+		.layout-home .editors-choice .news-list li .news-tab.news-hover { background:#F7E0D6 url(../../images/links/tab_hover.gif) 100% 45%  no-repeat; border-right:0; border-bottom:1px solid #F7E0D6}
+		
+		/* selected hover */
+		.layout-home .editors-choice .news-list li .news-tab.news-selected.news-hover { background:#F7E0D6 url(../../images/links/tab_hover.gif) 100% 45%  no-repeat; border-right:0; border-top:1px solid #DA6B3E; border-bottom:1px solid #E9A98D}
+		.layout-home .editors-choice .news-list li .news-tab.news-selected.news-hover .content-type { color:#666 }
+		.layout-home .editors-choice .news-list li .news-tab.news-selected.news-hover .title { color:#000; font-weight:normal}
+		
+		.layout-home .editors-choice .news-list li .news-body .toptitle { float:left; width:75%; font-size:130%; font-weight:normal; background:none}
+		.layout-home .editors-choice .news-list li .news-body .editor { font-style:normal; float:right; width:24%; font-size:95%; text-align:right}
+		.layout-home .editors-choice .news-list li .news-body .toptitle-wrapper { padding-bottom:15px; margin-bottom:20px; border-bottom:1px solid #ddd; }
+		.layout-home .editors-choice .news-list li .news-body .body-title { clear:both; padding-top:5px; color:#CF3B00; font-size:120%; background:none; font-weight:bold}
+		
+		.layout-home .editors-choice .news-list li .news-body .body-type { clear:both; float:left; width:64%; color:#333; padding:0 0 5px 27px; 
+			background: url(../../images/icons/icons_lists.png) 0 -457px no-repeat}
+		.layout-home .editors-choice .news-list li .news-body .body-type.project-project-icon {  background: url(../../images/icons/icons_lists.png) 0 -1592px no-repeat} 
+		.layout-home .editors-choice .news-list li .news-body .body-type.event-icon { background: url(../../images/icons/icons_lists.png) 0 -522px no-repeat} 
+		.layout-home .editors-choice .news-list li .news-body .body-type.news-icon { background: url(../../images/icons/icons_lists.png) 0 -768px no-repeat} 
+		.layout-home .editors-choice .news-list li .news-body .body-type.blog-icon { background: url(../../images/icons/icons_lists.png) 0 -1011px no-repeat} 
+		.layout-home .editors-choice .news-list li .news-body .body-type.community-icon { background:transparent url(../../images/icons/icons_lists.png) 0 -332px no-repeat} 
+		.layout-home .editors-choice .news-list li .news-body .body-type.case-icon { background: url(../../images/icons/icons_lists.png) 0 -894px no-repeat}
+		.layout-home .editors-choice .news-list li .news-body .body-type.wiki-icon {  background: url(../../images/icons/icons_lists.png) 0 -1072px no-repeat} 	
+		.layout-home .editors-choice .news-list li .news-body .body-type.asset-release-icon {background:transparent url(../../images/icons/icons_lists.png) 0 -2098px no-repeat;}
+		.layout-home .editors-choice .news-list li .news-body .body-type.topic-icon {  background: url(../../images/icons/icons_lists.png) 0 -1312px no-repeat} 		
+		.layout-home .editors-choice .news-list li .news-body .body-type.document-icon { background: url(../../images/icons/icons_lists.png) 0 -578px no-repeat} 		
+		.layout-home .editors-choice .news-list li .news-body .body-type.presentation-icon { background: url(../../images/icons/icons_lists.png) 0 -714px no-repeat} 					
+		.layout-home .editors-choice .news-list li .news-body .body-type.federated-project-icon { background: url(../../images/icons/icons_lists.png) 0 -644px no-repeat} 
+		.layout-home .editors-choice .news-list li .news-body .body-type.help-icon { background: url(../../images/icons/icons_lists.png) 0 -1132px no-repeat} 
+		
+		.layout-home .editors-choice .news-list li .news-body .body-fivestars { float:right; width:85px;}
+		.layout-home .editors-choice .news-list li .news-body .body-teaser { clear:both; padding-top:5px}
+		.layout-home .editors-choice .news-list li .news-body .body-more { float:right; margin:20px 0; padding-right:15px; background: url(../../images/links/link.gif) 100% 6px  no-repeat;}
+		.layout-home .editors-choice .news-list li .news-body .body-more a { text-align:right; text-decoration:none}
+		
+
+

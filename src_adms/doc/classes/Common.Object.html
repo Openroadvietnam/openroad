@@ -1,0 +1,281 @@
+<!DOCTYPE html><html xmlns:date="http://exslt.org/dates-and-times" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+<meta charset="utf-8">
+<title>phpDocumentor » \Common\Object</title>
+<meta name="author" content="Mike van Riel">
+<meta name="description" content="">
+<link href="../css/template.css" rel="stylesheet" media="all">
+<script src="../js/jquery-1.7.1.min.js" type="text/javascript"></script><script src="../js/jquery-ui-1.8.2.custom.min.js" type="text/javascript"></script><script src="../js/jquery.mousewheel.min.js" type="text/javascript"></script><script src="../js/bootstrap.js" type="text/javascript"></script><script src="../js/template.js" type="text/javascript"></script><script src="../js/prettify/prettify.min.js" type="text/javascript"></script><link rel="shortcut icon" href="../img/favicon.ico">
+<link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="72x72" href="../img/apple-touch-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="114x114" href="../img/apple-touch-icon-114x114.png">
+</head>
+<body>
+<div class="navbar navbar-fixed-top">
+<div class="navbar-inner"><div class="container">
+<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a><a class="brand" href="../index.html">phpDocumentor</a><div class="nav-collapse"><ul class="nav">
+<li class="dropdown">
+<a href="#api" class="dropdown-toggle" data-toggle="dropdown">
+                                    API Documentation <b class="caret"></b></a><ul class="dropdown-menu"></ul>
+</li>
+<li class="dropdown" id="charts-menu">
+<a href="#charts" class="dropdown-toggle" data-toggle="dropdown">
+                                    Charts <b class="caret"></b></a><ul class="dropdown-menu"><li><a href="../graph_class.html"><i class="icon-list-alt"></i> Class hierarchy diagram</a></li></ul>
+</li>
+<li class="dropdown" id="reports-menu">
+<a href="#reports" class="dropdown-toggle" data-toggle="dropdown">
+                                    Reports <b class="caret"></b></a><ul class="dropdown-menu">
+<li><a href="../errors.html"><i class="icon-remove-sign"></i> Errors 
+                <span class="label label-info">50</span></a></li>
+<li><a href="../markers.html"><i class="icon-map-marker"></i> Markers 
+                <ul><li>todo 
+                <span class="label label-info">3</span>
+</li></ul></a></li>
+<li><a href="../deprecated.html"><i class="icon-stop"></i> Deprecated elements 
+                <span class="label label-info">0</span></a></li>
+</ul>
+</li>
+</ul></div>
+</div></div>
+<div class="go_to_top"><a href="#___" style="color: inherit">Back to top  <i class="icon-upload icon-white"></i></a></div>
+</div>
+<div id="___" class="container">
+<noscript><div class="alert alert-warning">
+                            Javascript is disabled; several features are only available
+                            if Javascript is enabled.
+                        </div></noscript>
+<div class="row">
+<div class="span4">
+<span class="btn-group visibility" data-toggle="buttons-checkbox"><button class="btn public active" title="Show public elements">Public</button><button class="btn protected" title="Show protected elements">Protected</button><button class="btn private" title="Show private elements">Private</button><button class="btn inherited active" title="Show inherited elements">Inherited</button></span><div class="btn-group view pull-right" data-toggle="buttons-radio">
+<button class="btn details" title="Show descriptions and method names"><i class="icon-list"></i></button><button class="btn simple" title="Show only method names"><i class="icon-align-justify"></i></button>
+</div>
+<ul class="side-nav nav nav-list">
+<li class="nav-header">
+<i class="icon-custom icon-method"></i> Methods</li>
+<li class="method public "><a href="#__construct" title="__construct :: Default constructor"><span class="description">Default constructor</span><pre>__construct()</pre></a></li>
+<li class="method public "><a href="#__get" title='__get :: Getter, "magic" function'><span class="description">Getter, "magic" function</span><pre>__get()</pre></a></li>
+<li class="method public "><a href="#__set" title='__set :: Setter, "magic" function'><span class="description">Setter, "magic" function</span><pre>__set()</pre></a></li>
+<li class="method public "><a href="#addParameter" title="addParameter :: This method is used for the intermediary parameter
+(to be used with @translate())"><span class="description">This method is used for the intermediary parameter
+(to be used with @translate())</span><pre>addParameter()</pre></a></li>
+<li class="method public "><a href="#addType" title="addType :: This method is used for the intermediary types
+(to be used with @translate())"><span class="description">This method is used for the intermediary types
+(to be used with @translate())</span><pre>addType()</pre></a></li>
+<li class="method public "><a href="#translate" title="translate :: This method is translating the current object into an array of other object"><span class="description">This method is translating the current object into an array of other object</span><pre>translate()</pre></a></li>
+<li class="nav-header">
+<i class="icon-custom icon-property"></i> Properties</li>
+<li class="property public "><a href="#%24_logger" title="$_logger :: Set the logger"><span class="description">Set the logger</span><pre>$_logger</pre></a></li>
+<li class="nav-header protected">» Protected</li>
+<li class="property protected "><a href="#%24id" title="$id :: The identifier of the object"><span class="description">The identifier of the object</span><pre>$id</pre></a></li>
+<li class="property protected "><a href="#%24object" title="$object :: The object represented"><span class="description">The object represented</span><pre>$object</pre></a></li>
+<li class="property protected "><a href="#%24tStatus" title="$tStatus :: The technical status is depicting the state of the object regarding the
+synchronisation"><span class="description">The technical status is depicting the state of the object regarding the
+synchronisation</span><pre>$tStatus</pre></a></li>
+<li class="property protected "><a href="#%24weight" title="$weight :: The weigt of the object in order to be sorted"><span class="description">The weigt of the object in order to be sorted</span><pre>$weight</pre></a></li>
+<li class="nav-header private">» Private</li>
+<li class="property private "><a href="#%24_params" title="$_params :: This array contains the parameters which should be translated"><span class="description">This array contains the parameters which should be translated</span><pre>$_params</pre></a></li>
+<li class="property private "><a href="#%24_types" title="$_types :: This array contains the type of object which should be instantiated"><span class="description">This array contains the type of object which should be instantiated</span><pre>$_types</pre></a></li>
+</ul>
+</div>
+<div class="span8">
+<a name="%5CCommon%5CObject" id="\Common\Object"></a><ul class="breadcrumb">
+<li>
+<a href="../index.html"><i class="icon-custom icon-class"></i></a><span class="divider">\</span>
+</li>
+<li><a href="../namespaces/Common.html">Common</a></li>
+<li class="active">
+<span class="divider">\</span><a href="../classes/Common.Object.html">Object</a>
+</li>
+</ul>
+<div href="../classes/Common.Object.html" class="element class">
+<p class="short_description">This class is depicting an Adms Object in order to set up generic methods
+to all this kind of object
+class AdmsObject</p>
+<div class="details">
+<p class="long_description"></p>
+<h3>
+<i class="icon-custom icon-method"></i> Methods</h3>
+<a name="__construct" id="__construct"></a><div class="element clickable method public __construct" data-toggle="collapse" data-target=".__construct .collapse">
+<h2>Default constructor</h2>
+<pre>__construct() </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="__get" id="__get"></a><div class="element clickable method public __get" data-toggle="collapse" data-target=".__get .collapse">
+<h2>Getter, "magic" function</h2>
+<pre>__get(\type $attribute) : mixed</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$attribute</h4>
+<code>\type</code><p>the value of the attribute</p></div>
+<h3>Returns</h3>
+<div class="subelement response"><code>mixed</code></div>
+</div></div>
+</div>
+<a name="__set" id="__set"></a><div class="element clickable method public __set" data-toggle="collapse" data-target=".__set .collapse">
+<h2>Setter, "magic" function</h2>
+<pre>__set(mixed $attribute, mixed $value) </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$attribute</h4>
+<code>mixed</code>
+</div>
+<div class="subelement argument">
+<h4>$value</h4>
+<code>mixed</code>
+</div>
+</div></div>
+</div>
+<a name="addParameter" id="addParameter"></a><div class="element clickable method public addParameter" data-toggle="collapse" data-target=".addParameter .collapse">
+<h2>This method is used for the intermediary parameter
+(to be used with @translate())</h2>
+<pre>addParameter(mixed $attribute, mixed $value) </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$attribute</h4>
+<code>mixed</code>
+</div>
+<div class="subelement argument">
+<h4>$value</h4>
+<code>mixed</code>
+</div>
+</div></div>
+</div>
+<a name="addType" id="addType"></a><div class="element clickable method public addType" data-toggle="collapse" data-target=".addType .collapse">
+<h2>This method is used for the intermediary types
+(to be used with @translate())</h2>
+<pre>addType(string $type) </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$type</h4>
+<code>string</code><p>the type of the object to be instantiated</p></div>
+<h3>Exceptions</h3>
+<table class="table table-bordered"><tr>
+<th><code><a href="http://php.net/manual/en/class.errorexception.php">\ErrorException</a></code></th>
+<td>if the type is already registered</td>
+</tr></table>
+</div></div>
+</div>
+<a name="translate" id="translate"></a><div class="element clickable method public translate" data-toggle="collapse" data-target=".translate .collapse">
+<h2>This method is translating the current object into an array of other object</h2>
+<pre>translate() : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>an array of instantiated object</div>
+</div></div>
+</div>
+<h3>
+<i class="icon-custom icon-property"></i> Properties</h3>
+<a name="%24_logger" id="$_logger"> </a><div class="element clickable property public $_logger" data-toggle="collapse" data-target=".$_logger .collapse">
+<h2>Set the logger</h2>
+<pre>$_logger </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>public</td>
+</tr></table>
+</div></div>
+</div>
+<a name="%24id" id="$id"> </a><div class="element clickable property protected $id" data-toggle="collapse" data-target=".$id .collapse">
+<h2>The identifier of the object</h2>
+<pre>$id : mixed</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>protected</td>
+</tr></table>
+</div></div>
+</div>
+<a name="%24object" id="$object"> </a><div class="element clickable property protected $object" data-toggle="collapse" data-target=".$object .collapse">
+<h2>The object represented</h2>
+<pre>$object </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>protected</td>
+</tr></table>
+</div></div>
+</div>
+<a name="%24tStatus" id="$tStatus"> </a><div class="element clickable property protected $tStatus" data-toggle="collapse" data-target=".$tStatus .collapse">
+<h2>The technical status is depicting the state of the object regarding the
+synchronisation</h2>
+<pre>$tStatus </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>protected</td>
+</tr></table>
+</div></div>
+</div>
+<a name="%24weight" id="$weight"> </a><div class="element clickable property protected $weight" data-toggle="collapse" data-target=".$weight .collapse">
+<h2>The weigt of the object in order to be sorted</h2>
+<pre>$weight </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>protected</td>
+</tr></table>
+</div></div>
+</div>
+<a name="%24_params" id="$_params"> </a><div class="element clickable property private $_params" data-toggle="collapse" data-target=".$_params .collapse">
+<h2>This array contains the parameters which should be translated</h2>
+<pre>$_params : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>private</td>
+</tr></table>
+</div></div>
+</div>
+<a name="%24_types" id="$_types"> </a><div class="element clickable property private $_types" data-toggle="collapse" data-target=".$_types .collapse">
+<h2>This array contains the type of object which should be instantiated</h2>
+<pre>$_types : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>private</td>
+</tr></table>
+</div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="row"><footer class="span12">
+            Template is built using <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap 2</a> and icons provided by <a href="http://glyphicons.com/">Glyphicons</a>.<br>
+            Documentation is powered by <a href="http://www.phpdoc.org/">phpDocumentor 2.0.0a6</a> and<br>
+            generated on 2012-06-19T14:36:09+02:00.<br></footer></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,6 @@
+; $Id
+core            = "6.x"
+dependencies[]  = ctools
+description     = "Module for using Ajax in the node templates"
+name            = "Ajax"
+package         = "ISA Toolbox"

@@ -1,0 +1,960 @@
+<?php
+
+/**
+ * @defgroup isa_metrics
+ * @brief Provides some metrics about groups, contents,...
+ * @file 
+ * Modules main file
+ * @ingroup isa_metrics
+ */
+
+define('COLOR_COMMUNITIES', '#0000FF');
+define('COLOR_SOFTWARE', '#FF0000');
+define('COLOR_ASSETS', '#FF9232');
+define('COLOR_REPOSITORY', '#007F0E');
+define('COLOR_NEWS', '#68C5FF');
+define('COLOR_BLOGS', '#FFD800');
+define('COLOR_EVENTS', '#FF7FED');
+define('COLOR_DOCUMENTS', '#A963FF');
+define('COLOR_CASES', '#4B9943');
+define('COLOR_FACTSHEETS', '#000000');
+define('COLOR_VIDEOS', '#A0A0A0');
+define('COLOR_USERS', '#FFAFC7');
+define('COLOR_ASSET_RELEASES', '00DDFF');
+
+/**
+ * Implement of hook_menu().
+ */
+function isa_metrics_menu() {
+  $items = array();
+  $items['community/%/metrics'] = array(
+      'title' => 'Metrics',
+      'page callback' => 'isa_metrics_page',
+      'page arguments' => array('Community'),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );
+  $items['software/%/metrics'] = array(
+      'title' => 'Metrics',
+      'page callback' => 'isa_metrics_page',
+      'page arguments' => array('Software'),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );
+  $items['asset/%/metrics'] = array(
+      'title' => 'Metrics',
+      'page callback' => 'isa_metrics_page',
+      'page arguments' => array('Asset'),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );
+  $items['metrics'] = array(
+      'title' => 'Metrics',
+      'page callback' => 'isa_metrics_page',
+      'page arguments' => array(),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );
+  $items['metrics/csv/%'] = array(
+      'title' => 'Metrics',
+      'page callback' => 'isa_metrics_get_csv',
+      'page arguments' => array(2),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/*
+ * Return the content of the metrics page
+ */
+function isa_metrics_page($type = NULL) {
+  global $base_url;
+  $external_js = 'https://www.google.com/jsapi';
+  drupal_add_js('document.write(unescape("%3Cscript src=\''. $external_js . '\' type=\'text/javascript\'%3E%3C/script%3E"));', 'inline');
+  drupal_add_js('document.write(unescape("%3Cscript src=\''. $base_url . '/' . drupal_get_path('module', 'isa_metrics'). '/charts.js' . '\' type=\'text/javascript\'%3E%3C/script%3E"));', 'inline');
+
+  $content = '';
+  $gid = NULL;
+  if (!is_null($type)) {
+    $gid = variable_get('current_group', isa_toolbox_get_community_nid());
+    $content = '<h3>General Metrics</h3>';
+    $content .= l('General Metrics','metrics');
+  }
+  $graphs = array();
+  $graphs[] = isa_metrics_get_evolution($type, $gid);
+  $graphs[] = isa_metrics_get_repartition($type, $gid);
+  $graphs[] = isa_metrics_get_geographical_distribution($type, $gid);
+  if ($type == 'Asset' || $type == 'Software') {
+    $graphs[] = isa_metrics_get_survey_graph($gid);
+    $graphs[] = isa_metrics_get_releases_graph($type, $gid);
+  }
+  foreach ($graphs as $graph) {
+    $content .= "<h3>{$graph['title']}</h3>";
+    $content .= l('Export as CSV file', 'metrics/csv/' . $graph['cid'], array('attributes' => array('class' => 'download_csv')));
+    $content .= $graph['div'];
+  }
+  drupal_add_js(array('graphs' => $graphs),'setting');
+
+  return $content;
+}
+
+//////////// Charts creation ///////////
+/**
+ * Prepare the pie chart for the percentage of groups, items, or elibrary
+ * @return array contening all options for the graph
+ */
+function isa_metrics_get_repartition($type = NULL, $gid = NULL) {
+  $graph = array();
+  $colors = array();
+  $datas = cache_get("metrics_repartition_{$type}_{$gid}");
+
+  //Groups repartition
+  if (is_null($type)) {
+    if (!$datas) {
+      //Number of communities
+      $query = "SELECT COUNT(nid) FROM {node}
+                INNER JOIN {workflow_node} USING (nid)
+                WHERE type = 'community' AND workflow_node.sid = %d";
+      $result = db_result(db_query($query, ISA_SID_COMMUNITY_VALIDATED));
+      $data_groups[] = array('Community', intval($result), 'Groups');
+
+      //Number of software, asset
+      $query = "SELECT field_project_common_type_value, COUNT(node.nid) AS nb FROM {node}
+                INNER JOIN {workflow_node} ON node.nid = workflow_node.nid AND workflow_node.sid = %d
+                INNER JOIN {content_field_project_common_type} ON node.nid = content_field_project_common_type.nid AND node.vid = content_field_project_common_type.vid
+                WHERE type = 'project_project'
+                GROUP BY field_project_common_type_value";
+      $results = db_query($query, ISA_SID_COMMUNITY_VALIDATED);
+      while ($result = db_fetch_object($results)) {
+        if ($result->field_project_common_type_value == 1) {
+          $data_groups[] = array('Software', intval($result->nb), 'Groups');
+        }
+        else {
+          $data_groups[] = array('Semantic Assets', intval($result->nb), 'Groups');
+        }
+      }
+
+      //Number of repositories
+      $query = "SELECT COUNT(nid) FROM {node}
+                INNER JOIN {workflow_node} USING (nid)
+                WHERE type = '%s' AND workflow_node.sid IN (%s)";
+      $sids = implode(',', array(ISA_SID_REPOSITORY_VALIDATED, ISA_SID_REPOSITORY_REJECTED_DELETION,
+                           ISA_SID_REPOSITORY_POSTPONED_DELETION, ISA_SID_REPOSITORY_REQUESTED_DELETION));
+      $result = db_result(db_query($query, ISA_REPOSITORY_TYPE, $sids));
+      $data_groups[] = array('Repository', intval($result), 'Groups');
+
+      $data[] = $data_groups;
+    }
+    $colors[] = array(COLOR_COMMUNITIES, COLOR_ASSETS, COLOR_SOFTWARE, COLOR_REPOSITORY);
+  }
+
+  //Items (blogs, news, events) repartition
+  $results = isa_metrics_get_result_items_repartition($gid);
+  while ($result = db_fetch_object($results)) {
+    $data_items[] = array('News', intval($result->nb_news), 'Items');
+    $data_items[] = array('Blogs', intval($result->nb_blogs), 'Items');
+    $data_items[] = array('Events', intval($result->nb_events), 'Items');
+  }
+  $data[] = $data_items;
+  $colors[] = array(COLOR_NEWS, COLOR_BLOGS, COLOR_EVENTS);
+
+  //Elibrary (documents, cases, factsheets, videos) repartition
+  if (!$datas) {
+    $results = isa_metrics_get_result_elibrary_repartition($gid);
+    while ($result = db_fetch_object($results)) {
+      $data_elibrary[] = array('Documents', intval($result->nb_docs), 'E-library');
+      $data_elibrary[] = array('Cases', intval($result->nb_cases), 'E-library');
+      $data_elibrary[] = array('Factsheets', intval($result->nb_factsheets), 'E-library');
+      $data_elibrary[] = array('Videos', intval($result->nb_videos), 'E-library');
+    }
+    $data[] = $data_elibrary;
+  }
+  $colors[] = array(COLOR_DOCUMENTS, COLOR_CASES, COLOR_FACTSHEETS, COLOR_VIDEOS);
+  
+  //Forums repartition
+  if (!is_null($type)) {
+    if (!$datas) {
+      $results = isa_metrics_get_result_forums_repartition($gid);
+      $colors[] = array('#005499', '#BB00CC', '#AD0505', '#04A578', '#808080', '#CCA600');
+      while ($result = db_fetch_object($results)) {
+        $data_forums[] = array($result->name, intval($result->nb), 'Forums');
+      }
+      $data[] = $data_forums;
+    }
+  }
+  $columns = array(array('string', 'Type'),
+                      array('number', 'Number'),
+                      array('string', 'Category'));
+  if (!$datas) {
+    cache_set("metrics_repartition_{$type}_{$gid}", array('datas' => $data, 'columns' => $columns), 'cache', time()+60);
+  }
+  else {
+    $data = $datas->data['datas'];
+  }
+
+  //Chart options
+  $graph['title']   = 'Repartition';
+  $graph['cid']     = "metrics_repartition_{$type}_{$gid}";
+  $graph['columns'] = $columns;
+  $graph['options'] = array('div'    => 'repartition_chart',
+                            'type'   => 'PieChart',
+                            'colors' => $colors,
+                            'config' => array('width'  => 550,
+                                              'height' => 300,
+                                              'is3D'   => TRUE,
+                                              'colors' => $colors[0]
+                                              ),
+                            'dashboard' => array('filter_div' => 'repartition_filter',
+                                                 'div' => 'repartition',
+                                                 'columnLabel' => 'Category',
+                                                 'selectedValue' => 'Items'),
+                            );
+  
+  $graph['data']  = $data;
+  $graph['div']   = '<div id="repartition"><div id="repartition_filter">
+                     Choose information to display :
+                     <select id="repartitionSelect" onchange="repartitionChange(this)">';
+  $graph['div']  .= is_null($type) ? '<option value="0" selected="selected">Groups</option><option value="1">Items</option>' : '<option value="1" selected="selected">Items</option>';
+  $graph['div']  .= '<option value="2">E-library</option>';
+  $graph['div']  .= is_null($type) ? '' : '<option value="4">Forums</option>';
+  $graph['div']  .= '</select>
+                     </div><div id="repartition_chart"></div></div>';
+
+  return $graph;
+}
+
+/**
+ * Prepare the line chart for number of new group, by date
+ * @return array contening all options for the graph
+ */
+function isa_metrics_get_evolution($type = NULL, $gid = NULL) {
+  $graph = array();
+  $data = array();
+  $colors = array();
+  $datas = cache_get("metrics_evolution_{$type}_{$gid}");
+  //Groups evolution
+  if (is_null($type)) {
+    if (!$datas) {
+      $arr = array();
+      $results = isa_metrics_get_result_groups_evolution();
+      $count = -1;
+      while ($result = db_fetch_object($results)) {
+        $arr[] = array($result->created,
+                       intval($result->co) + $arr[$count][1],
+                       intval($result->asset) + $arr[$count][2],
+                       intval($result->pr) + $arr[$count][3],
+                       intval($result->re) + $arr[$count][4]);
+        $count++;
+      }
+      $data[] = $arr;
+    }
+    $colors[] = array(COLOR_COMMUNITIES, COLOR_ASSETS, COLOR_SOFTWARE, COLOR_REPOSITORY);
+  }
+  //Items (news, blogs, events) evolution
+  if (!$datas) {
+    $arr = array();
+    $results = isa_metrics_get_result_items_evolution($gid);
+    $count = -1;
+    while ($result = db_fetch_object($results)) {
+      $arr[] = array($result->created,
+                     intval($result->news) + $arr[$count][1],
+                     intval($result->blogs) + $arr[$count][2],
+                     intval($result->events) + $arr[$count][3]);
+      $count++;
+    }
+    $data[] = $arr;
+  }
+  $colors[] = array(COLOR_NEWS, COLOR_BLOGS, COLOR_EVENTS);
+  
+  //Elibrary (cases, documents, factsheets, videos) evolution
+  if (!$datas) {
+    $arr = array();
+    $results = isa_metrics_get_result_elibrary_evolution($gid);
+    $count = -1;
+    while ($result = db_fetch_object($results)) {
+      $arr[] = array($result->created,
+                     intval($result->docs) + $arr[$count][1],
+                     intval($result->cases) + $arr[$count][2],
+                     intval($result->factsheets) + $arr[$count][3],
+                     intval($result->videos) + $arr[$count][4]);
+      $count++;
+    }
+    $data[] = $arr;
+  }
+  $colors[] = array(COLOR_DOCUMENTS, COLOR_CASES, COLOR_FACTSHEETS, COLOR_VIDEOS);
+
+  //Topics evolution
+  if (!is_null($type)) {
+    $colors[] = array('#005499', '#BB00CC', '#AD0505', '#04A578', '#808080', '#CCA600');
+    if (!$datas) {
+      $arr = array();
+      //Name of forums
+      $query = "SELECT name, tid FROM {term_data}
+                WHERE vid = %d";
+      $results = db_query($query, variable_get('forums_vid', 13));
+      $col_count = 0;
+      $columns_topic = array(array('datetime', 'Date'));
+      while ($result = db_fetch_object($results)) {
+        $columns_topic[] = array('number', $result->name);
+        $col_count++;
+        $query = "SELECT node.created, COUNT(node_topics.nid) AS nb
+                FROM {node} AS node
+                INNER JOIN {og_ancestry} ON og_ancestry.nid = node.nid
+                INNER JOIN {term_node} ON term_node.nid = node.nid AND term_node.vid = node.vid
+                LEFT JOIN {node} AS node_topics ON node_topics.nid = node.nid AND node_topics.vid = node.vid AND term_node.tid = %d AND group_nid = %d
+                GROUP BY DATE_FORMAT(FROM_UNIXTIME(node.created), '%j %y') ORDER BY node.created";
+        $res = db_query($query, $result->tid, $gid);
+        $row_count = 0;
+        while ($r = db_fetch_object($res)) {
+          $arr[$row_count][0] = $r->created;
+          $arr[$row_count][$col_count] = intval($r->nb) + $arr[$row_count - 1][$col_count];
+          $row_count++;
+        }
+      }
+      $data[] = $arr;
+    }
+  }
+
+  //Users evolution
+  if (!$datas) {
+    $arr = array();
+    $results = isa_metrics_get_result_users_evolution($gid);
+    $count = -1;
+    while ($result = db_fetch_object($results)) {
+      $arr[] = array($result->created,
+                     intval($result->users) + $arr[$count][1]);
+      $count++;
+    }
+    $data[] = $arr;
+  }
+  $colors[] = array(COLOR_USERS);
+
+  //Asset releases evolution
+  if (is_null($type)) {
+    if (!$datas) {
+      $arr = array();
+      $results = isa_metrics_get_result_asset_releases_evolution($gid);
+      $count = -1;
+      while ($result = db_fetch_object($results)) {
+        $arr[] = array($result->created,
+                       intval($result->releases) + $arr[$count][1]);
+        $count++;
+      }
+      $data[] = $arr;
+    }
+    $colors[] = array(COLOR_ASSET_RELEASES);
+  }
+  $columns = array();
+  if (is_null($type)) {
+    $columns[] = array(array('datetime', 'Date'),
+                                 array('number', 'Community'),
+                                 array('number', 'Semantic Asset'),
+                                 array('number', 'Software'),
+                                 array('number', 'Repository'));
+  }
+  $columns[] = array(array('datetime', 'Date'),
+                               array('number', 'News'),
+                               array('number', 'Blogs'),
+                               array('number', 'Events'));
+  $columns[] = array(array('datetime', 'Date'),
+                               array('number', 'Documents'),
+                               array('number', 'Cases'),
+                               array('number', 'Factsheets'),
+                               array('number', 'Videos'));
+  if (!is_null($type)) {
+    $columns[] = $columns_topic;
+  }
+  $columns[] = array(array('datetime', 'Date'),
+                               array('number', 'Users'));
+  if (is_null($type)) {
+    $columns[] = array(array('datetime', 'Date'),
+                       array('number', 'Asset Releases'));
+  }
+
+  if (!$datas) {
+    cache_set("metrics_evolution_{$type}_{$gid}", array('datas' => $data, 'columns' => $columns), 'cache', time()+60);
+  }
+  else {
+    $data = $datas->data['datas'];
+    $columns = $datas->data['columns'];
+  }
+  //Chart options
+  $graph['title']   = 'Evolution';
+  $graph['cid']     = "metrics_evolution_{$type}_{$gid}";
+  $graph['columns'] = $columns;
+  $graph['options'] = array('div'    => 'evolution_chart',
+                            'type'   => 'LineChart',
+                            'colors' => $colors,
+                            'config' => array('width'  => 600,
+                                              'height' => 300,
+                                              'colors' => $colors[0],
+                                              'legend' => array('position' => 'in'),
+                                              'animation' => array('duration'  => '1000',
+                                                                   'easing'    =>'out'),
+                            'dashboard' => array('filter_div' => 'evolution_filter',
+                                                 'div' => 'evolution',
+                                                 'columnLabel' => 'Category',
+                                                 'selectedValue' => 'Groups')));
+  $graph['data'] = $data;
+  $graph['div']   = '<div id="evolution"><div id="evolution_filter">
+                     Choose information to display :
+                     <select id="evolutionSelect" onchange="evolutionChange(this)">';
+  $graph['div']  .= is_null($type) ? '<option value="0" selected="selected">Groups</option><option value="1">Items</option>' : '<option value="1" selected="selected">Items</option>';
+  $graph['div']  .= '<option value="2">E-library</option>';
+  $graph['div']  .= is_null($type) ? '' : '<option value="4">Forums</option>';
+  $graph['div']  .= ' <option value="3">Users</option>';
+  $graph['div']  .= is_null($type) ? '<option value="5">Asset Releases</option>' : '';
+  $graph['div']  .= '</select>
+                     </div><div id="evolution_chart"></div></div>';
+  return $graph;
+}
+
+
+/**
+ * Prepare the geo chart for the repartition of news per country
+ * @return array contening all options for the graph
+ */
+function isa_metrics_get_geographical_distribution($type = NULL, $gid) {
+  $datas = cache_get("metrics_distribution_{$type}_{$gid}");
+  $graph = array();
+  $columns = array(array('string', 'Country'),
+                    array('number', 'Blogs'),
+                    array('number', 'Cases'),
+                    array('number', 'Documents'),
+                    array('number', 'Events'),
+                    array('number', 'News'),
+                    array('number', 'Users'));
+  if (!$datas) {
+    $results = isa_metrics_get_results_geographical_distribution($type);
+    while ($result = db_fetch_object($results)) {
+      $data[] = array($result->name,
+                      intval($result->nb_blogs),
+                      intval($result->nb_case),
+                      intval($result->nb_document),
+                      intval($result->nb_event),
+                      intval($result->nb_news),
+                      intval($result->nb_profiles));
+    }
+    cache_set("metrics_distribution_{$type}_{$gid}", array('datas' => $data, 'columns' => $columns), 'cache', time()+60);
+  }
+  else {
+    $data = $datas->data['datas'];
+  }
+  $colors = array(COLOR_BLOGS, COLOR_CASES, COLOR_DOCUMENTS, COLOR_EVENTS, COLOR_NEWS, COLOR_USERS);
+  //Chart options
+  $graph['columns'] = $columns;
+  $graph['options'] = array('div'    => 'geographical_chart',
+                            'type'   => 'GeoMap',
+                            'colors' => $colors,
+                            'config' => array('width'  => 600,
+                                              'height' => 380,
+                                              'displayMode' => 'regions',
+                                              'region' => '150',
+                                              'animation' => array('duration'  => '1000',
+                                                                   'easing'    =>'out')
+                                ));
+  $graph['title']   = 'Geographical distribution';
+  $graph['cid']     = "metrics_distribution_{$type}_{$gid}";
+  $graph['data']  = $data;
+  $graph['div']   = '<div id="geographical_distribution">
+                     Choose information to display : 
+                     <select id="categorySelect" onchange="geographicalChange(this)">
+                      <option value="1" selected="selected">Blogs</option>
+                      <option value="2">Cases</option>
+                      <option value="4">Documents</option>
+                      <option value="5">Events</option>
+                      <option value="6">News</option>
+                      <option value="7">Users</option>
+                     </select>
+                     <div id="geographical_chart"></div></div>';
+  return $graph;
+}
+
+/**
+ * Display the graph of number of downloads, number of answer and answers of surveys
+ */
+function isa_metrics_get_survey_graph($nid = NULL) {
+  $datas = cache_get("metrics_surveys_{$nid}");
+  if (!$datas) {
+    global $base_url;
+    $path = explode('/', drupal_lookup_path('source', substr($_GET['q'], 0, -7) . 'description'));
+    $project_type = (arg(0) == ISA_SOFTWARE_TYPE) ? 'software' : 'semantic asset';
+
+    if ($project_type == 'software') {
+      $query = "SELECT DATE_FORMAT(FROM_UNIXTIME(dateanswer), '%M %y') AS date_answer, COUNT(value) AS nb_total, SUM(value) AS nb, qa_question.qid, label
+                FROM {qa_answer}
+                INNER JOIN {project_release_nodes} USING (nid)
+                INNER JOIN {qa_question} USING (qid)
+                WHERE pid = %d
+                GROUP BY date_answer, qa_question.qid
+                ORDER BY dateanswer";
+    }
+    else {
+      $query = "SELECT DATE_FORMAT(FROM_UNIXTIME(dateanswer), '%M %y') AS date_answer, COUNT(value) AS nb_total, SUM(value) AS nb, qa_question.qid, label
+                FROM {qa_answer}
+                INNER JOIN {og_ancestry} USING (nid)
+                INNER JOIN {qa_question} USING (qid)
+                WHERE group_nid = %d
+                GROUP BY date_answer, qa_question.qid
+                ORDER BY dateanswer";
+    }
+    $results = db_query($query, $nid);
+    $datas = array();
+    $first_qid = 0;
+    $first_time = TRUE;
+    $columns = array();
+    while ($result = db_fetch_object($results)) {
+      if ($result->qid == $first_qid || $first_time) {
+        if ($first_time) {
+          $first_time = FALSE;
+          $first_qid = $result->qid;
+        }
+        else {
+          $datas[] = $row_datas;
+        }
+        $row_datas = array();
+        $row_datas[] = $result->date_answer;
+        $sql = "SELECT COUNT(fid) FROM {isa_download_statistics}
+                WHERE DATE_FORMAT(FROM_UNIXTIME(timestamp), '%M %y') = '%s' AND pid = %d";
+        $nb_downloads = db_result(db_query($sql, $result->date_answer, $nid));
+        $row_datas[] = intval($nb_downloads);
+        $row_datas[] = intval($result->nb_total);
+      }
+      $row_datas[] = intval($result->nb);
+      $columns[$result->qid] = str_replace('[project]', $project_type, $result->label);
+    }
+    $datas[] = $row_datas;
+    $tab_columns = array(array('string', 'Month'),array('number', 'Number of downloads'),array('number', 'Number of answers'));
+    foreach($columns as $column) {
+      $tab_columns[] =  array('number', $column);
+    }
+    cache_set("metrics_surveys_{$nid}", array('datas' => $data, 'columns' => $tab_columns), 'cache', time()+60);
+  }
+  else {
+    $datas = $datas->data['datas'];
+    $columns = $datas->data['columns'];
+  }
+
+  //Chart options
+  $graph['title']   = 'Surveys';
+  $graph['cid']     = "metrics_surveys_{$nid}";
+  $graph['columns'] = $tab_columns;
+  $graph['options'] = array('div'    => 'surveys_chart',
+                            'type'   => 'ComboChart',
+                            'config' => array('title'  => 'Surveys',
+                                              'width'  => 550,
+                                              'height' => 300,
+                                              'hAxis'  => array('title' => 'Month'),
+                                              'vAxis:' => array('title' => "Number"),
+                                              'hAxis:' => array('title' => "Month"),
+                                              'seriesType' => "bars",
+                                              'legend' => array('textStyle' => array('fontSize' => '10')),
+                                              'series' => array(0 => array('type' => "line"))
+                                             ));
+
+  $graph['data']  = $datas;
+  $graph['div']   = '<div id="surveys_chart">There is no result to display</div>';
+  return $graph;
+}
+
+/**
+ * Display the graph of number of releases by month
+ */
+function isa_metrics_get_releases_graph($type, $nid = NULL) {
+  $datas = cache_get("metrics_releases_{$type}_{$nid}");
+  if (!$datas) {
+    $month = new DateTime('2011-11-01');
+    $today = new DateTime();
+    $interval = new DateInterval('P1M');
+    $datas_downloads = array();
+    $columns_downloads = array();
+    $datas_issues = array();
+    $columns_issues = array();
+    $count = 0;
+
+    while ($month < $today) {
+      $datas_downloads[$count][] = $month->format('M Y');
+      $datas_issues[$count][] = $month->format('M Y');
+      $previous_month = $month->getTimestamp();
+      $month->add($interval);
+      if ($type == 'Software') {
+        //Number of download by project_release (for software), by month
+        $query = "SELECT title, COUNT(dsid) AS nb
+                  FROM {project_release_nodes} AS releases
+                  INNER JOIN {node} USING(nid)
+                  LEFT JOIN {isa_download_statistics} AS dl ON dl.nid = releases.nid AND dl.pid = releases.pid AND dl.timestamp BETWEEN %d AND %d
+                  WHERE releases.pid = %d
+                  GROUP BY releases.nid";
+      }
+      elseif ($type == 'Asset') {
+        //Number of download by distribution files (for asset), by month
+        $query = "SELECT title, node.nid, type, COUNT(dsid) AS nb
+                  FROM node AS node
+                  INNER JOIN og_ancestry AS og USING (nid)
+                  LEFT JOIN isa_download_statistics AS dl ON dl.nid = node.nid AND dl.pid = og.group_nid
+                  AND dl.timestamp BETWEEN %d AND %d
+                  WHERE og.group_nid = %d AND type = 'asset_release'
+                  GROUP BY node.nid";
+      }
+      $results = db_query($query, $previous_month, $month->getTimestamp(), $nid);
+      $column_count = 0;
+      while ($result = db_fetch_object($results)) {
+        $datas_downloads[$count][] = intval($result->nb);
+        $columns_downloads[$column_count] = $result->title;
+        $column_count++;
+      }
+
+      //Number of issues, by release, by month
+      $query = "SELECT release_node.title, COUNT(issue_node.nid) AS nb
+                FROM {project_release_nodes} AS rel
+                INNER JOIN {node} AS release_node ON release_node.nid = rel.nid
+                LEFT JOIN {project_issues} AS issue ON issue.rid = rel.nid
+                LEFT JOIN {node} AS issue_node ON issue_node.nid = issue.nid AND issue_node.created BETWEEN %d AND %d
+                WHERE rel.pid = %d
+                GROUP BY rel.nid";
+      $results = db_query($query, $previous_month, $month->getTimestamp(), $nid);
+      $column_count = 0;
+      while ($result = db_fetch_object($results)) {
+        $datas_issues[$count][] = intval($result->nb);
+        $columns_issues[$column_count] = $result->title;
+        $column_count++;
+      }
+      $count++;
+    }
+    $datas = array($datas_downloads, $datas_issues);
+    $columns = array();
+
+    $columns[0] = array(array('string', 'Month (Download)'));
+    foreach($columns_downloads as $column) {
+      $columns[0][] = array('number', $column);
+    }
+    $columns[1] = array(array('string', 'Month (Issues)'));
+    foreach($columns_issues as $column) {
+      $columns[1][] = array('number', $column);
+    }
+    cache_set("metrics_releases_{$type}_{$nid}", array('datas' => $datas, 'columns' => $columns), 'cache', time()+60);
+  }
+  else {
+    $columns = $datas->data['columns'];
+    $datas   = $datas->data['datas'];
+  }
+
+  //Chart options
+  $graph['data'][]  = $datas;
+  $graph['title']   = 'Releases';
+  $graph['cid'] = "metrics_releases_{$type}_{$nid}";
+  $graph['columns'] = $columns;
+  $graph['options'] = array('div'    => 'releases_chart',
+                            'type'   => 'ColumnChart',
+                            'config' => array('width'  => 550,
+                                              'height' => 300,
+                                              'hAxis'  => array('title' => 'Month'),
+                                              'animation' => array('duration'  => '1000',
+                                                                   'easing'    =>'out')
+                                             ));
+  if (count($columns[0]) <= 1 ) {
+    $graph['div']   = '<div id="releases">There is no datas to display</div>';
+  }
+  else {
+    $graph['div']   = '<div id="releases">
+                       <div id="releases_filter">
+                       Choose information to display :
+                       <select id="releasesSelect" onchange="releaseChange(this)">
+                        <option value="0" selected="selected">Number of Downloads</option>
+                        <option value="1">Number of Issues</option>
+                       </select></div><div id="releases_chart">There is no result to display</div></div>';
+  }
+  return $graph;
+}
+
+//////////// Queries ///////////
+
+/**
+ * Execute the sql query to have the datas concerning the geographical distribution, depends on group type.
+ * @param string $type : group type or NULL
+ * @return db_obhect : resutls of the query
+ */
+function isa_metrics_get_results_geographical_distribution($type = NULL) {
+  if (is_null($type)) {
+    $query = "SELECT term_data.name, COUNT(node_case.nid) AS nb_case, COUNT(node_news.nid) AS nb_news,
+                           COUNT(node_document.nid) AS nb_document, COUNT(node_event.nid) AS nb_event,
+                           COUNT(node_blogs.nid) AS nb_blogs, COUNT(node_profiles.nid) AS nb_profiles
+              FROM {term_data}
+                LEFT JOIN {term_node} USING(tid)
+                LEFT JOIN {node} ON term_node.nid = node.nid AND term_node.vid = node.vid
+                LEFT JOIN {users} ON node.uid = users.uid
+                LEFT JOIN {workflow_node} ON node.nid = workflow_node.nid
+                LEFT JOIN {content_field_project_common_type} ON node.nid = content_field_project_common_type.nid AND node.vid = content_field_project_common_type.vid
+                LEFT JOIN {node} AS node_case ON node.nid = node_case.nid AND node_case.type = 'case' AND ((workflow_node.sid = %d) OR (workflow_node.sid = %d))
+                LEFT JOIN {node} AS node_document ON node.nid = node_document.nid AND node_document.type = 'document' AND ((workflow_node.sid = %d) OR (workflow_node.sid = %d))
+                LEFT JOIN {node} AS node_event ON node.nid = node_event.nid AND node_event.type = 'event' AND ((workflow_node.sid = %d) OR (workflow_node.sid = %d))
+                LEFT JOIN {node} AS node_news ON node.nid = node_news.nid AND node_news.type = 'news' AND ((workflow_node.sid = %d) OR (workflow_node.sid = %d))
+                LEFT JOIN {node} AS node_blogs ON node.nid = node_blogs.nid AND node_blogs.type = 'blog'
+                LEFT JOIN {node} AS node_profiles ON node.nid = node_profiles.nid AND node_profiles.type = 'profile' AND users.status = 1
+              WHERE  term_data.vid = %d
+              GROUP BY name";
+
+    $results = db_query($query, ISA_SID_NEWS_VALIDATED, ISA_SID_NEWS_PUBLISHED,
+                                ISA_SID_NEWS_VALIDATED, ISA_SID_NEWS_PUBLISHED,
+                                ISA_SID_NEWS_VALIDATED, ISA_SID_NEWS_PUBLISHED,
+                                ISA_SID_NEWS_VALIDATED, ISA_SID_NEWS_PUBLISHED,
+                                variable_get('country_vid', 26));
+  }
+  else {
+
+    $gid = variable_get('current_group', isa_toolbox_get_community_nid());
+    $query = "SELECT name, COUNT(node_case.nid) AS nb_case, COUNT(node_news.nid) AS nb_news,
+                           COUNT(node_document.nid) AS nb_document, COUNT(node_event.nid) AS nb_event,
+                           COUNT(node_blogs.nid) AS nb_blogs, COUNT(node_profiles.nid) AS nb_profiles
+              FROM {term_data}
+                LEFT JOIN {term_node} USING(tid)
+                LEFT JOIN {node} ON term_node.nid = node.nid AND term_node.vid = node.vid
+                LEFT JOIN {og_ancestry} ON og_ancestry.nid = node.nid
+                LEFT JOIN {isa_highlight} ON isa_highlight.nid = node.nid and isa_highlight.gid= %d
+                LEFT JOIN {workflow_node} ON node.nid = workflow_node.nid
+                LEFT JOIN {content_field_project_common_type} ON node.nid = content_field_project_common_type.nid AND node.vid = content_field_project_common_type.vid
+                LEFT JOIN {node} AS node_case ON node.nid = node_case.nid AND node_case.type = 'case' AND isa_highlight.gid = %d
+                LEFT JOIN {node} AS node_document ON node.nid = node_document.nid AND node_document.type = 'document' AND (( group_nid = %d) OR (isa_highlight.gid = %d))
+                LEFT JOIN {node} AS node_event ON node.nid = node_event.nid AND node_event.type = 'event' AND (( group_nid = %d) OR  isa_highlight.gid = %d)
+                LEFT JOIN {node} AS node_news ON node.nid = node_news.nid AND node_news.type = 'news' AND (( group_nid = %d) OR (isa_highlight.gid = %d))
+                LEFT JOIN {node} AS node_blogs ON node.nid = node_blogs.nid AND node_blogs.type = 'blog' AND (( group_nid = %d) OR  isa_highlight.gid = %d)
+                LEFT JOIN {node} AS node_profiles ON node.nid = node_profiles.nid AND node_profiles.type = 'profile' AND node_profiles.uid IN (SELECT uid FROM {og_uid} WHERE nid = %d AND is_active = 1)
+              WHERE  term_data.vid = %d
+              GROUP BY name";	
+
+    $results = db_query($query,$gid, $gid,  $gid, $gid,$gid,$gid,
+                                $gid, $gid, $gid, $gid, $gid,
+                                variable_get('country_vid', 26));
+
+  }
+  return $results;
+}
+
+/**
+ * Return the evolution of number of groups (community, asset, software) depending on the date
+ */
+function isa_metrics_get_result_groups_evolution() {
+  $query = "SELECT node.created, COUNT(node_pr.nid) AS pr, COUNT(node_as.nid) AS asset, COUNT(node_co.nid) AS co, COUNT(node_re.nid) AS re
+            FROM {node}
+            INNER JOIN {workflow_node} USING (nid)
+            LEFT JOIN {node} AS node_co ON node_co.nid = node.nid AND node_co.type = 'community'
+            LEFT JOIN {node} AS node_re ON node_re.nid = node.nid AND node_re.type = 'repository'
+            LEFT JOIN {content_field_project_common_type} AS node_pr ON node_pr.nid = node.nid AND node_pr.vid = node.vid AND node_pr.field_project_common_type_value = 1
+            LEFT JOIN {content_field_project_common_type} AS node_as ON node_as.nid = node.nid AND node_as.vid = node.vid AND node_as.field_project_common_type_value = 0
+            WHERE workflow_node.sid IN (%s)
+            GROUP BY DATE_FORMAT(FROM_UNIXTIME(node.created), '%j %y') ORDER BY node.created";
+  $sids = implode(',', array(ISA_SID_REPOSITORY_VALIDATED, ISA_SID_REPOSITORY_REJECTED_DELETION,
+                       ISA_SID_REPOSITORY_POSTPONED_DELETION, ISA_SID_REPOSITORY_REQUESTED_DELETION,
+                       ISA_SID_COMMUNITY_VALIDATED));
+  return db_query($query, $sids);
+}
+
+/**
+ * Return the evolution of number of items (news, blogs, events) depending on the date, and the group
+ */
+function isa_metrics_get_result_items_evolution($gid = NULL) {
+
+  if (is_null($gid)) {
+    //Items evolution in the melting pot (validated + published items)
+    $query = "SELECT node.created, COUNT(node_news.nid) AS news, COUNT(node_blogs.nid) AS blogs, COUNT(node_events.nid) AS events
+              FROM {node}
+              LEFT JOIN {workflow_node} USING (nid)
+              LEFT JOIN {node} AS node_news ON node_news.nid = node.nid AND node_news.type = 'news' AND (workflow_node.sid = %d OR workflow_node.sid = %d)
+              LEFT JOIN {node} AS node_events ON node_events.nid = node.nid AND node_events.type = 'event' AND workflow_node.sid = %d
+              LEFT JOIN {node} AS node_blogs ON node_blogs.nid = node.nid AND node_blogs.type = 'blog'
+              GROUP BY DATE_FORMAT(FROM_UNIXTIME(node.created), '%j %y') ORDER BY node.created";
+    return db_query($query, ISA_SID_NEWS_VALIDATED, ISA_SID_NEWS_PUBLISHED, ISA_SID_NEWS_VALIDATED);
+  }
+  else {
+      
+    //Items evolution in a group (created + higlighted items)
+    $query = "SELECT node.created, COUNT(node_news.nid) AS news, COUNT(node_blogs.nid) AS blogs, COUNT(node_events.nid) AS events
+              FROM {node}
+              LEFT JOIN {og_ancestry} ON og_ancestry.nid = node.nid
+              LEFT JOIN {isa_highlight} ON isa_highlight.nid = node.nid AND isa_highlight.gid= %d
+              LEFT JOIN {node} AS node_news ON node_news.nid = node.nid AND node_news.type = 'news' AND (group_nid = %d OR isa_highlight.gid = %d)
+              LEFT JOIN {node} AS node_events ON node_events.nid = node.nid AND node_events.type = 'event' AND ( group_nid = %d OR isa_highlight.gid = %d)
+              LEFT JOIN {node} AS node_blogs ON node_blogs.nid = node.nid AND node_blogs.type = 'blog'  AND isa_highlight.gid = %d
+              GROUP BY DATE_FORMAT(FROM_UNIXTIME(node.created), '%j %y') ORDER BY node.created";
+
+    return db_query($query,$gid, $gid, $gid, $gid, $gid, $gid);
+  }
+}
+
+/**
+ * Return the evolution of number of elibrary items (documents, cases, factsheets, videos) depending on the date, and the group
+ */
+function isa_metrics_get_result_elibrary_evolution($gid = NULL) {
+  if (is_null($gid)) {
+    //Items evolution in the melting pot (validated + published items)
+    $query = "SELECT node.created, COUNT(node_docs.nid) AS docs, COUNT(node_cases.nid) AS cases, COUNT(node_factsheets.nid) AS factsheets, COUNT(node_videos.nid) AS videos
+              FROM {node}
+              LEFT JOIN {workflow_node} USING (nid)
+              LEFT JOIN {node} AS node_docs ON node_docs.nid = node.nid AND node_docs.type = 'document' AND (workflow_node.sid = %d OR workflow_node.sid = %d)
+              LEFT JOIN {node} AS node_cases ON node_cases.nid = node.nid AND node_cases.type = 'case' AND workflow_node.sid = %d
+              LEFT JOIN {node} AS node_factsheets ON node_factsheets.nid = node.nid AND node_factsheets.type = 'factsheet'
+              LEFT JOIN {node} AS node_videos ON node_videos.nid = node.nid AND node_videos.type = 'video'
+              GROUP BY DATE_FORMAT(FROM_UNIXTIME(node.created), '%j %y') ORDER BY node.created";
+    return db_query($query, ISA_SID_NEWS_VALIDATED, ISA_SID_NEWS_PUBLISHED, ISA_SID_NEWS_VALIDATED);
+  }
+  else {
+    //Items evolution in a group (created + higlighted items)
+    $query = "SELECT node.created, COUNT(node_docs.nid) AS docs, COUNT(node_cases.nid) AS cases, COUNT(node_factsheets.nid) AS factsheets, COUNT(node_videos.nid) AS videos
+              FROM {node}
+              LEFT JOIN {workflow_node} USING (nid)
+              LEFT JOIN {og_ancestry} ON og_ancestry.nid = node.nid
+              LEFT JOIN {isa_highlight} ON isa_highlight.nid = node.nid and isa_highlight.gid= %d
+              LEFT JOIN {node} AS node_docs ON node_docs.nid = node.nid AND node_docs.type = 'document' AND (( group_nid = %d) OR (isa_highlight.gid = %d))
+              LEFT JOIN {node} AS node_cases ON node_cases.nid = node.nid AND node_cases.type = 'case'  AND isa_highlight.gid = %d
+              LEFT JOIN {node} AS node_factsheets ON node_factsheets.nid = node.nid AND node_factsheets.type = 'factsheet' AND isa_highlight.gid = %d
+              LEFT JOIN {node} AS node_videos ON node_videos.nid = node.nid AND node_videos.type = 'video' AND isa_highlight.gid = %d
+              GROUP BY DATE_FORMAT(FROM_UNIXTIME(node.created), '%j %y') ORDER BY node.created";
+    return db_query($query,$gid , $gid, $gid,  $gid, $gid, $gid);
+  }
+}
+
+/**
+ * Return the evolution of number of users/members depending on the date, and the group
+ */
+function isa_metrics_get_result_users_evolution($gid = NULL) {
+  if (is_null($gid)) {
+    $query = "SELECT created, COUNT(uid) AS users
+              FROM {users}
+              WHERE status = 1
+              GROUP BY DATE_FORMAT(FROM_UNIXTIME(created), '%j %y') ORDER BY created";
+    return db_query($query);
+  }
+  else {
+    $query = "SELECT og_uid.created AS created, COUNT(uid) AS users
+              FROM {users}
+              INNER JOIN {og_uid} USING(uid)
+              WHERE status = 1 AND og_uid.nid = %d AND og_uid.is_active = 1
+              GROUP BY DATE_FORMAT(FROM_UNIXTIME(og_uid.created), '%j %y') ORDER BY og_uid.created";
+    return db_query($query, $gid);
+  }
+}
+
+
+/**
+ * Return the evolution of number of asset releases depending on the date, and the group
+ */
+function isa_metrics_get_result_asset_releases_evolution() {
+  $query = "SELECT created, COUNT(nid) AS releases
+            FROM {node}
+            INNER JOIN {workflow_node} USING (nid)
+            WHERE node.type = '%s' AND workflow_node.sid IN (%s)
+            GROUP BY DATE_FORMAT(FROM_UNIXTIME(created), '%j %y') ORDER BY created";
+  $sids = implode(',',array(ISA_SID_ASSET_VALIDATED, ISA_SID_ASSET_ASSESSMENT, ISA_SID_ASSET_ASSESSED, ISA_SID_ASSET_REQUEST_DELETED));
+  return db_query($query, ISA_ASSET_RELEASE_TYPE, $sids);
+}
+
+/**
+ * Return the repartition of number of items (news, blogs, events) depending on the group
+ */
+function isa_metrics_get_result_items_repartition($gid = NULL) {
+  if (is_null($gid)) {
+    $query = "SELECT COUNT(node_news.nid) AS nb_news, COUNT(node_blogs.nid) AS nb_blogs, COUNT(node_event.nid) AS nb_events
+              FROM {node}
+              LEFT JOIN {workflow_node} ON node.nid = workflow_node.nid
+              LEFT JOIN {node} AS node_event ON node.nid = node_event.nid AND node_event.type = 'event' AND workflow_node.sid = %d
+              LEFT JOIN {node} AS node_news ON node.nid = node_news.nid AND node_news.type = 'news' AND ((workflow_node.sid = %d) OR (workflow_node.sid = %d))
+              LEFT JOIN {node} AS node_blogs ON node.nid = node_blogs.nid AND node_blogs.type = 'blog'";
+    return db_query($query, ISA_SID_NEWS_VALIDATED, ISA_SID_NEWS_VALIDATED, ISA_SID_NEWS_PUBLISHED);
+  }
+  else {
+    $query = "SELECT COUNT(node_news.nid) AS nb_news, COUNT(node_blogs.nid) AS nb_blogs, COUNT(node_event.nid) AS nb_events
+              FROM {node} AS node
+              LEFT JOIN {workflow_node} ON node.nid = workflow_node.nid
+              LEFT JOIN {isa_highlight} ON isa_highlight.nid = node.nid and isa_highlight.gid = %d
+              LEFT JOIN {og_ancestry} ON og_ancestry.nid = node.nid
+              LEFT JOIN {node} AS node_event ON node.nid = node_event.nid AND node_event.type = 'event' AND (group_nid= %d OR isa_highlight.gid = %d)
+              LEFT JOIN {node} AS node_news ON node.nid = node_news.nid AND node_news.type = 'news' AND ( group_nid = %d OR isa_highlight.gid = %d)
+              LEFT JOIN {node} AS node_blogs ON node.nid = node_blogs.nid AND node_blogs.type = 'blog' AND isa_highlight.gid = %d";
+    return db_query($query,$gid, $gid, $gid,  $gid,  $gid, $gid);
+  }
+}
+
+/**
+ * Return the repartition of number of elibrary items (documents, cases, factsheets, videos) depending on the group
+ */
+function isa_metrics_get_result_elibrary_repartition($gid = NULL) {
+  if (is_null($gid)) {
+    $query = "SELECT COUNT(node_docs.nid) AS nb_docs, COUNT(node_cases.nid) AS nb_cases, COUNT(node_factsheets.nid) AS nb_factsheets, COUNT(node_videos.nid) AS nb_videos
+              FROM {node}
+              LEFT JOIN {workflow_node} ON node.nid = workflow_node.nid
+              LEFT JOIN {node} AS node_docs ON node.nid = node_docs.nid AND node_docs.type = 'document' AND ((workflow_node.sid = %d) OR (workflow_node.sid = %d))
+              LEFT JOIN {node} AS node_cases ON node.nid = node_cases.nid AND node_cases.type = 'case' AND (workflow_node.sid = %d)
+              LEFT JOIN {node} AS node_factsheets ON node.nid = node_factsheets.nid AND node_factsheets.type = 'factsheet'
+              LEFT JOIN {node} AS node_videos ON node.nid = node_videos.nid AND node_videos.type = 'video'";
+    return db_query($query, ISA_SID_NEWS_VALIDATED, ISA_SID_NEWS_PUBLISHED, ISA_SID_NEWS_VALIDATED);
+  }
+  else {
+    $query = "SELECT COUNT(node_docs.nid) AS nb_docs, COUNT(node_cases.nid) AS nb_cases, COUNT(node_factsheets.nid) AS nb_factsheets, COUNT(node_videos.nid) AS nb_videos
+              FROM {node}
+              LEFT JOIN {workflow_node} ON node.nid = workflow_node.nid
+              LEFT JOIN {og_ancestry} ON og_ancestry.nid = node.nid
+              LEFT JOIN {isa_highlight} ON isa_highlight.nid = node.nid and isa_highlight.gid = %d
+              LEFT JOIN {node} AS node_docs ON node.nid = node_docs.nid AND node_docs.type = 'document' AND (( group_nid = %d) OR  (isa_highlight.gid = %d))
+              LEFT JOIN {node} AS node_cases ON node.nid = node_cases.nid AND node_cases.type = 'case' AND  isa_highlight.gid = %d
+              LEFT JOIN {node} AS node_factsheets ON node.nid = node_factsheets.nid AND node_factsheets.type = 'factsheet' AND isa_highlight.gid = %d
+              LEFT JOIN {node} AS node_videos ON node.nid = node_videos.nid AND node_videos.type = 'video' AND isa_highlight.gid = %d";
+    return db_query($query,$gid, $gid, $gid,$gid, $gid, $gid);
+  }
+}
+
+
+/**
+ * Return the repartition of number of topics depending on the group and forum
+ */
+function isa_metrics_get_result_forums_repartition($gid = NULL) {
+  $query = "SELECT name, COUNT(node.nid) AS nb
+            FROM {term_data}
+              LEFT JOIN {term_node} ON term_node.tid = term_data.tid
+              LEFT JOIN {og_ancestry} ON og_ancestry.nid = term_node.nid
+              LEFT JOIN {node} ON term_node.nid = node.nid AND term_node.vid = node.vid AND type = 'topic' AND group_nid = %d
+            WHERE term_data.vid = %d
+            GROUP BY name";
+  return db_query($query, $gid, variable_get('forum_vid', 13));
+}
+
+/**
+ * Return the evolution of number of releases + downloads depending on the date, and the group
+ */
+function isa_metrics_get_result_releases_evolution($gid = NULL) {
+  $query = "SELECT og_uid.created AS created, COUNT(uid) AS users
+            FROM {users}
+            INNER JOIN {og_uid} USING(uid)
+            WHERE status = 1 AND og_uid.nid = %d
+            GROUP BY DATE_FORMAT(FROM_UNIXTIME(og_uid.created), '%j %y') ORDER BY og_uid.created";
+  return db_query($query, $gid);
+}
+
+/**
+ * Download datas as a csv file
+ * @param <type> $cid (cache identifier)
+ */
+function isa_metrics_get_csv($cid) {
+  $datas_cache = cache_get($cid);
+  $datas = $datas_cache->data['datas'];
+  $columns = $datas_cache->data['columns'];
+  $filename = $cid . '.csv';
+  drupal_set_header('Content-Type: text/csv');
+  drupal_set_header('Content-Disposition: attachment; filename=' . $filename);
+  if (substr($cid,0,15) == 'metrics_distrib') {
+    $datas = array($datas);
+  }
+  if (substr($cid,0,15) != 'metrics_evoluti' && substr($cid,0,15) != 'metrics_release') {
+    $columns = array($columns);
+  }
+  foreach($datas as $key => $row){
+    foreach($columns[$key] as $column) {
+      print $column[1] . ';';
+    }
+    print "\r\n";
+    foreach($row as $values){
+      print implode(';', $values) ."\r\n";
+    }
+  }
+}
+

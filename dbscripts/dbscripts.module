@@ -1,0 +1,2608 @@
+<?php
+
+/*
+ * Global locked function so db scripts can be locked from restore at various input gathering parts
+ */
+function dbscripts_locked($in_locked = NULL) {
+  static $locked = 0;
+  if (isset($in_locked)) $locked = $in_locked;
+  return $locked;
+}
+
+/**
+ * Dump the database
+ *
+ * @param $options
+ *    An array containing various options for the merge. Most contain a configure_file, filter_option, branch_primary, branch_last_merge, branch_production
+ */
+function dbscripts_dump($options) {
+  $options = _dbscripts_get_options($options,'dump');
+  require($options['configure_file']);
+  extract($options); // any options should override ones set in configure files
+  // we do it this way so that if a configure file sets what it's corresponding reference is the corresponding reference will be included instead of the default. 
+  if (!$reference_file) $reference_file = 'config.references.inc';
+  require($reference_file);
+  
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+  if (!isset($tables_referenced)) return dbscripts_errors('missing_config_references');
+
+  $db_connection_settings = _dbscripts_db_connect();
+  if (($error = dbscripts_errors())) return $error;
+  elseif (!$db_connection_settings) {
+    return dbscripts_errors('bad_database_connection');
+  }
+
+  // Define paths
+  $dump_location = "$dump_path/$branch_primary";
+  $lastmerge_location = "$dump_path/$branch_last_merge";
+  $temp_branch = "tmp";
+  $temp_location = "$dump_path/$temp_branch";
+  $workspace_branch = "workspace/last-dump";
+  $workspace_location = "$dump_path/$workspace_branch";
+
+  // Creating required folders
+  if (file_exists($temp_location) && exec("ls $temp_location")) exec("rm -rf $temp_location/*");
+  exec("mkdir -p $temp_location/data");
+  exec("mkdir -p $temp_location/tables");
+  if (!file_exists("$dump_location/data")) exec("mkdir -p $dump_location/data");
+  if (!file_exists("$dump_location/tables")) exec("mkdir -p $dump_location/tables");
+
+  $lastmerge_exists = FALSE;
+  if (file_exists("$lastmerge_location") && file_exists("$dump_location/table_list.txt") && $branch_primary != $branch_last_merge) {
+    $lastmerge_exists = TRUE;
+  }
+
+  // Set the filtering options and message to be presented to the user
+  $tables_cleared = array();
+  $fix_user_table = FALSE;
+  switch($filter_option){
+    case 'none':
+      $message = "Performed a full database dump to $branch_primary.";
+      break;
+
+    case 'min':
+      $tables_cleared = array_merge($tables_filtered, $tables_filtered_l1);
+      $message = "Dumped the database to $branch_primary with minimal filtering.";
+      break;
+
+    default:
+      $tables_cleared = array_merge($tables_filtered, $tables_filtered_l1, $tables_filtered_l2);
+      $fix_user_table = $lastmerge_exists ? TRUE : FALSE;
+      $message = "Dumped the database to $branch_primary with full filtering options.";
+      break;
+  }
+
+  // Create an array of all tables in the database and store it
+  exec("$mysqldump --add-drop-table --no-data $db_connection_settings | grep 'DROP TABLE' | sed -e \"s/DROP TABLE IF EXISTS .//g\" -e \"s/.;//g\" > $temp_location/table_list.txt");
+  $table_list = file("$temp_location/table_list.txt", FILE_IGNORE_NEW_LINES);
+
+  // These are all the special dump options that make the database diffable
+  // and preserve character set
+  $dump_options = "--skip-opt --add-drop-table --add-locks --create-options --quick --lock-tables --disable-keys --order-by-primary --skip-comments --comments=FALSE --set-charset --default-character-set=utf8 --character-sets-dir=$charsets --hex-blob";
+
+  // Some versions of MySQL do not set character encoding for column names
+  // which can cause unnessisary changes in the version control system
+  // Enable this in config.inc
+  $charset_filter = '';
+  if ($remove_column_charset) {
+    $charset_filter .= "| sed ";
+    $charset_filter .= "-e '/SET @saved_cs_client     = @@character_set_client;/d' ";
+    $charset_filter .= "-e '/SET character_set_client = utf8;/d' ";
+    $charset_filter .= "-e '/SET character_set_client = @saved_cs_client;/d' ";
+  }
+
+  // Dump the structure of all tables
+  foreach ($table_list as $table) {
+  	exec("$mysqldump $dump_options --no-data $db_connection_settings --tables $table $charset_filter > $temp_location/tables/$table.sql");
+  }
+
+  // Check that a file actually has data, and stop if it doesn't
+  if (file_get_contents("$temp_location/tables/{$table_list[0]}.sql") == '') {
+    exec("rm -r $temp_location/*");
+    return dbscripts_errors('empty_data');
+  }
+  // Remove all AUTO_INCREMENT values of the filtered tables
+  $tables_to_filter = _dbscripts_process_tables($temp_branch, $tables_cleared, FALSE);
+  foreach ($tables_to_filter as $table) {
+    $filtered_increment = dbscripts_get_table_increment($table, $temp_branch);
+    exec("sed 's/ AUTO_INCREMENT={$filtered_increment['num']}//g' $temp_location/tables/$table.sql > $temp_location/$table.sql");
+    exec("mv $temp_location/$table.sql $temp_location/tables/$table.sql");
+  }
+
+  // Find out which tables contain new data, and potentially new data
+  if ($branch_primary != $branch_last_merge && $lastmerge_exists) {
+
+    // Get all tables that have content that would need to be merged
+    $tables_to_merge = _dbscripts_process_tables($temp_branch, $tables_merge, FALSE);
+
+    // Find references for each table
+    foreach ($tables_to_merge as $table) {
+
+      // Get the current and lastmerge increments of the table
+      $increment = dbscripts_get_table_increment($table, $temp_branch);
+      $increment_lastmerge = dbscripts_get_table_increment($table, $branch_last_merge);
+      if (is_numeric($increment['num']) && !is_numeric($increment_lastmerge['num'])) {
+        $increment_lastmerge['num'] = '0';
+      }
+
+      // Continue only if there is a possibility of new data or a reference
+      if (isset($increment['num']) && isset($increment_lastmerge['num']) && $increment['num'] > $increment_lastmerge['num']) {
+
+        // Not error checking when finding references because it takes too long
+        $references = dbscripts_get_table_references($table, $workspace_branch, $filter_option, FALSE);
+
+        // Compare the primary keys of the referencing table with
+        // the foreign keys of the referenced table
+        if (is_array($references['references'])) {
+          foreach ($references['references'] as $referenced_table => $columns) {
+
+            // Don't continue if this table is production-only
+            if (!in_array($referenced_table, $tables_override)) {
+              $primary_keys = dbscripts_get_table_primary_keys($referenced_table, $branch_primary);
+              if (is_array($primary_keys)) {
+                foreach ($columns as $column) {
+                  if (in_array($column, $primary_keys)) {
+                    // Record the table/column pair along with the lastmerge increment value
+                    $tables_with_new_data[$referenced_table][$column] = $increment_lastmerge['num'];
+                  }
+                }
+              }
+            }
+
+          }
+        }
+
+      }
+
+    }
+
+  } // woa, thats a lot of end brackets in a row
+
+  // Get tables to be dumped by removing $tables_cleared from the list of all tables
+  $tables_dumped = _dbscripts_process_tables($temp_branch, $tables_cleared);
+  if (($error = dbscripts_errors())) return $error;
+  elseif (!is_array($tables_dumped)) {
+    return dbscripts_errors('unknown');
+  }
+
+  // Dump the data of all tables we're tracking
+  foreach ($tables_dumped as $table) {
+    if (isset($tables_with_new_data[$table])) {
+      // Create the where statements
+      $where_clause_new = '';
+      $where_clause_old = '';
+      $where_clause_new_data = array();
+      $where_clause_old_data = array();
+      foreach ($tables_with_new_data[$table] as $column => $increment) {
+        $where_clause_new_data[] = "$column>=$increment";
+        $where_clause_old_data[] = "$column<$increment";
+      }
+
+      // Where statement for new data
+      $where_clause_new = "--where='";
+      foreach ($where_clause_new_data as $key => $query) {
+        if ($key != 0) {
+          $where_clause_new .= " OR ";
+        }
+        $where_clause_new .= $query;
+      }
+      $where_clause_new .= "'";
+
+      // Where statement for old data
+      $where_clause_old .= "--where='";
+      foreach ($where_clause_old_data as $key => $query) {
+        if ($key != 0) {
+          $where_clause_old .= " AND ";
+        }
+        $where_clause_old .= $query;
+      }
+      $where_clause_old .= "'";
+
+      exec("$mysqldump $dump_options --no-create-info $db_connection_settings $where_clause_old --tables $table > $temp_location/data/$table.sql");
+      exec("$mysqldump $dump_options --no-create-info $db_connection_settings $where_clause_new --tables $table > $temp_location/data/$table-new.sql");
+    } else {
+      exec("$mysqldump $dump_options --no-create-info $db_connection_settings --tables $table > $temp_location/data/$table.sql");
+    }
+
+    // If there's no data, then delete the file
+    if (!exec("grep 'INSERT INTO' $temp_location/data/$table.sql")) {exec("rm $temp_location/data/$table.sql");}
+    if (file_exists("$temp_location/data/$table-new.sql")) {
+      if (!exec("grep 'INSERT INTO' $temp_location/data/$table-new.sql")) exec("rm $temp_location/data/$table-new.sql");
+    }
+  }
+
+  // Move the dump files to the working space's last dump
+  if (file_exists($workspace_location) && exec("ls $workspace_location")) exec("rm -rf $workspace_location/*");
+  if (!file_exists($workspace_location)) exec("mkdir -p $workspace_location");
+  exec("mv $temp_location/* $workspace_location");
+
+  // Fix the users table issue with conflicting timestamps
+  // Just use the last-merge timestamp
+  if ($fix_user_table) {
+    // Define paths
+    $dumped_version = "$workspace_location/data/users.sql";
+    $lastmerge_version = "$lastmerge_location/data/users.sql";
+    $dumped_converted_version = "$temp_location/users-dumped.txt";
+    $lastmerge_converted_version = "$temp_location/users-lastmerge.txt";
+    $rewritten_version = "$temp_location/users.csv";
+    $new_version = "$temp_location/users.sql";
+
+    // Columns to work with (minus 1 for arrays)
+    $columns = _dbscripts_get_table_columns('users',$branch_primary);
+    $override_column = array('access','login');
+    if (is_array($user_override_columns)) $override_column = array_merge($override_column, $user_override_columns); // let config add other columns to override
+    foreach($override_column as $r) {
+      $cols[$r] =  array_search($r,$columns) +1;
+    }
+    // Create a converted version of the user table
+    exec("
+        grep 'INSERT INTO' $dumped_version \\
+        |sed -e 's/^INSERT INTO `users` VALUES (//g' -e 's/);$//g' \\
+        |sed -e 's/#/#PND#/g' -e \"s/\\\\\'/#SQ#/g\" -e \"s/\\\\\\\"/#DQ#/g\" \\
+        | awk -f $script_path/helpers/csv.awk -f $script_path/helpers/convert.awk \\
+        |sed -e 's/#CM#$//g' \\
+        > $dumped_converted_version
+    ");
+    exec("
+        grep 'INSERT INTO' $lastmerge_version \\
+        |sed -e 's/^INSERT INTO `users` VALUES (//g' -e 's/);$//g' \\
+        |sed -e 's/#/#PND#/g' -e \"s/\\\\\'/#SQ#/g\" -e \"s/\\\\\\\"/#DQ#/g\" \\
+        | awk -f $script_path/helpers/csv.awk -f $script_path/helpers/convert.awk \\
+        |sed -e 's/#CM#$//g' \\
+        > $lastmerge_converted_version
+    ");
+
+    // Convert to arrays
+    $dumped_converted_file = file("$dumped_converted_version", FILE_IGNORE_NEW_LINES);
+    $lastmerge_converted_file = file("$lastmerge_converted_version", FILE_IGNORE_NEW_LINES);
+
+    // Put the UID as the array key, with an array of columns
+    foreach ($dumped_converted_file as $line) {
+      $line_parts = explode('#CM#', $line);
+      $dumped_converted[$line_parts[0]] = $line_parts;
+    }
+    foreach ($lastmerge_converted_file as $line) {
+      $line_parts = explode('#CM#', $line);
+      $lastmerge_converted[$line_parts[0]] = $line_parts;
+    }
+
+    // Rewrite the timestamps
+    foreach ($dumped_converted as $uid => $columns) {
+      $rewritten_timestamps[$uid] = $columns;
+      foreach($cols as $pos) {
+        $rewritten_timestamps[$uid][$pos] = $lastmerge_converted[$uid][$pos];
+      }
+    }
+
+    // Write the rewritten version to file
+    foreach ($rewritten_timestamps as $columns) {
+      $line = '';
+      foreach ($columns as $key => $column) {
+        if ($key == 0) {
+          $line = $column;
+        } else {
+          $line .= ",$column";
+        }
+      }
+      exec("echo \"$line\" >> $rewritten_version");
+    }
+
+    // Convert the file back to SQL
+
+    // Get an array of the last-merge sql file
+    $sql = file("$lastmerge_version", FILE_IGNORE_NEW_LINES);
+
+    // Get the top sql comments
+    $data_start = '';
+    foreach ($sql as $key => $line) {
+      if (!$data_start) {
+        if (preg_match("/^INSERT INTO/", $line)) {
+          $data_start = $key;
+        } else {
+          $line = str_replace("'", "#SQ#", $line); // issues with quotes
+          if ($key == 0) {
+            exec("echo '$line' > $temp_location/top.sql");
+          } else {
+            exec("echo '$line' >> $temp_location/top.sql");
+          }
+        }
+      }
+    }
+    exec("sed \"s/#SQ#/\\'/g\" $temp_location/top.sql > $new_version"); // reverting quotes
+
+    // Insert the data
+    exec("
+        cat $rewritten_version \\
+        |sed -e \"s/#DQ#/\\\\\\\"/g\" -e \"s/#SQ#/\\\\\'/g\" -e 's/#PND#/#/g' \\
+        |sed -e 's/^/INSERT INTO `users` VALUES (/g' -e 's/$/);/g' \\
+        >> $new_version
+    ");
+
+    // Insert the bottom sql comments
+    foreach ($sql as $key => $line) {
+      if ($key > $data_start && !preg_match("/^INSERT INTO/", $line)) {
+        $line = str_replace("'", "#SQ#", $line); // issues with quotes
+        exec("echo '$line' >> $temp_location/bottom.sql");
+      }
+    }
+    exec("sed \"s/#SQ#/\\'/g\" $temp_location/bottom.sql >> $new_version"); // reverting quotes
+
+    // Copy the results over to the new dump
+    exec("mv $new_version $dumped_version");
+
+    // Delete files that are no longer required
+    exec("rm $temp_location/top.sql $temp_location/bottom.sql $dumped_converted_version $lastmerge_converted_version $rewritten_version");
+  }
+
+  // For now we're just going to directly copy everything to $dump_location
+  // Eventually we'll actually perform a merge
+  // Erasing directory without erasing folders for svn support
+  if (exec("ls $dump_location/tables")) exec("rm $dump_location/tables/*");
+  if (exec("ls $dump_location/data")) exec("rm $dump_location/data/*");
+  exec("cp $workspace_location/table_list.txt $dump_location");
+  exec("cp $workspace_location/tables/* $dump_location/tables");
+  exec("cp $workspace_location/data/* $dump_location/data");
+
+
+  // Let the user know what happened
+  return "\n$message\n\n";
+}
+
+
+
+/**
+ * Erase the database
+ *
+ * @param $options
+ *    Must contain filter_option and configure_file
+ *   Choose what level of filtering should be performed while erasing the
+ *   database.  Filter levels are configured in config.inc.  Any options set to
+ *   be filtered will be subsequently PRESERVED in the database, and not
+ *   erased.
+ *   'full' - Default option.  Preserves the full option of data from the dump.
+ *       Most useful for keeping user, sessions and cache data.  Use this when
+ *       erasing a development database.
+ *   'min' - Preserves only a select minimum of data from the dump.  Most
+ *       useful for keeping sessions data so you don't get logged out.  Use
+ *       this when erasing a production database.
+ *   'none' - NO filtering is performed whatsoever.  The entire database will
+ *       be erased.
+ */
+function dbscripts_erase($options) {
+  if (!$options['options_processed']) $options = _dbscripts_get_options($options,'erase');
+  require($options['configure_file']);
+  extract($options); 
+
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+
+  $db_connection_settings = _dbscripts_db_connect();
+  if (($error = dbscripts_errors())) return $error;
+  elseif (!$db_connection_settings) {
+    return dbscripts_errors('bad_database_connection');
+  }
+
+  // Set the filtering options and message to be presented to the user
+  $tables_preserved = array();
+  switch ($filter_option) {
+    case 'none';
+      $message = "Erased the entire database.";
+      break;
+
+    case 'min':
+      $tables_preserved = $tables_filtered_l1;
+      $message = "Erased the database, except for minimal preserved tables.";
+      break;
+
+    default:
+      $tables_preserved = array_merge($tables_filtered_l1,$tables_filtered_l2);
+      $message = "Erased the database, except for preserved tables.";
+      break;
+  }
+
+  $filter = '';
+  foreach($tables_preserved as $preserved_data) {
+    $filter .= "|grep -v 'DROP TABLE IF EXISTS .$preserved_data.;'";
+  }
+
+  // Dump options to make it easy to erase the database
+  $dump_options = "--add-drop-table --no-data";
+
+  // We'll dump the database, perform some changes to it, then pipe it back into
+  // MySQL so it will drop the given tables
+  exec("$mysqldump $dump_options $db_connection_settings | grep 'DROP TABLE' $filter | $mysql $db_connection_settings");
+
+  return "\n$message\n\n";
+}
+
+
+
+/**
+ * Restore the database
+ *
+ * @param $branch
+ *   File the database should be restored from.  Defaults to 'development'.
+ *   Alternative options that are supported by default are 'production' and
+ *   'last-merge'.  Other filename patterns may be used if you wish to restore
+ *   the database from an alternate location.
+ * @param $filter_option
+ *   Choose what level of filtering should be performed during the restoration.
+ *   Filter levels are configured in config.inc
+ *   'full' - Default option.  Preserves the full option of data currently
+ *       residing within MySQL. Most useful for preserving user, sessions and
+ *       cache data.  Use this when restoring within a development environment.
+ *   'min' - Preserves only a select minimum of data currently residing within
+ *       MySQL.  Most useful for preserving sessions and cache data.  Use this
+ *       when restoring within a production environment.
+ *   'none' - NO filtering is performed whatsoever.  The entire database is
+ *       erased from MySQL and restored with the data from the given file.
+ */
+function dbscripts_restore($options) {
+  $options = _dbscripts_get_options($options,'restore');
+  require($options['configure_file']);
+  extract($options);
+  //create a pre-restore dump based on option from command line or setting in cofiguration file
+  if  (($options['paranoia'] || $paranoia ) && !$options['not_paranoid']) {
+    $fake_options[1] = $options['paranoia']? $options['paranoia'] : $paranoia ;
+    dbscripts_dump($fake_options);
+  }
+
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+
+  $db_connection_settings = _dbscripts_db_connect();
+  if (dbscripts_locked()) {
+    dbscripts_errors('locked');
+  }
+  elseif (($error = dbscripts_errors())) return $error;
+  elseif (!$db_connection_settings) {
+    return dbscripts_errors('bad_database_connection');
+  }
+
+  // Set locations
+  $dump_location = "$dump_path/$branch_primary";
+  $workspace_location = "$dump_path/workspace/last-restore";
+
+  // Check that the requested location exists
+  if (!file_exists($dump_location)) {
+    return dbscripts_errors('path_missing',array($dump_location));
+  }
+  if (!file_exists($workspace_location)) {
+    exec("mkdir -p $workspace_location");
+  }
+
+  // Set behavior depending on filter
+  $tables_preserved = array();
+  switch($filter_option){
+    case 'none':
+      $message = "Restored the full database";
+      break;
+
+    case 'min':
+      $tables_preserved = array_merge($tables_filtered_l1);
+      $message = "Restored the database perserving minimal tables";
+      break;
+
+    default:
+      $tables_preserved = array_merge($tables_filtered_l1,$tables_filtered_l2);
+      $message = "Restored the database preserving the full option of tables";
+      break;
+  }
+
+  // Erase the database so any tables that were removed stay removed
+  dbscripts_erase($options);
+
+  // Get a list of tables to restore by removing $tables_preserved from the list of all tables
+  $tables_restored = _dbscripts_process_tables($branch_primary, $tables_preserved);
+  if (($error = dbscripts_errors())) return $error;
+  elseif (!is_array($tables_restored)) {
+    return dbscripts_errors('restore_paths');
+  }
+
+  // Restore each database file
+  foreach ($tables_restored as $table) {
+    print $debugging ? "\nrestoring $table\n" : '';
+    if (file_exists("$dump_location/tables/$table.sql")) exec("$mysql $db_connection_settings < $dump_location/tables/$table.sql");
+    if (file_exists("$dump_location/data/$table.sql")) exec("$mysql $db_connection_settings < $dump_location/data/$table.sql");
+    if (file_exists("$dump_location/data/$table-new.sql")) exec("$mysql $db_connection_settings < $dump_location/data/$table-new.sql");
+  }
+
+  // Copy what was restored to the working space
+  // Careful to preserve directories for SVN support
+  if (exec("ls $workspace_location")) {exec("rm -r $workspace_location/*");}
+  exec("mkdir $workspace_location/tables $workspace_location/data");
+  exec("cp $dump_location/table_list.txt $workspace_location");
+  exec("cp $dump_location/data/* $workspace_location/data");
+  exec("cp $dump_location/tables/* $workspace_location/tables");
+
+  return "\n$message\n\n";
+}
+
+
+
+/**
+ * Merge databases
+ *
+ * You really only need to set the following parameters for expert use.
+ * Otherwise this function can be run with no options.
+ *
+ * @param $options
+ *    An array containing various options for the merge. Most contain a configure_file.
+ */
+function dbscripts_merge($options) {
+  $options = _dbscripts_get_options($options,'merge');
+  require($options['configure_file']);
+  extract($options); 
+
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+
+  // Set all locations
+  $temp_location = "$dump_path/tmp";
+  $dev_location = "$dump_path/$branch_primary";
+  $lastmerge_location = "$dump_path/$branch_last_merge";
+  $prod_location = "$dump_path/$branch_production";
+  $merge_location = "$temp_location/merge";
+  $tmpdev_branch = "tmp/dev";
+  $tmpdev_location = "$dump_path/$tmpdev_branch";
+  $conflict_file = "$temp_location/conflict.txt";
+
+  // Ensure all the branches exist
+  $missing_branch = '';
+  if (!file_exists($dev_location)) $missing_branch .= $branch_primary.' ';
+  if (!file_exists($lastmerge_location)) $missing_branch .= $branch_last_merge.' ';
+  if (!file_exists($prod_location)) $missing_branch .= $branch_production.' ';
+
+  // Cancel merge if all branches do not exist
+  if ($missing_branch) {
+    return dbscripts_errors('missing_merge_files',array($missing_branch));
+  }
+
+  // Ensure tmp folder exists
+  if (!file_exists($temp_location)) exec("mkdir -p $temp_location");
+
+  //
+  // CONTINUE MERGE
+  //
+
+  // If a previous merge had a conflict, it'll be picked up and continued here
+  if ($continue) {
+
+    if (file_exists($conflict_file)) {
+      $conflicted_tables = file($conflict_file, FILE_IGNORE_NEW_LINES);
+
+      foreach ($conflicted_tables as $table) {
+        // Set the location of the merge files for existing and new data
+        $existing_version = "$merge_location/data/$table.sql";
+        $new_version = "$temp_location/$table.sql";
+        $temp_version = "$temp_location/$table-tmp.sql";
+
+        // Ensure the file exists
+        if (!file_exists($existing_version)) {
+          return dbscripts_errors('missing_merge_table',array($table));
+        }
+
+        // Ensure that the merge was actually resolved
+        $check_conflict = exec("grep '^<<<<<<<' $existing_version");
+        if ($check_conflict) {
+           return dbscripts_errors('still_conflicted',array($table));
+        }
+
+        // If there was any new data to this table, we'll have to merge the two
+        if (file_exists($new_version)) {
+          $sql = file("$existing_version", FILE_IGNORE_NEW_LINES);
+
+          // Get the top sql comments
+          $data_start = '';
+          foreach ($sql as $key => $line) {
+            if (!$data_start) {
+              if (preg_match("/^INSERT INTO/", $line)) {
+                $data_start = $key;
+              } else {
+                $line = str_replace("'", "#SQ#", $line); // issues with quotes
+                if ($key == 0) {
+                  exec("echo '$line' > $temp_location/top.sql");
+                } else {
+                  exec("echo '$line' >> $temp_location/top.sql");
+                }
+              }
+            }
+          }
+          exec("sed \"s/#SQ#/\\'/g\" $temp_location/top.sql > $temp_version"); // reverting quotes
+
+          // Insert the data
+          exec("grep '^INSERT INTO' $existing_version >> $temp_version");
+          exec("grep '^INSERT INTO' $new_version >> $temp_version");
+
+          // Insert the bottom sql comments
+          foreach ($sql as $key => $line) {
+            if ($key > $data_start && !preg_match("/^INSERT INTO/", $line)) {
+              $line = str_replace("'", "#SQ#", $line); // issues with quotes
+              exec("echo '$line' >> $temp_location/bottom.sql");
+            }
+          }
+          exec("sed \"s/#SQ#/\\'/g\" $temp_location/bottom.sql >> $temp_version"); // reverting quotes
+
+          // Copy the results over to where we're storing data
+          exec("mv $temp_version $existing_version");
+
+          // Delete files that are no longer required
+          exec("rm $temp_location/top.sql $temp_location/bottom.sql $new_version");
+        }
+
+      }
+
+      // Delete the conflict file
+      exec("rm $conflict_file");
+
+    } else {
+      return dbscripts_errors('missing_merge_file',array($conflict_file));
+    }
+
+  } else {
+
+    //
+    // NEW MERGE
+    //
+
+    // After a conflict, the temp files would still exist, so delete everything and start over
+    if (exec("ls $temp_location")) exec("rm -rf $temp_location/*");
+
+    // Creating merge folders
+    if (!file_exists($merge_location)) exec("mkdir -p $merge_location/tables $merge_location/data");
+    exec("cp -R $merge_location $tmpdev_location");
+    exec("cp $dev_location/table_list.txt $tmpdev_location");
+    exec("cp $dev_location/tables/* $tmpdev_location/tables");
+    exec("cp $dev_location/data/* $tmpdev_location/data");
+
+    // Define the tables, fail if they don't return arrays
+    $tables_content = _dbscripts_process_tables($branch_primary, $tables_merge, FALSE);
+    $tables_prod = _dbscripts_process_tables($branch_production, $tables_override, FALSE);
+    $tables_dev = _dbscripts_process_tables($branch_primary, array_merge($tables_merge, $tables_override));
+    if (($error = dbscripts_errors())) return $error; 
+    
+    
+    // Raise all the increments of the content tables of development to above be production values
+    if ($raise_increments_on_merge) {
+      print "\nRaising increments of the '$branch_primary' branch ";
+      foreach ($tables_content as $table) {
+        print "."; // gheto status messages
+        // Find the last-merge value
+        $lastmerge_increment = dbscripts_get_table_increment($table, $branch_last_merge);
+        $start_at = $lastmerge_increment['num'];
+
+        // Find the production value
+        $production_increment = dbscripts_get_table_increment($table, $branch_production);
+        $change_to = $production_increment['num'];
+
+        if ($start_at < $change_to) {
+          // Raise the increments
+          $action = dbscripts_raise_table_increments($table, $start_at, $change_to, $tmpdev_branch);
+          if (!$action) {
+            return dbscripts_errors('missing_config');          
+          }
+        }
+      }
+      print "\n"; // gheto status messages
+    }
+
+    // Move all tables to the temp merge location
+    foreach (array_merge($tables_dev, $tables_content, $tables_prod) as $table) {
+      if (file_exists("$tmpdev_location/tables/$table.sql")) {
+        $dev_increment = dbscripts_get_table_increment($table, $tmpdev_branch);
+        $prod_increment = dbscripts_get_table_increment($table, $branch_production);
+        if ($dev_increment['num'] >= $prod_increment) {
+          exec("cp $tmpdev_location/tables/$table.sql $merge_location/tables");
+        } else {
+          // If the production increment is higher than development, must rewrite increment
+          exec("sed 's/ AUTO_INCREMENT={$dev_increment['num']} / AUTO_INCREMENT={$prod_increment['num']} /g' $tmpdev_location/tables/$table.sql > $temp_location/$table.sql");
+          exec("mv $temp_location/$table.sql $merge_location/tables/$table.sql");
+        }
+      }
+    }
+
+    // Move the data files to be preserved wholly to the merge location
+    foreach ($tables_dev as $table) {
+      if (file_exists("$tmpdev_location/data/$table.sql")) exec("cp $tmpdev_location/data/$table.sql $merge_location/data");
+    }
+    foreach ($tables_prod as $table) {
+      if (file_exists("$prod_location/data/$table.sql")) exec("cp $prod_location/data/$table.sql $merge_location/data");
+    }
+
+    // DATA MERGING
+    // Merge the data from development into the production values
+    print "\nMerging content ";
+    $conflict = array();
+    exec("echo '' > $conflict_file");
+    foreach ($tables_content as $table) {
+      print "."; // gheto status messages
+      // Ensure there is actually some data to work with
+      $known_data_file = file_exists("$tmpdev_location/data/$table.sql") ? "$tmpdev_location/data/$table.sql" : (file_exists("$lastmerge_location/data/$table.sql") ? "$lastmerge_location/data/$table.sql" : (file_exists("$prod_location/data/$table.sql") ? "$prod_location/data/$table.sql" : FALSE));
+      $known_data_file = $known_data_file ? $known_data_file : (file_exists("$tmpdev_location/data/$table-new.sql") ? "$tmpdev_location/data/$table-new.sql" : (file_exists("$prod_location/data/$table-new.sql") ? "$prod_location/data/$table-new.sql" : FALSE));
+
+      // Set data paths
+      $blank_version = "$temp_location/blank.sql";
+      $dev_version = file_exists("$tmpdev_location/data/$table.sql") ? "$tmpdev_location/data/$table.sql" : $blank_version;
+      $lastmerge_version = file_exists("$lastmerge_location/data/$table.sql") ? "$lastmerge_location/data/$table.sql" : $blank_version;
+      $prod_version = file_exists("$prod_location/data/$table.sql") ? "$prod_location/data/$table.sql" : $blank_version;
+      $dev_version_new = file_exists("$tmpdev_location/data/$table-new.sql") ? "$tmpdev_location/data/$table-new.sql" : '';
+      $prod_version_new = file_exists("$prod_location/data/$table-new.sql") ? "$prod_location/data/$table-new.sql" : '';
+      $merge_version = "$merge_location/data/$table.sql";
+      $temp_version = "$temp_location/$table.sql";
+
+      // Only go through with the merge if there is any data to work with
+      if ($known_data_file || $dev_version_new || $prod_version_new) {
+        // Create a blank version for merge with diff3 purposes
+        exec("grep -v '^INSERT INTO' $known_data_file > $blank_version");
+
+        // Merge the existing data
+        exec("diff3 -E --merge $dev_version $lastmerge_version $prod_version > $merge_version");
+        $check_conflict = exec("grep '^<<<<<<<' $merge_version");
+        if ($check_conflict) {
+           $conflict[] = $table;
+        }
+
+        // Merge the new data
+        if (($dev_version_new || $prod_version_new)) {
+          $sql = file("$known_data_file", FILE_IGNORE_NEW_LINES);
+
+          // Get the top sql comments
+          $data_start = '';
+          foreach ($sql as $key => $line) {
+            if (!$data_start) {
+              if (preg_match("/^INSERT INTO/", $line)) {
+                $data_start = $key;
+              } else {
+                $line = str_replace("'", "#SQ#", $line); // issues with quotes
+                if ($key == 0) {
+                  exec("echo '$line' > $temp_location/top.sql");
+                } else {
+                  exec("echo '$line' >> $temp_location/top.sql");
+                }
+              }
+            }
+          }
+          exec("sed \"s/#SQ#/\\'/g\" $temp_location/top.sql > $temp_version"); // reverting quotes
+
+          // Insert the data
+          if (!in_array($table, $conflict) && file_exists($merge_version)) exec("grep '^INSERT INTO' $merge_version >> $temp_version");
+          if ($prod_version_new) exec("grep '^INSERT INTO' $prod_version_new >> $temp_version");
+          if ($dev_version_new) exec("grep '^INSERT INTO' $dev_version_new >> $temp_version");
+
+          // Insert the bottom sql comments
+          foreach ($sql as $key => $line) {
+            if ($key > $data_start && !preg_match("/^INSERT INTO/", $line)) {
+              $line = str_replace("'", "#SQ#", $line); // issues with quotes
+              exec("echo '$line' >> $temp_location/bottom.sql");
+            }
+          }
+          exec("sed \"s/#SQ#/\\'/g\" $temp_location/bottom.sql >> $temp_version"); // reverting quotes
+
+          // Delete temp files
+          exec("rm $temp_location/top.sql $temp_location/bottom.sql $blank_version");
+
+          // If there isn't a conflict with this table, then move it to the merge location
+          if (!in_array($table, $conflict)) {
+            exec("mv $temp_version $merge_version");
+          }
+        }
+
+        // Delete temp file
+        if (file_exists("$blank_version")) exec("rm $blank_version");
+      }
+
+    }
+    print "\n";
+
+    // If there were conflicts, fail
+    if (isset($conflict[0])) {
+      // Store the conflicted tables in a file
+      foreach ($conflict as $key => $table) {
+        if ($key > 0) {
+          exec("echo '$table' >> $conflict_file");
+        } else {
+          exec("echo '$table' > $conflict_file");
+        }
+      }
+
+      print "\nDON'T PANIC! But, I'm afraid I have to inform you that the following tables\nfailed to merge:\n\n";
+      print_r($conflict);
+      print "\nPlease correct the conflicts in '$merge_location/data' (look for '<<<<<<<').\n";
+      print "Afterwards, run '$script_path/merge.php continue' to finish the merge.\n\n";
+      return;
+    }
+
+  }
+
+  // MERGE COMPLETE
+
+  // Copy this new merged version to all three branches
+
+  // Deleting originals, while preserving original directories for svn support
+  exec("rm $dev_location/table_list.txt $lastmerge_location/table_list.txt $prod_location/table_list.txt");
+  exec("rm $dev_location/tables/* $lastmerge_location/tables/* $prod_location/tables/*");
+  exec("rm $dev_location/data/* $lastmerge_location/data/* $prod_location/data/*");
+
+  exec("cp $tmpdev_location/table_list.txt $merge_location");
+
+  // Copy new merge to development
+  exec("cp $merge_location/table_list.txt $dev_location");
+  exec("cp $merge_location/tables/* $dev_location/tables");
+  exec("cp $merge_location/data/* $dev_location/data");
+
+  // Copy new merge to last-merge
+  exec("cp $merge_location/table_list.txt $lastmerge_location");
+  exec("cp $merge_location/tables/* $lastmerge_location/tables");
+  exec("cp $merge_location/data/* $lastmerge_location/data");
+
+  // Copy new merge to production
+  exec("cp $merge_location/table_list.txt $prod_location");
+  exec("cp $merge_location/tables/* $prod_location/tables");
+  exec("cp $merge_location/data/* $prod_location/data");
+
+  // Dev and last-merge do not need to be bothered with all the data
+  $tables_cleared = _dbscripts_process_tables($tmpdev_branch, array_merge($tables_filtered, $tables_filtered_l1, $tables_filtered_l2), FALSE);
+  foreach ($tables_cleared as $table) {
+    // Erase the data file
+  	if (file_exists("$dev_location/data/$table.sql")) exec("rm $dev_location/data/$table.sql");
+    if (file_exists("$lastmerge_location/data/$table.sql")) exec("rm $lastmerge_location/data/$table.sql");
+
+    // Copy over the dev version of the table
+    exec("cp $tmpdev_location/tables/$table.sql $dev_location/tables/$table.sql");
+    exec("cp $tmpdev_location/tables/$table.sql $lastmerge_location/tables/$table.sql");
+  }
+
+  // Clear temp
+  exec("rm -r $temp_location/*");
+
+  return "\nMerge was successfull.\n\n";
+}
+
+
+
+/**
+ * Raise the increments, and its foreign keys, of the given table within the
+ * given branch
+ *
+ * @param $table
+ *   Table to raise the increments of
+ * @param $column
+ *   Column to raise the increments of
+ * @param $start_at
+ *   Range of increments within the table to start rewriting
+ * @param $change_to
+ *   Range to change rewrite the increments to.  Must be higher than both
+ *   $start_at, and the table's current increment value.  If it is not, then it
+ *   will be recalculated to be the highest value.
+ * @param $branch
+ *   Branch to make the changes on.
+ */
+function dbscripts_raise_table_increments($table, $start_at, $change_to, $branch = 'development', $filter_option = 'full') {
+  $options = _dbscripts_get_options();
+  require($options['configure_file']);
+  if (!$reference_file) $reference_file = 'config.references.inc';
+  require($reference_file);
+
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+  if (!isset($tables_referenced)) return dbscripts_errors('missing_config_references');
+
+  // Set locations
+  $branch_location = "$dump_path/$branch";
+  $temp_location = "$dump_path/tmp";
+
+  // Ensure tmp directory exists
+  if (!file_exists($temp_location)) {
+     exec("mkdir -p $temp_location");
+  }
+
+  // Check if the branch exists, otherwise fail
+  if (!file_exists($branch_location)){
+    return dbscripts_errors('missing_branch',array($branch));
+  }
+
+  // Check if the table exists, otherwise fail
+  if (!file_exists("$branch_location/tables/$table.sql")) {
+    return dbscripts_errors('missing_table',array($table));
+  }
+
+  // Find all tables that use the increment as a foreign key
+  $table_references = dbscripts_get_table_references($table, $branch, $filter_option);
+  if (!is_array($table_references)) {
+    print "\n\nERROR: ".$table_references."\n\n";
+    return FALSE;
+  }
+
+  // Fail if there are any found possible references
+  if (array_key_exists('found', $table_references)) {
+    print "\n\nFAILED:  Possible references found for table '$table'\n\n";
+    print_r($table_references['found']);
+    print "\nUpdate '$script_path/config.reference.inc' with this reference\n\n";
+    return FALSE;
+  }
+
+  // Add system path patterns as references
+  if (isset($system_paths[$table]['tables'])) {
+    foreach ($system_paths[$table]['tables'] as $system_path_table => $system_path_columns) {
+      foreach ($system_path_columns as $system_path_column) {
+        $table_references['references'][$system_path_table][] = $system_path_column;
+      }
+    }
+  }
+
+  // Find the largest increment value between $change_to and the current
+  // increment. Use the highest increment
+  $current_inc = dbscripts_get_table_increment($table, $branch);
+  if (is_array($current_inc) && $current_inc['num'] > $change_to) {
+    $change_to = $current_inc['num'];
+  }
+
+  // Get an array of the range of increments to work with
+  if ($start_at < $current_inc['num']) {
+    $increment_range = range($start_at, ($current_inc['num'] - 1));
+  } else {
+    // There is nothing to do then.  Likely there are no new records.
+    return TRUE;
+  }
+
+  // Create a key=>value array of increment pairs
+  $increment_pairs = array();
+  $increment_change = $change_to;
+  foreach ($increment_range as $increment) {
+    $increment_pairs[$increment] = $increment_change;
+    $increment_change++;
+  }
+
+  // If there is a system paths reference, also add the pairs
+  $pattern_pair_old = array();
+  $pattern_pair_new = array();
+  $fuzzy_pattern_pair_old = array();
+  $fuzzy_pattern_pair_new = array();
+  if (isset($system_paths[$table])) {
+
+    // Exact patterns
+    if (array_key_exists('patterns', $system_paths[$table])) {
+      $i = 0;
+      foreach ($system_paths[$table]['patterns'] as $key => $pattern) {
+        foreach ($increment_pairs as $old_increment => $new_increment) {
+          $pattern_pair_old[$i] = str_replace('*', $old_increment, $pattern);
+          $pattern_pair_new[$i] = str_replace('*', $new_increment, $pattern);
+          $i++;
+        }
+      }
+    }
+
+    // Fuzzy patterns
+    if (array_key_exists('fuzzy', $system_paths[$table])) {
+      $i = 0;
+      foreach($system_paths[$table]['fuzzy'] as $key => $pattern) {
+
+        $pattern_parts = explode('#', $pattern);
+        $strlen_pattern = FALSE;
+        foreach ($pattern_parts as $part) {
+          if (strstr($part, 'NUMLEN+')) {
+            $strlen_pattern = $part;
+          }
+        }
+        $strlen = isset($strlen_pattern) ? str_replace('NUMLEN+', '', $strlen_pattern) : FALSE;
+
+        $pattern = str_replace(array('"', '\\'), array('#DQ#', '#BS#'), $pattern);
+        //$pattern = str_replace('\\', '#BS', $pattern);
+
+        foreach ($increment_pairs as $old_increment => $new_increment) {
+          $search = array();
+          $replace_old = array();
+          $replace_new = array();
+
+          $idlen_old = strlen($old_increment);
+          $idlen_new = strlen($new_increment);
+
+          $search[] = '*';
+          $replace_old[] = $old_increment;
+          $replace_new[] = $new_increment;
+
+          $search[] = "#NUMLEN#";
+          $replace_old[] = $idlen_old;
+          $replace_new[] = $idlen_new;
+
+          if ($strlen) {
+            $search[] = "#".$strlen_pattern."#";
+            $replace_old[] = $strlen + $idlen_old;
+            $replace_new[] = $strlen + $idlen_new;
+          }
+
+          $fuzzy_pattern_pair_old[$i] = str_replace($search, $replace_old, $pattern);
+          $fuzzy_pattern_pair_new[$i] = str_replace($search, $replace_new, $pattern);
+          $i++;
+        }
+      }
+    }
+
+  }
+
+  // Write these increment and pattern pairs to a file for awk to use
+  exec("echo '#!/usr/bin/awk -f' > $temp_location/increment_pairs.awk");
+  exec("echo '{' >> $temp_location/increment_pairs.awk");
+  foreach ($increment_pairs as $increment => $target) {
+    exec("echo 'increment_pairs[$increment] = $target' >> $temp_location/increment_pairs.awk");
+  }
+  if (array_key_exists('0', $pattern_pair_old)) {
+    foreach ($pattern_pair_old as $key => $pattern) {
+      exec("echo \"pattern_pair_old[$key] = \\\"'$pattern'\\\"\" >> $temp_location/increment_pairs.awk");
+    }
+    foreach ($pattern_pair_new as $key => $pattern) {
+      exec("echo \"pattern_pair_new[$key] = \\\"'$pattern'\\\"\" >> $temp_location/increment_pairs.awk");
+    }
+  }
+  if (array_key_exists('0', $fuzzy_pattern_pair_old)) {
+    foreach ($fuzzy_pattern_pair_old as $key => $pattern) {
+      exec("echo \"fuzzy_pattern_pair_old[$key] = \\\"$pattern\\\"\" >> $temp_location/increment_pairs.awk");
+    }
+    foreach ($fuzzy_pattern_pair_new as $key => $pattern) {
+      exec("echo \"fuzzy_pattern_pair_new[$key] = \\\"$pattern\\\"\" >> $temp_location/increment_pairs.awk");
+    }
+  }
+  exec("echo '}' >> $temp_location/increment_pairs.awk");
+
+
+  // Raise the auto_increment value of the table
+  exec("sed 's/ AUTO_INCREMENT={$current_inc['num']} / AUTO_INCREMENT={$increment_change} /g' $branch_location/tables/$table.sql > $temp_location/$table.sql");
+  exec("mv $temp_location/$table.sql $branch_location/tables/$table.sql");
+
+  // Raise the increment for all foreign keys of the given table
+  foreach ($table_references['references'] as $table_to_modify => $columns_referenced) {
+
+    // Check if this table exists and has any data stored
+    if (
+          file_exists("$branch_location/tables/$table_to_modify.sql") &&
+          (
+            file_exists("$branch_location/data/$table_to_modify.sql") ||
+            file_exists("$branch_location/data/$table_to_modify-new.sql")
+          )
+        ) {
+
+      // Create an array of the files we'll be working with (existing data and/or new data)
+      $file_names = array();
+      if (file_exists("$branch_location/data/$table_to_modify.sql")) {
+        $file_names[] = $table_to_modify;
+      }
+      if (file_exists("$branch_location/data/$table_to_modify-new.sql")) {
+        $file_names[] = $table_to_modify."-new";
+      }
+
+      // Create a CSV version of the table's data
+      foreach ($file_names as $file_name) {
+        exec("
+            grep 'INSERT INTO' $branch_location/data/$file_name.sql \\
+            |sed -e 's/^INSERT INTO `$table_to_modify` VALUES (//g' -e 's/);$//g' \\
+            |sed -e 's/#/#PND#/g' -e \"s/\\\\\'/#SQ#/g\" -e 's/\"/#DQ#/g' -e \"s/\\\\\/#BS#/g\" \\
+            > $temp_location/$file_name.csv
+        ");
+      }
+
+      // Create an array of the table's structure
+      exec("grep '^  `' $branch_location/tables/$table_to_modify.sql > $temp_location/$table_to_modify.txt");
+      $table_columns = file("$temp_location/$table_to_modify.txt", FILE_IGNORE_NEW_LINES);
+      exec("rm $temp_location/$table_to_modify.txt");
+
+      // Find out the column position
+      $column_positions = array();
+      $dependant_columns = array();
+      foreach ($columns_referenced as $column_to_modify) {
+        $found_position = FALSE;
+        foreach ($table_columns as $key => $table_column) { // the key defines the column's position
+
+          if (is_array($column_to_modify)) {
+            // If the column_to_modify value is an array, it is a case that has dependencies
+
+            // Restructure the array to something more useful, with the columns' positions
+            foreach ($column_to_modify as $column_name => $value) {
+              if (strpos($table_column, "`$column_name`")) {
+                if ($value == '*') {
+                  $dependant_columns['foreign-key']['name'] = $column_name;
+                  $dependant_columns['foreign-key']['position'] = $key;
+                } else {
+                  $dependant_columns['dependencies'][$column_name]['value'] = $value;
+                  $dependant_columns['dependencies'][$column_name]['position'] = $key;
+                }
+                $found_position = TRUE;
+              }
+            }
+
+          } else {
+            // but in most cases just have a single column value to find the position of
+            if (strpos($table_column, "`$column_to_modify`")) {
+              $column_positions[] = $key;
+              $found_position = TRUE;
+            }
+          }
+
+        }
+        if (!$found_position) {
+          print "ERROR: Didn't find column '$column_to_modify' in '$table_to_modify' when I thought I should have.";
+          return FALSE;
+        }
+      }
+
+      // Set the column positions as a variable for awk
+      $column_variables = '';
+      foreach ($column_positions as $position) {
+        $column_variables .= "\ncolumns_to_change[$position] = $position\n";
+      }
+
+      // Do the same for column positions of foreign keys with dependencies
+      if (array_key_exists('foreign-key', $dependant_columns)) {
+        $position = $dependant_columns['foreign-key']['position'];
+        $column_variables .= "\ncolumn_with_dependency = $position\n";
+        foreach ($dependant_columns['dependencies'] as $column_name => $values) {
+          $position = $values['position'];
+          $value = $values['value'];
+          if (is_string($value)) {
+            $column_variables .= "\ncolumn_dependency[$position] = \"'$value'\"\n";
+          } else {
+            $column_variables .= "\ncolumn_dependency[$position] = $value\n";
+          }
+        }
+      }
+
+      // Write the column positions to a file for awk
+      exec("echo '#!/usr/bin/awk -f' > $temp_location/columns.awk");
+      exec("echo '{".$column_variables."}' >> $temp_location/columns.awk");
+
+      // Raise the increments in the csv version of the data
+      foreach ($file_names as $file_name) {
+        exec("
+            cat $temp_location/$file_name.csv | \\
+            awk -f $script_path/helpers/csv.awk -f $temp_location/increment_pairs.awk -f $temp_location/columns.awk -f $script_path/helpers/change_column_values.awk | \\
+            sed -e 's/,$//g' \\
+            > $temp_location/$file_name-tmp.csv
+        ");
+
+        // Check if there were any errors
+        if (exec("grep '^ERROR' $temp_location/$file_name-tmp.csv")) {
+          print "ERROR: There was an error parsing the data in '$table_to_modify' as CSV.  Check the file '$temp_location/$file_name-tmp.csv'";
+          return FALSE;
+        } else {
+          exec("mv $temp_location/$file_name-tmp.csv $temp_location/$file_name.csv");
+        }
+      }
+
+      // Delete variable temp file
+      exec("rm $temp_location/columns.awk");
+
+      // Convert the csv file back to SQL
+      foreach ($file_names as $file_name) {
+        $sql = file("$branch_location/data/$file_name.sql", FILE_IGNORE_NEW_LINES);
+
+        // Get all the top sql comments
+        $data_start = FALSE;
+        foreach ($sql as $key => $line) {
+          if ($data_start === FALSE) {
+            if (preg_match("/^INSERT INTO/", $line)){
+              $data_start = $key;
+            } else{
+              $line = str_replace("'", "#SQ#", $line); // issues with quotes
+              if ($key == 0) {
+                exec("echo '$line' > $temp_location/$file_name.sql");
+              } else {
+                exec("echo '$line' >> $temp_location/$file_name.sql");
+              }
+            }
+          }
+        }
+
+        // Reapply quotes to the top comments
+        exec("sed \"s/#SQ#/'/g\" $temp_location/$file_name.sql > $temp_location/$file_name-tmp.sql");
+        exec("mv $temp_location/$file_name-tmp.sql $temp_location/$file_name.sql");
+
+        // Apply the new data after the top sql comments, converting the csv to sql along the way
+        exec("
+          sed -e 's/^/INSERT INTO `$table_to_modify` VALUES (/g' -e 's/$/);/g' \\
+          -e \"s/#BS#/\\\\\/g\" -e 's/#DQ#/\"/g' -e \"s/#SQ#/\\\\\'/g\" -e 's/#PND#/#/g' \\
+          $temp_location/$file_name.csv >> $temp_location/$file_name.sql
+        ");
+
+        // Create a file of the bottom comments
+        foreach ($sql as $key => $line) {
+          if ($key > $data_start && !preg_match("/^INSERT INTO/", $line)) {
+            $line = str_replace("'", "#SQ#", $line); // issues with quotes
+            exec("echo '$line' >> $temp_location/$file_name-bottom.sql");
+          }
+        }
+
+        // Reapply quotes to the bottom comments
+        // (seperating sed statements to avoid running another sed query through the entire data)
+        exec("sed \"s/#SQ#/'/g\" $temp_location/$file_name-bottom.sql > $temp_location/$file_name-tmp.sql");
+
+        // Attach the bottom comments to the end of the sql file
+        exec("cat $temp_location/$file_name-tmp.sql >> $temp_location/$file_name.sql");
+
+        // Delete the temporary files
+        exec("rm $temp_location/$file_name.csv");
+        exec("rm $temp_location/$file_name-bottom.sql");
+        exec("rm $temp_location/$file_name-tmp.sql");
+      }
+
+    }
+  }
+
+  // Delete temporary file
+  exec("rm $temp_location/increment_pairs.awk");
+
+  // Since we got this far without error, we can now move
+  // all the newly created sql files from temp back to the branch
+  foreach ($table_references['references'] as $table_to_modify => $columns_referenced) {
+    if (file_exists("$temp_location/$table_to_modify.sql")) {
+      exec("mv $temp_location/$table_to_modify.sql $branch_location/data/$table_to_modify.sql");
+    }
+    if (file_exists("$temp_location/$table_to_modify-new.sql")) {
+      exec("mv $temp_location/$table_to_modify-new.sql $branch_location/data/$table_to_modify-new.sql");
+    }
+  }
+
+  return TRUE;
+
+}
+
+function _dbscripts_get_table_columns($table,$branch){
+  $options = _dbscripts_get_options();
+  require($options['configure_file']);
+  extract($options);
+  $list = array();
+  $branch_location = "$dump_path/$branch";
+  $temp_location = "$dump_path/tmp";
+  if(file_exists("$branch_location/tables/$table.sql")) {
+    exec("grep '^  `' $branch_location/tables/$table.sql > $temp_location/columns.sql");
+    $columns = file("$temp_location/columns.sql", FILE_IGNORE_NEW_LINES);
+    foreach ($columns as $column) {
+      $parts = explode('`', $column);
+      $list[] = $parts[1];
+    }
+    exec("rm $temp_location/columns.sql");
+  }
+  return $list;
+}
+
+/**
+ * Return actual references to a given table
+ *
+ * Checks against dbscripts_find_possible_table_references to ensure there are
+ * no obvious tables that could have been missed during development.  Update
+ * settings in config.reference.inc to reflect any new references and false
+ * positives.
+ *
+ * DOES NOT GUARANTEE TO RETURN ALL REFERENCES
+ * It only returns what is configured in config.reference.inc, and checks that
+ * configuration against dbscripts_find_possible_table_references for
+ * *possible* matches that you may have missed during development.  It is your
+ * responcibility to check the database schema for references (such as by
+ * checking the diff after a change).
+ *
+ * @param $table
+ *    Table to find all references of
+ * @param $branch
+ *    Branch to check
+ * @param $filter_option
+ *    What degree of filtering should be done on the tables returned, just
+ *    like when dumping and restoring.
+ */
+function dbscripts_get_table_references($table, $branch, $filter_option = 'full', $error_check = TRUE) {
+  $options = _dbscripts_get_options();
+  require($options['configure_file']);
+  extract($options);
+  if (!$reference_file) $reference_file = 'config.references.inc';
+  require($reference_file);
+
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+  if (!isset($tables_referenced)) return dbscripts_errors('missing_config_references');
+
+  // Set locations
+  $branch_location = "$dump_path/$branch";
+  $temp_location = "$dump_path/tmp";
+
+  // Check if the branch exists, otherwise fail
+  if (!file_exists($branch_location)) {
+    return dbscripts_errors('missing_branch',array($branch));
+  }
+
+  // Ensure tmp directory exists
+  if (!file_exists($temp_location)) exec("mkdir -p $temp_location");
+
+  $increment = dbscripts_get_table_increment($table, $branch);
+  if (!is_array($increment) && $increment != FALSE) {
+    // If not FALSE and not an array, then fail and pass through the error message
+    return $increment;
+  }
+
+  $table_can_be_referenced = FALSE;
+  $can_contain_new_data = FALSE;
+  $references = array(
+    'references' => array(),
+    'false positives' => array(),
+  );
+  if (!in_array($table, $tables_standalone) && isset($increment['id'])) {
+    $table_can_be_referenced = TRUE;
+
+    $config_references = isset($tables_referenced[$table]['references']) ? $tables_referenced[$table]['references'] : array();
+    $config_false_positive = isset($tables_referenced[$table]['false positives']) ? $tables_referenced[$table]['false positives'] : array();
+
+    // The table list file is important, so fail if it doesn't exist
+    if (!file_exists("$branch_location/table_list.txt")) {
+      return dbscripts_errors('missing_file',array("$branch_location/table_list.txt"));
+    }
+
+    $table_list = file("$branch_location/table_list.txt", FILE_IGNORE_NEW_LINES);
+
+    // Since you can set the configuration with *'s, creating an array $references of real values
+    foreach ($table_list as $check_table) {
+      // Format possible values for the table name
+      $table_name_parts = explode("_", $check_table);
+      $check_table_1 = isset($table_name_parts[1]) ? $table_name_parts[0]."_.*" : FALSE;
+      $check_table_2 = isset($table_name_parts[2]) ? $table_name_parts[0]."_".$table_name_parts[1]."_.*" : FALSE;
+      $check_table_3 = isset($table_name_parts[3]) ? $table_name_parts[0]."_".$table_name_parts[1]."_".$table_name_parts[2]."_.*" : FALSE;
+      $possible_table_names = array($check_table, $check_table_1, $check_table_2, $check_table_3);
+
+      // Check all possible values for the table name
+      foreach ($possible_table_names as $check) {
+        if ($check && (array_key_exists($check, $config_references) || array_key_exists($check, $config_false_positive))) {
+          // Check to see if any of the configured column names for that table have a wildcard
+          $wildcard = FALSE;
+          if (is_array($config_references) && array_key_exists($check, $config_references) && is_array($config_references[$check])) {
+            foreach ($config_references[$check] as $column) {
+              if (!is_array($column) && strpos($column, '*') !== FALSE) {
+                $wildcard = TRUE;
+              }
+            }
+          }
+          if (is_array($config_false_positive) && array_key_exists($check, $config_false_positive) && is_array($config_false_positive[$check])) {
+            foreach ($config_false_positive[$check] as $column) {
+              if (!is_array($column) && strpos($column, '*') !== FALSE) {
+                $wildcard = TRUE;
+              }
+            }
+          }
+
+          // If there is a wildcard, we need to find all possible matches in the table
+          if ($wildcard) {
+            // Get all columns for the given table
+            exec("grep '^  `' $branch_location/tables/$check_table.sql > $temp_location/columns.sql");
+            $column_values = file("$temp_location/columns.sql");
+
+            // Check each column
+            foreach ($column_values as $column_value) {
+              // Extract the column name
+              $column_value_parts = explode('`', $column_value);
+              $column_name = $column_value_parts[1];
+
+              // Format other possible values for the column name
+              $column_name_parts = explode("_", $column_name);
+              $column_num_parts = count($column_name_parts);
+              $column_last_part = $column_num_parts -1;
+              $column_name_1 = isset($column_name_parts[1]) ? $column_name_parts[0]."_*" : FALSE;
+              $column_name_2 = isset($column_name_parts[2]) ? $column_name_parts[0]."_*_".$column_name_parts[$column_last_part] : FALSE;
+              $possible_column_names = array($column_name, $column_name_1, $column_name_2);
+
+              // Check all the possible column names
+              foreach ($possible_column_names as $possible_column_name) {
+                if ($possible_column_name) {
+                  if (isset($config_references[$check]) && in_array($possible_column_name, $config_references[$check])) {
+                    $references['references'][$check_table][] = $column_name;
+                  }
+                  if (isset($config_false_positive[$check]) && in_array($possible_column_name, $config_false_positive[$check])) {
+                    $references['false positives'][$check_table][] = $column_name;
+                  }
+                }
+              }
+            }
+
+            // Erase the temporary file
+            exec("rm $temp_location/columns.sql");
+
+          } else {
+            // Without a wildcard as the column name we can just return what was configured
+            if (isset($config_references[$check])) {
+              $references['references'][$check_table] = $config_references[$check];
+            }
+            if (isset($config_false_positive[$check])) {
+              $references['false positives'][$check_table] = $config_false_positive[$check];
+            }
+          }
+
+        }
+      }
+    }
+
+    // Now checking the real values against the discovered possible references
+    if ($error_check) {
+      $possible_references = dbscripts_find_possible_table_references($table, $branch, $filter_option);
+      if(is_array($possible_references)) {
+        foreach ($possible_references as $check_table => $check_ids) {
+          foreach ($check_ids as $check_id) {
+
+            // Check to see if the possible reference is in the references list as found above
+            $check_references = FALSE;
+            if (array_key_exists('references', $references) && array_key_exists($check_table, $references['references']) && is_array($references['references'][$check_table])) {
+              $check_references = in_array($check_id, $references['references'][$check_table]);
+            }
+            $check_false_positive = FALSE;
+            if (array_key_exists('false positives', $references) && array_key_exists($check_table, $references['false positives']) && is_array($references['false positives'][$check_table])) {
+              $check_false_positive = in_array($check_id, $references['false positives'][$check_table]);
+            }
+
+            // If it is not in either, then record it under 'found'
+            if(!$check_references && !$check_false_positive) {
+              $references['found'][$check_table][] = $check_id;
+            }
+
+          }
+        }
+      } else {
+        // If an array is not returned, then pass through the error message
+        return $possible_references;
+      }
+    }
+
+  } elseif (in_array($table, $tables_standalone) && in_array($table, $tables_merge)) {
+    $can_contain_new_data = TRUE;
+  }
+
+  // Add itself as a reference
+  if ($table_can_be_referenced || $can_contain_new_data) {
+    $references['references'][$table][] = $increment['id'];
+  }
+
+  return $references;
+}
+
+
+
+/**
+ * Get a given table's current auto increment value
+ *
+ * @param $table
+ *    The table name you want to check
+ * @param $branch
+ *    The branch that will be checked, since each branch could
+ *    possibly have a different increment.
+ */
+function dbscripts_get_table_increment($table, $branch) {
+  $options = _dbscripts_get_options();
+  require($options['configure_file']);
+
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+
+  $branch_location = "$dump_path/$branch";
+
+  // Check if the branch exists, otherwise fail
+  if (!file_exists($branch_location)) {
+    return dbscripts_errors('missing_branch',array($branch));
+  }
+
+  $increment = FALSE;
+  if(file_exists("$branch_location/tables/$table.sql")) {
+    if (exec("grep -i 'auto_increment' $branch_location/tables/$table.sql")) {
+      $inc_string = exec("grep 'AUTO_INCREMENT=' $branch_location/tables/$table.sql");
+
+      $increment['num'] = '0';
+      if ($inc_string) {
+        $inc_string_parts = explode(' ', $inc_string);
+        foreach ($inc_string_parts as $part) {
+          if (strpos($part, 'AUTO_INCREMENT=') !== FALSE) {
+            $increment['num'] = str_replace('AUTO_INCREMENT=', '', $part);
+          }
+        }
+      }
+
+      $id_string = exec("grep -i 'auto_increment' $branch_location/tables/$table.sql");
+      $id_string_parts = explode('`', $id_string);
+      $increment['id'] = $id_string_parts[1];
+    }
+  }
+
+  return $increment;
+}
+
+
+
+/**
+ * Return a table's primary key
+ *
+ * @param $table
+ *   Table to check
+ * @param $branch
+ *   Branch to check in
+ */
+function dbscripts_get_table_primary_keys($table, $branch) {
+  $options = _dbscripts_get_options();
+  require($options['configure_file']);
+
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+  // Set locations
+  $branch_location = "$dump_path/$branch";
+
+  if (file_exists("$branch_location/tables/$table.sql")) {
+    $primary_key_line = exec("grep '^  PRIMARY KEY' $branch_location/tables/$table.sql | sed 's/`//g'");
+    if ($primary_key_line) {
+      $primary_key_line_parts = explode("(", $primary_key_line);
+      $primary_key_line_parts = explode(")", $primary_key_line_parts[1]);
+      $primary_keys = explode(",", $primary_key_line_parts[0]);
+      return $primary_keys;
+    }
+  }
+
+}
+
+
+
+/**
+ * Find all possible references for the given table
+ *
+ * Helper script to make it easier to discover if there are possible references
+ * to a given table.
+ *
+ * DOES NOT GAURANTEE TO FIND ALL REFERENCES
+ * This is merely a tool to assist you in narrowing down possibilities and
+ * provide a first level of error checking for dbscripts_get_table_references.
+ * It is your responsibility to ensure all actual references are recorded in
+ * config.references.inc
+ *
+ * @param $table
+ *    Table to find all references of
+ * @param $branch
+ *    Branch to check
+ * @param $filter_option
+ *    What degree of filtering should be done on the tables returned, just
+ *    like when dumping and restoring.
+ */
+function dbscripts_find_possible_table_references($table, $branch, $filter_option = "full") {
+  $options = _dbscripts_get_options();
+  require($options['configure_file']);
+
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+
+  // Set locations
+  $branch_location = "$dump_path/$branch";
+  $temp_location = "$dump_path/tmp";
+
+  // Check if the branch exists, otherwise fail
+  if (!file_exists($branch_location)) {
+    return dbscripts_errors('missing_branch',array($branch));
+  }
+
+  // Ensure tmp directory exists
+  if (!file_exists($temp_location)) exec("mkdir -p $temp_location");
+
+  // Set the filtering options, ignoring tables not being tracked
+  $tables_ignored = array();
+  switch($filter_option){
+    case 'none':
+      break;
+
+    case 'min':
+      $tables_ignored = array_merge($tables_filtered, $tables_filtered_l1);
+      break;
+
+
+    default:
+      $tables_ignored = array_merge($tables_filtered, $tables_filtered_l1, $tables_filtered_l2);
+      break;
+  }
+
+  // List of tables to check
+  $table_list = _dbscripts_process_tables($branch, $tables_ignored);
+  if (!is_array($table_list)) {
+    // Fail and pass through the message from _dbscripts_process_tables if it didn't pass an array
+    return $table_list;
+  }
+
+  // Get the id name of the table
+  $increment = dbscripts_get_table_increment($table, $branch);
+  if (!is_array($increment) && $increment != FALSE) {
+    // If not FALSE and not an array, then fail and pass through the error message
+    return $increment;
+  }
+  $id = isset($increment['id']) ? $increment['id'] : FALSE;
+
+  $list = array();
+  if ($id) {
+    foreach ($table_list as $check_table) {
+      // Ensure this table doesn't use the same ID name for auto increment as well
+      $match_increment = dbscripts_get_table_increment($check_table, $branch);
+      if (!is_array($match_increment) && $match_increment != FALSE) {
+        // If not FALSE and not an array, then fail and pass through the error message
+        return $match_increment;
+      }
+      $match_id = isset($match_increment['id']) ?  $match_increment['id'] : FALSE;
+
+      exec("grep '^  `' $branch_location/tables/$check_table.sql > $temp_location/columns.sql");
+      $columns = file("$temp_location/columns.sql", FILE_IGNORE_NEW_LINES);
+      foreach ($columns as $column) {
+        $parts = explode('`', $column);
+        // Avoid returning columns that are auto_increment on that table
+        if (strpos($parts[1], $id) !== FALSE && $parts[1] != $match_id) {
+          $list[$check_table][] = $parts[1];
+        }
+      }
+      exec("rm $temp_location/columns.sql");
+    }
+  }
+
+  return $list;
+}
+
+
+
+/**
+ * Get a list of all tables that are using auto increment
+ *
+ * @param $branch
+ *    The branch that has the tables to check
+ * @param $filter_option
+ *    What degree of filtering should be done on the tables returned, just
+ *    like when dumping and restoring.
+ */
+function dbscripts_find_tables_with_increment($branch, $filter_option = "full") {
+  $options = _dbscripts_get_options();
+  require($options['configure_file']);
+
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+  
+  // Set location
+  $branch_location = "$dump_path/$branch";
+
+  // Check if the branch exists, otherwise fail
+  if (!file_exists($branch_location)) {
+    return dbscripts_errors('missing_branch',array($branch));
+  }
+
+  // Set the filtering options, ignoring tables not being tracked
+  $tables_ignored = array();
+  switch($filter_option){
+    case 'none':
+      break;
+
+    case 'min':
+      $tables_ignored = array_merge($tables_filtered, $tables_filtered_l1);
+      break;
+
+    default:
+      $tables_ignored = array_merge($tables_filtered, $tables_filtered_l1, $tables_filtered_l2);
+      break;
+  }
+
+  $table_list = _dbscripts_process_tables($branch, $tables_ignored);
+  if (!is_array($table_list)) {
+    // Fail and pass through the message from _dbscripts_process_tables if it didn't pass an array
+    return $table_list;
+  }
+
+  $list = array();
+  foreach ($table_list as $table) {
+    $increment = dbscripts_get_table_increment($table, $branch);
+    if ($increment && is_array($increment)) {
+      $list[] = $table;
+    } elseif ($increment != FALSE) {
+      // If not FALSE and not an array, then fail and pass through the error message
+    	return $increment;
+    }
+  }
+
+  return $list;
+}
+
+
+
+/**
+ * Raise all increments of a given branch based on the values of the last-merge
+ * and production branches.
+ *
+ * Only used from within the raise_increments.php script.
+ *
+ * @param $dev_branch
+ *   Location of the branch you wish to make the changes on.  All actions will
+ *   effect and modify this branch.
+ * @param $branch_last_merge
+ *   Location of the branch that was used to represent the state the
+ *   last time the other two branches were merged.  This is used as reference
+ *   to discover the start of increment rewriting.
+ * @param $branch_production
+ *   Location of the branch that will be used as reference to discover at which
+ *   point the rewrite should start at.
+ */
+function dbscripts_raise_all_increments($options) {
+  $options = _dbscripts_get_options($options,'raise');
+  require($options['configure_file']);
+  extract($options); 
+
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+
+  // Set all locations
+  $temp_location = "$dump_path/tmp";
+  $dev_location = "$dump_path/$branch_primary";
+  $lastmerge_location = "$dump_path/$branch_last_merge";
+  $prod_location = "$dump_path/$branch_production";
+
+  // Ensure all the branches exist
+  $missing_branch = '';
+  if (!file_exists($dev_location)) $missing_branch .= $branch_primary.' ';
+  if (!file_exists($lastmerge_location)) $missing_branch .= $branch_last_merge.' ';
+  if (!file_exists($prod_location)) $missing_branch .= $branch_production.' ';
+
+  // Cancel merge if any branches do not exist
+  if ($missing_branch) {
+    return dbscripts_errors('missing_merge_files',array($missing_branch));
+  }
+
+  // Ensure tmp folder exists
+  if (!file_exists($temp_location)) exec("mkdir -p $temp_location");
+
+  // Define the tables, fail if they don't return arrays
+  if (!file_exists("$dev_location/table_list.txt")) {
+    return dbscripts_errors('missing_file',array("$dev_location/table_list.txt"));
+  }
+  
+  $tables = file("$dev_location/table_list.txt", FILE_IGNORE_NEW_LINES);
+  
+  foreach ($tables as $table) {
+    // Find the last-merge value
+    $lastmerge_increment = dbscripts_get_table_increment($table, $branch_last_merge);
+    $start_at = $lastmerge_increment['num'];
+
+    // Find the production value
+    $production_increment = dbscripts_get_table_increment($table, $branch_production);
+    $change_to = $production_increment['num'];
+
+    if ($start_at < $change_to) {
+      // Raise the increments
+      dbscripts_raise_table_increments($table, $start_at, $change_to, $branch_primary);
+    }
+  }
+
+}
+
+
+
+/**
+ * Get the database connection settings from settings.php file
+ *
+ * Helper function for dump, erase and restore functions
+ */
+function _dbscripts_db_connect() {
+  $options = _dbscripts_get_options();
+  require($options['configure_file']);
+  require("$settings_path");
+  dbscripts_locked($dbscripts_locked);
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+  if (!isset($db_url)) return dbscripts_errors('missing_dburl');
+
+  $db_url = is_array($db_url) ? $db_url['default'] : $db_url;
+  $db = parse_url($db_url);
+  $db['db'] = ltrim($db['path'], '/');
+  $output = '';
+  foreach (array('host'=>'h ','user'=> 'u ','pass'=>'p', 'db'=>'') as $pos=>$arg) {
+    if ($db[$pos]) $output .= ($arg? " -$arg":' ') . urldecode($db[$pos]);  
+  }
+  if ($output) return $output ;
+  else return dbscripts_errors('parsing_db_url');
+}
+
+
+
+/**
+ * Get options
+ *
+ *
+ * @param $argv
+ *   Pass in the $_SERVER['argv'] variable to return options set when running
+ *   the script.
+ */
+function _dbscripts_get_options($argv=NULL,$case = '') {
+  static $options;
+    // Set default filter option
+  if (is_array($argv)) {
+   unset($argv[0]);
+   foreach($argv as $k => $arg) {
+      $begin = substr($arg,0,5);
+      $end = substr($arg,5);
+      switch($begin) {
+        case '-fc==': // configure file
+          $options['configure_file'] = $end; 
+          unset($argv[$k]);
+        break;
+        case '-fr==': // configure file
+          $options['reference_file'] = $end; 
+          unset($argv[$k]);
+        break;
+        case '-ps==':
+          $options['script_path'] = $end;
+          unset($argv[$k]);
+        break;
+        case '-pd==':
+          $options['dump_path'] = $end;
+          unset($argv[$k]);
+        break;
+        case '-par=':
+          if ($end) $options['paranoia'] = trim($end,"=");
+          unset($argv[$k]);
+        break;
+        case 'nopar':
+          $options['not_paranoid'] = 1;
+          unset($argv[$k]);
+        break ;
+        default:
+          if (substr($arg,0,1)=='-') unset($argv[$k]);;
+        break;
+      }
+    }
+    if (!$options['configure_file']) $options['configure_file'] = 'config.inc';
+    foreach (array('min','none','full') as $filter) {
+      if (in_array($filter,$argv)) {
+        $pos = array_search($filter,$argv);
+        $options['filter_option'] = $filter; 
+        unset($argv[$pos]);
+        break;
+      }
+    }
+    if (!$options['filter_option']) $options['filter_option'] = 'full';
+    // merge specific
+    if (($pos = array_search('continue',$argv))) {
+      $options['continue'] = 'continue';
+      unset($argv[$pos]);
+    }
+    // Special case options for specific operations, bound to position for historic reasons
+    $special = array(
+      'dump' => array(
+        1=> array('key'=>'branch_primary',
+          'default'=>'development'
+          ),
+        2=> array('key'=>'branch_last_merge',
+          'default'=>'last-merge'
+          ),
+      ),
+      'merge' => array(
+        1=> array('key'=>'branch_primary',
+          'default'=>'development'
+          ),
+        2=> array('key'=>'branch_last_merge',
+          'default'=>'last-merge'
+          ),
+        3=> array('key'=>'branch_production',
+          'default'=>'production'
+          ),
+      ),
+      'raise' => array(
+        1=> array('key'=>'branch_primary',
+          'default'=>'development'
+          ),
+        2=> array('key'=>'branch_last_merge',
+          'default'=>'last-merge'
+          ),
+        3=> array('key'=>'branch_production',
+          'default'=>'production'
+          ),
+      ),
+      'restore' => array(
+        1=> array('key'=>'branch_primary',
+          'default'=>'development'
+          ),
+      ),
+    );
+    
+    if ($case && $special[$case]) {
+      foreach ($special[$case] as $pos => $info) {
+        if ($argv[$pos]) {
+          $options[$info['key']] = $argv[$pos];
+        } else {
+          $options[$info['key']] = $info['default'];
+        }
+      }
+    }
+    $options['options_processed'] = 1;
+  }
+  return $options;
+}
+
+
+
+/**
+ * Process an array of tables
+ *
+ * When given an array of all tables, you can either remove matches
+ * from the table list, or pick only positive matches
+ *
+ * @param $branch
+ *    Which branch should be use for its list of tables
+ * @param $tables_compare
+ *    An array of table names that should be compared
+ * @param $remove_match
+ *    Should matches in $tables_compare be removed from the list, or kept
+ */
+function _dbscripts_process_tables($branch, $tables_compare, $remove_match = TRUE) {
+  $options = _dbscripts_get_options();
+  require($options['configure_file']);
+  // Ensure required files are loaded
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+
+  // Set location
+  $branch_location = "$dump_path/$branch";
+
+  // Check if the branch exists, otherwise fail
+  if (!file_exists($branch_location)) {
+    return dbscripts_errors('missing_branch',array($branch));
+  }
+
+  // Check if the table list file exists, otherwise fail
+  if (!file_exists("$branch_location/table_list.txt")) {
+    return dbscripts_errors('missing_file',array("$branch_location/table_list.txt"));
+  }
+
+  $tables = file("$branch_location/table_list.txt", FILE_IGNORE_NEW_LINES);
+  $tables_match = array();
+
+  foreach ($tables as $key => $table) {
+    // Since some tables are specified with a .*, generating other possible values
+    $truncated = explode('_', $table);
+    $truncated1 = isset($truncated[0]) ? $truncated[0].'_.*' : '';
+    $truncated2 = isset($truncated[1]) ? $truncated[0].'_'.$truncated[1].'_.*' : '';
+
+    $check_tables = array($table, $truncated1, $truncated2);
+    foreach ($check_tables as $check) {
+      if (in_array($check, $tables_compare)) {
+        $tables_match[$key] = $table;
+      }
+    }
+  }
+
+  foreach ($tables_match as $key => $table) {
+    unset($tables[$key]);
+  }
+
+  if ($remove_match) {
+    return $tables;
+  } else {
+    return $tables_match;
+  }
+}
+
+
+/**
+ * Find
+ *
+ * @param $options
+ *   Params to find information
+ */
+function dbscripts_find($options) {
+  // Find all tables with auto_increment
+  if (isset($options[1]) && $options[1] == 'increment') {
+    $branch = isset($options[2]) ? $options[2] : 'development';
+    $filter_option = isset($options[3]) ? $options[3] : 'full';
+    $list = dbscripts_find_tables_with_increment($branch, $filter_option);
+    return print_r($list,1);
+
+  // Find all possible references to a given table
+  } elseif (isset($options[1]) && $options[1] == 'possible-references') {
+    $branch = isset($options[3]) ? $options[3] : 'development';
+    $filter_option = isset($options[4]) ? $options[4] : 'full';
+
+    $list = array();
+  	if(isset($options[2]) && $options[2] != 'all') {
+      $table = $options[2];
+      $list = dbscripts_find_possible_table_references($table, $branch, $filter_option);
+  	} else {
+      //print "\n Please wait. This can take awhile.  'ctrl+c' to cancel.\n\n";
+      $table_list = dbscripts_find_tables_with_increment($branch, $filter_option);
+      if (is_array($table_list)) {
+        foreach ($table_list as $table) {
+        	$references = dbscripts_find_possible_table_references($table, $branch, $filter_option);
+          if (is_array($references)) {
+          	$list[$table] = $references;
+          }
+        }
+      } else {
+        // If not an array, pass through the error message
+      	return "\n$table_list\n\n";
+      }
+  	}
+    return print_r($list,1);
+
+  // Find all configured and possible references to a given table
+  } elseif (isset($options[1]) && $options[1] == 'references') {
+    if(isset($options[2]) && $options[2] != 'all' && $options[2] != 'found') {
+      $table =  $options[2];
+      $branch = isset($options[3]) && $options[3] != 'found' ? $options[3] : 'development';
+      $filter_option = isset($options[4]) && $options[4] != 'found' ? $options[4] : 'full';
+      $found_only = in_array('found', $options) ? TRUE : FALSE;
+      $references = dbscripts_get_table_references($table, $branch, $filter_option);
+
+      if (!$found_only) {
+        return print_r($references,1);
+      } else {
+        if (isset($references['found'])) {
+          return print_r($references['found'],1);
+        } else {
+          return "\nNo new references found for '$table'.\n\n";
+        }
+      }
+    } else {
+      if (file_exists("$dump_path/development/table_list.txt")) {
+        //print "\n Please wait. This can take awhile.  'ctrl+c' to cancel.\n\n";
+
+        $all_tables = file("$dump_path/development/table_list.txt", FILE_IGNORE_NEW_LINES);
+        $tables = _dbscripts_process_tables('development', array_merge($tables_filtered, $tables_filtered_l1, $tables_filtered_l2));
+        foreach ($tables as $table) {
+          if (in_array('found', $options)) {
+            $table_references = dbscripts_get_table_references($table, 'development');
+            if (isset($table_references['found'])) $references[$table] = $table_references['found'];
+          } else {
+            $table_references = dbscripts_get_table_references($table, 'development');
+            if (is_array($table_references)) {
+              $references[$table] = $table_references;
+            }
+          }
+        }
+        if (isset($references)) {
+           return print_r($references, 1);
+        } else {
+          return "\nNo new references found.\n\n";
+        }
+      } else {
+        return "\nMust provide a table to check.\n\n";
+      }
+
+    }
+
+  // Fail
+  } else {
+  	return "\nNot a valid search.\n\n";
+  }
+}
+
+/**
+ * Return help for each script
+ *
+ * @param $script
+ *   Available options are 'dump', 'restore', 'erase', 'merge', 'find',
+ *   'raise_increments'.
+ */
+function dbscripts_help($script) {
+  $options = _dbscripts_get_options();
+  require($options['configure_file']);
+  if (!isset($dump_path)) return dbscripts_errors('missing_config');
+
+  switch ($script) {
+
+
+
+    // DUMP SCRIPT
+    case 'dump':
+      $help = <<<EOF
+
+NAME
+    Dump - database dump script
+
+SYNOPSIS
+    dump.php [branch-to-dump] [last-merge-branch] [filter-option]
+
+EXAMPLE USAGE
+    development: dump.php
+    production:  dump.php production min
+    last merge:  dump.php last-merge
+
+DESCRIPTION
+    Dump the database from MySQL to a given branch of dump files.  The dump is
+    'diffable' allowing it to be under version control.  Filtering options are
+    performed to avoid dumping data that is not nessisary to be stored from
+    development and production environments.
+
+OPTIONS
+    branch-to-dump
+        Branch the database should be dumped to.  Default options are
+        'development', 'production' and 'last-merge'.  Other naming patterns,
+        including entire paths, may be used if you wish to dump the database to
+        an alternate location.
+
+        Relative to: {$file_path}
+        Defaults to: {$file_path}/development
+
+    last-merge-branch
+        Branch to compare with for finding new and existing data.  Default
+        option is 'last-merge'.  Other naming patterns, including entire paths,
+        may be used if you wish to compare to an alternate branch.
+
+    filter-option
+        The level of filtering that should be performed during the dump.
+            full
+                Removes the full option of data from the dump, and rewrites all
+                user timestamps with the 'last-merge' version.  Most useful for
+                removing user, sessions and cache data, and avoiding conflicts
+                with the user table.  Recomended to be used when dumping a
+                development database.
+            min
+                Removes only a select minimum of data from the dump.  Most
+                useful for removing sessions and cache data.  Recommended to be
+                used when dumping a production database.
+            none
+                NO filtering is performed whatsoever.  The entire database is
+                dumped to the given branch.
+
+        Defaults to: full
+
+FILES
+    {$script_path}/config.inc
+        Configuration settings for customizing these scripts for your
+        environment.
+    {$script_path}/config.references.inc
+        Configuration settings for discovering table references.
+
+AUTHOR
+    Kathleen Murtagh <kathleen@ceardach.com>
+        http://drupal.org/user/79082
+
+SEE ALSO
+    dbscripts documentation
+        http://drupal.org/node/232151
+    dump documentation
+        http://drupal.org/node/232153
+
+    Online ocumentation is not up-to-date for the 2.x version
+\n
+EOF;
+      break;
+
+
+
+    // RESTORE SCRIPT
+    case 'restore':
+      $help = <<<EOF
+
+NAME
+    Restore - database restore script
+
+SYNOPSIS
+    restore.php [branch] [filter-option]
+
+EXAMPLE USAGE
+    development: restore.php
+    production:  restore.php production min
+    last merge:  restore.php last-merge
+
+DESCRIPTION
+    Restores the database from a given branch.  Filtering options are performed
+    to prevent certain data from being lost in the MySQL database in
+    development and production environments.  Also performs the 'erase' script
+    to ensure that any tables removed in development are removed when
+    performing a restore.
+
+OPTIONS
+    branch
+        The branch the database should be restored from.  Default options are
+        'development', 'production' and 'last-merge'.  Other naming patterns,
+        including entire paths, may be used if you wish to restore the database
+        from an alternate branch.
+
+        Relative to: {$file_path}
+        Defaults to: {$file_path}/development
+
+    filter-option
+        The level of filtering that should be performed during the restore to
+        allow some data to be preserved in the MySQL database.
+            full
+                Preserves the full option of data currently residing within the
+                MySQL database.  Most useful for preserving user, sessions and
+                cache data.  Recommended to use this when restoring within a
+                development environment.
+            min
+                Preserves only a select minimum of data currently residing
+                within the MySQL database.  Most useful for preserving sessions
+                and cache data.  Recommended to use this when restoring within
+                a production environment.
+            none
+                NO filtering is performed whatsoever.  The entire database is
+                erased from MySQL and restored with only the data from the
+                given file.
+
+        Defaults to: full
+
+FILES
+    {$script_path}/config.inc
+        Configuration settings for customizing these scripts for your
+        environment.
+
+AUTHOR
+    Kathleen Murtagh <kathleen@ceardach.com>
+        http://drupal.org/user/79082
+
+SEE ALSO
+    dbscripts documentation
+        http://drupal.org/node/232151
+    restore and erase documentation
+        http://drupal.org/node/232154
+
+    Online ocumentation is not up-to-date for the 2.x version
+\n
+EOF;
+      break;
+
+
+
+    // ERASE SCRIPT
+    case 'erase':
+      $help = <<<EOF
+
+NAME
+  Erase - database erase script
+
+SYNOPSIS
+  erase.php [filter-option]
+
+EXAMPLE USAGE
+    development: erase.php
+    production:  erase.php min
+
+DESCRIPTION
+    Erases the database within the MySQL database.  Filtering options are
+    performed to prevent erasing data that should be kept.
+
+OPTIONS
+    filter-option
+        The level of filtering that shold be performed during the erasure.
+            full
+                Preserves the full option of data within the MySQL database.
+                Most useful for keeping user, sessions and cache data.
+                Recommended to be used when erasing within a development
+                environment.
+            min
+                Preserves only the select minimum of data within the MySQL
+                database.  Most useful for preserving sessions data so you do
+                not get logged out.  Recommended to be used when erasing within
+                a production environment.
+            none
+                NO filtering is performed whatsoever.  The entire database will
+                be erased.
+
+        Defaults to: full
+
+FILES
+    {$script_path}/config.inc
+        Configuration settings for customizing these scripts for your
+        environment.
+
+AUTHOR
+    Kathleen Murtagh <kathleen@ceardach.com>
+        http://drupal.org/user/79082
+
+SEE ALSO
+    dbscripts documentation
+        http://drupal.org/node/232151
+    restore and erase documentation
+        http://drupal.org/node/232154
+
+    Online ocumentation is not up-to-date for the 2.x version
+\n
+EOF;
+      break;
+
+
+
+    // MERGE SCRIPT
+    case 'merge':
+      $help = <<<EOF
+
+NAME
+    Merge - database merge script
+
+SYNOPSIS
+    merge.php [dev-branch] [last-merge-branch] [prod-branch] [continue]
+
+EXAMPLE USAGE
+    default:        merge.php
+    continue merge: merge.php continue
+
+DESCRIPTION
+    Merge a development and production database together.
+
+OPTIONS
+    dev-branch
+        The location of the database branch used for development.  Only
+        configuration and content changes will be preserved from this file.
+        All user data will be lost.
+
+        Relative to: {$file_path}
+        Defaults to: {$file_path}/development
+
+    last-merge-branch
+        The location of the database branch that was used to represent the state
+        the last time both production development were merged.  This is
+        important to be able to track the difference between an addition and a
+        subtraction.
+
+        Relative to: {$file_path}
+        Defaults to: {$file_path}/last-merge
+
+    prod-branch
+        The location of the database branch used for production.  Only content
+        and user data will be preserved from this branch.  All other data will
+        be lost.
+
+        Relative to: {$file_path}
+        Defaults to: {$file_path}/production
+
+    continue
+        Use the 'continue' flag after resolving a conflict when a previous
+        merge attempt resulted in a conflict.  Leave blank to perform a full
+        merge.
+
+FILES
+    {$script_path}/config.inc
+        Configuration settings for customizing these scripts for your
+        environment.
+    {$script_path}/config.references.inc
+        Configuration settings for discovering table references.
+
+AUTHOR
+    Kathleen Murtagh <kathleen@ceardach.com>
+        http://drupal.org/user/79082
+
+SEE ALSO
+    dbscripts documentation
+        http://drupal.org/node/232151
+    merge documentation
+        http://drupal.org/node/232155
+
+    Online ocumentation is not up-to-date for the 2.x version
+\n
+EOF;
+      break;
+
+
+    // FIND SCRIPT
+    case 'find':
+      $help = <<<EOF
+
+NAME
+    Find - Search for information about the database
+
+SYNOPSIS
+    find.php increment [branch] [filter-option]
+    find.php possible-references [table] [branch] [filter-option]
+    find.php references [table] [branch] [filter-option] [found]
+
+EXAMPLE USAGE
+    increment:                find.php increment production min
+    all increments:           find.php increment
+
+    possible references:      find.php possible-references node last-merge full
+    all possible references:  find.php possible-references
+
+    references:               find.php references users found
+    all references:           find.php references
+
+DESCRIPTION
+    Find information about the database.  Searches for auto_increment values,
+    possible references, actual configured references, or found references that
+    are not currently configured.
+
+OPTIONS
+    increment
+        Return the current increment of the given table.  If no table is
+        specified, returns information on all tables within the database.
+
+        Default Search: All tables with increments within the development
+                        branch, except for filtered tables.
+
+    possible-references
+        Returns all possible references it could find to the given table.  This
+        search is based on column names, so it will not find any references
+        that uses a non-similar column name.  If no table is specified, returns
+        all possible references across the entire database.
+
+        Default Search: All possible references within the development branch,
+                        except for filtered tables.
+
+    references
+        Returns the configured references, as set within the
+        '{$script_path}/config.references.inc' file, including a seperated
+        batch of discovered possible references that are not currently
+        configured.  Highly useful for ensuring references are properly
+        configured.
+
+        Default Search: All references within the development branch, except
+                        for filtered tables.
+
+    table
+        The specific table search for information about.  May also use 'all' to
+        search all tables.
+
+        Defaults to: all
+
+    branch
+        Branch to look for the information within.
+
+        Defaults to: development
+
+    filter-option
+        The option for filtering out tables you do not want included in your
+        search.
+
+        Defaults to: full
+
+    found
+        Set this flag when searching 'references' to return only newly
+        discovered references instead of all configured references.  Useful for
+        updating your configuration script.  Otherwise, leave blank.
+
+FILES
+    {$script_path}/config.inc
+        Configuration settings for customizing these scripts for your
+        environment.
+    {$script_path}/config.references.inc
+        Configuration settings for discovering table references.
+
+AUTHOR
+    Kathleen Murtagh <kathleen@ceardach.com>
+        http://drupal.org/user/79082
+
+SEE ALSO
+    dbscripts documentation
+        http://drupal.org/node/232151
+
+    Online ocumentation is not up-to-date for the 2.x version
+\n
+EOF;
+      break;
+
+
+    // RAISE INCREMENTS SCRIPT
+    case 'raise_increments':
+      $help = <<<EOF
+
+NAME
+    Raise Increments -  Raise increments, and all tables that use it as a
+                        foreign key
+
+SYNOPSIS
+   raise_increments.php [table] [start-at] [change-to] [branch] [filter-option]
+
+EXAMPLE USAGE
+    table:  raise_increments.php node 50 100
+    all:    raise_increments.php all
+
+DESCRIPTION
+    Raise all the AUTO_INCREMENT values of the given table, and all tables that
+    use that value as a foreign key.  Optionally raise all values of a
+    development branch to be above that of the production branch, starting with
+    the increment values of the last-merge branch.
+
+OPTIONS
+    table
+        The specific table to raise the increments of, and all tables that use
+        the table as a foreign key.
+
+        When set to 'all', the other options are ignored.  Instead it will
+        raise the increments of all tables in the development branch to be
+        above the values of the production branch, starting at the increment
+        values of the last-merge branch.  There is no way to configure what is
+        considered 'development', 'production' and 'last-merge' at this time,
+        so the default values will be used.
+
+        Defaults to: all
+
+    start-at
+        The increment value to start at.
+
+        No default value, fails when 'table' is not 'all' and this value is
+        unset.
+
+    change-to
+        The increment value to change to.  All values since 'start-at' will be
+        changed to be above the 'change-to' value.
+
+        No default value, fails when 'table' is not 'all' and this value is
+        unset.
+
+    branch
+        Branch to change.
+
+        Defaults to: development
+
+    filter-option
+        The option for filtering out tables you do not want included when
+        changing values.  Possible options are 'full', 'min' and 'none'.
+
+        Defaults to: full
+
+FILES
+    {$script_path}/config.inc
+        Configuration settings for customizing these scripts for your
+        environment.
+    {$script_path}/config.references.inc
+        Configuration settings for discovering table references.
+
+AUTHOR
+    Kathleen Murtagh <kathleen@ceardach.com>
+        http://drupal.org/user/79082
+
+SEE ALSO
+    dbscripts documentation
+        http://drupal.org/node/232151
+
+    Online ocumentation is not up-to-date for the 2.x version
+\n
+EOF;
+      break;
+
+
+
+    default:
+      $help = "\n\nThat is not a valid script.  Try one of these options:\n";
+      $help .= "dump erase restore merge find raise_increments";
+      break;
+  }
+
+  return $help;
+}
+
+
+function dbscripts_errors_format($error) {
+  return "\nFAILED: $error\n\n";
+}
+function dbscripts_errors($error_type=NULL,$extra=null) {
+  static $error,$extra_info = array();
+  
+  /*only overwrite error if there is a new one.*/
+  if ($error_type) $error = $error_type;
+  if ($extra) $extra_info = $extra;
+  if($error) {
+    switch($error) {
+      case 'parsing_db_url':
+        return dbscripts_errors_format("Error parsing database url.");
+      case 'missing_dburl':
+        return dbscripts_errors_format("The file 'settings.php' file does not exist or db_url variable is not set.");
+      case 'missing_file':
+         return str_replace(array("missing_file"),$extra_info,dbscripts_errors_format("Missing missing_file."));
+      case 'missing_branch':
+         return str_replace(array("missing_branch"),$extra_info,dbscripts_errors_format("The branch 'missing_branch' does not exist."));
+      case 'missing_table':
+         return str_replace(array("missing_table"),$extra_info,dbscripts_errors_format("The table 'missing_table' does not exist."));
+      /*Configuration messages*/
+      case 'missing_config':
+        return dbscripts_errors_format("The file 'config.inc' does not exist. Copy from the example version and change the variables to their desired values.");
+      case 'missing_config_references':
+        return dbscripts_errors_format("The file 'config.references.inc' does not exist.  Copy from the example version and change the variables to their desired values"); 
+      case 'bad_database_connection':
+        return dbscripts_errors_format("Improper database connection settings.");
+      case 'empty_data':
+        return dbscripts_errors_format("Empty data returned.  There may be a problem connecting to the database.");  
+        
+      /*Restore related messages*/
+      case 'locked':
+        return dbscripts_errors_format("The database has been locked to restore. Please edit settings to set $dbscripts_locked to false in order to restore.");
+      case 'path_missing':
+        return str_replace(array("location"),$extra_info,dbscripts_errors_format("The path does not exist: location"));
+      case 'restore_paths':
+        return dbscripts_errors_format("Error finding paths to restore.");
+        
+      /*Merge related messages*/
+      case 'missing_merge_files':
+        return str_replace(array("branch"),$extra_info,dbscripts_errors_format("Missing database files for merge: branch"));
+      case 'missing_merge_table':
+        return str_replace(array("table"),$extra_info,dbscripts_errors_format("I thought you resolved conflicts in 'table', but the file is missing.\nAre you trying to confuse me??"));
+      case 'still_conflicted':
+        return str_replace(array("table"),$extra_info,dbscripts_errors_format("'table' still has conflicts, please resolve them first."));
+      case 'missing_merge_file':
+        return str_replace(array("file"),$extra_info,dbscripts_errors_format("'I cannot find 'conflict_file', so I cannot continue :("));
+      case 'missing_merge_references':
+        return dbscripts_errors_format("Merge failed. Cannot continue if there are unconfigured references.");
+      default:
+        return dbscripts_errors_format('Unknown error.');
+    } 
+  }
+}

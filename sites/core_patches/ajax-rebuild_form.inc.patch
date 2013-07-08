@@ -1,0 +1,14 @@
+This patch is dedicated to add a new feature for ajax request. The aim is to be able to force the rebuild of the form.
+Index: includes/form.inc
+===================================================================
+--- includes/form.inc	Mon Aug 27 14:49:23 2012
++++ includes/form.inc	Mon Aug 27 14:50:08 2012
+@@ -139,7 +139,7 @@
+   // in the latest $form_state in addition to any other variables passed
+   // into drupal_get_form().
+ 
+-  if ((!empty($form_state['storage']) || !empty($form_state['rebuild'])) && !empty($form_state['process_input']) && !form_get_errors()) {
++  if ( (!empty($form_state['storage']) || !empty($form_state['rebuild'])) && !empty($form_state['process_input']) && ( !form_get_errors() || $form_state['#force_rebuild'] ) ) {
+     $form = drupal_rebuild_form($form_id, $form_state, $args);
+   }
+ 

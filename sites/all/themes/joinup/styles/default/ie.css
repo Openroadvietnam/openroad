@@ -1,0 +1,61 @@
+body { p
+  width:expression( documentElement.clientWidth < 960 ? (documentElement.clientWidth == 0 ? (body.clientWidth < 960 ? "960px" : "auto") : "960px") : "auto" );
+}
+
+ /* HOME*/
+	.layout-home #additional-tools { /*width:62px;*/ width:22px; padding-bottom:15px}
+	.layout-home .layout-wrapper{ padding-top:0 }
+	.layout-home .title-box-sharing span, .layout-home .title-box-joinup span { bottom:-1px}
+
+/* IE 8*/	
+	/*div#right-sidebar-region #block-isa_links-buttons_actions.block div.buttons  ul.links li{ margin-bottom:0\0/}*/
+	div#right-sidebar-region #block-isa_links-buttons_actions.block div.buttons  ul.links  li.share-this { display:none\0/; }	
+	.layout-home div.block div.buttons div.share-links div.share_button a { display:block}
+	.layout-home  #share-this { width:220px; height:35px; display:block}
+	
+	/* advanced search */
+	.advanced-search-form-solr #advanced-search-link-wrapper{width:100%; float:none; clear:both}
+	#advanced-search-link-wrapper a{float:right; margin-right:20px}
+	#edit-custom-search-submit{margin-top:0.9em !important}
+	.rounded-box-wrapper a{padding-left:16px}
+	.advanced-search-form-solr #edit-custom-search-submit {margin-top:1.1em}
+	div#content-region .advanced-search-form-solr form.search-form{padding-bottom:12px}
+	.advanced-search-form-solr .form-submit{/*margin-top:0.9em !important*/}
+	#block-isa_links-buttons_actions.block div.buttons ul.links li a.push.export-metadata  span{ padding-right:10px}
+	.advanced-search-form-solr #advanced-search-link-wrapper a { margin-top:10px;}
+	/* .layout-content table { width:544px !important}*/
+	div#content-region div.view-isa-issue-project div.view-content table.views-table td.views-field-title .field-title{  width: 150px !important; }
+	
+/* IE 9 */
+	#block-isa_links-buttons_actions.block div.buttons ul.links li a.push.export-metadata { padding-bottom:0 !important; height:100% !important}
+	#block-isa_links-buttons_actions.block div.buttons ul.links li a.push.propose-asset span, #block-isa_links-buttons_actions.block div.buttons ul.links li a.push.propose-asset-release span { padding-right:30px !important}
+	#before-content-region .layout-content #content .subtitle-box h3 {}
+	.layout-right #right-sidebar-region .subtitle-box, .layout-content #content .subtitle-box {
+    position: relative;}
+	
+	/*.layout-right #right-sidebar-region .subtitle-box span, .layout-content #content .subtitle-box span {
+    position:absolute; top:23px; left:0; width:75px; height:3px; border-bottom:3px solid #0064A3}*/
+	
+/* Added Styles belong other files for validation CSS */
+	
+	/* FILE: sites\all\modules\custom\isa_jquery_noconflict\jquery_1_9_0\css\jquery-ui-1.10.0.custom.min.css */	
+	.ui-helper-zfix{filter:Alpha(Opacity=0)}
+	.ui-progressbar .ui-progressbar-overlay{filter:alpha(opacity=25)}
+	.ui-priority-secondary,.ui-widget-content .ui-priority-secondary,.ui-widget-header .ui-priority-secondary{filter:Alpha(Opacity=70)}
+	.ui-state-disabled,.ui-widget-content .ui-state-disabled,.ui-widget-header .ui-state-disabled{filter:Alpha(Opacity=35)}
+	.ui-state-disabled .ui-icon{filter:Alpha(Opacity=35)}
+	.ui-widget-overlay{filter:Alpha(Opacity=50)}
+	.ui-widget-shadow{filter:Alpha(Opacity=20)}
+	.ui-slider.ui-state-disabled .ui-slider-handle,.ui-slider.ui-state-disabled .ui-slider-range{filter:inherit}
+
+	/* FILE: sites\all\modules\contributed\admin_menu\admin_menu.css*/
+	#admin-menu li li { filter: Alpha(opacity=88)}
+	#admin-menu li li li { filter: Alpha(opacity=100)}
+
+	/* FILE: sites\all\modules\contributed\modified\contexthelp\contexthelp.css */
+	.ie #contextual-help-dialog ul#contextual-help-tabs { zoom: 1; }
+	.flag-waiting a {
+	  /* Give an impression of a disabled link. */
+	  opacity: 0.5;
+	  filter: alpha(opacity=50); /* IE */
+	}

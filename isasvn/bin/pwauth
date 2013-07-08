@@ -1,0 +1,22 @@
+#!/usr/bin/php
+<?php
+// Note: you may have to modify the above shebang for this script to work in
+// any environment
+chdir(dirname(__FILE__) . '/..');
+
+require 'conf/isasvn-conf.inc.php';
+require 'lib/authentication.inc.php';
+
+$authentication = new Authentication(
+	LOCAL_SERVER,
+	LOCAL_DB_USERNAME,
+	LOCAL_DB_PASSWORD,
+	LOCAL_DB_NAME,
+	ISA_SERVER,
+	ISA_DB_USERNAME,
+	ISA_DB_PASSWORD,
+    ISA_DB_NAME,
+    getenv('CONTEXT'),
+    constant('URI_PREFIX')
+);
+exit($authentication->exit_auth_status(getenv('USER'), getenv('PASS'), getenv('URI')));

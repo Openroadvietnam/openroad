@@ -1,0 +1,730 @@
+<?php
+/**
+ * @defgroup isa_sort_form
+ * @brief Sort form ISA, module who create combo lists for sort the result of view
+ * @file 
+ * Modules main file
+ * @ingroup isa_sort_form
+ */
+
+//include_once('sites/all/modules/contributed/devel/krumo/class.krumo.php');
+
+/**
+ *
+ * @param type $op
+ * @param type $delta
+ * @param type $edit
+ * @return string 
+ */
+function isa_sort_form_block($op = 'list', $delta = 0, $edit = array()) {
+ 
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info'] = t('Community Sort Form');
+      $blocks[0]['cache'] = BLOCK_NO_CACHE;
+      $blocks[1]['info'] = t('News Sort Form');
+      $blocks[1]['cache'] = BLOCK_NO_CACHE;
+      $blocks[2]['info'] = t('Wikis Sort Form');
+      $blocks[2]['cache'] = BLOCK_NO_CACHE;
+      $blocks[3]['info'] = t('Blogs Sort Form');
+      $blocks[3]['cache'] = BLOCK_NO_CACHE;
+      $blocks[4]['info'] = t('Softwares Sort Form');
+      $blocks[5]['info'] = t('Softwares Menu Related Project');
+      $blocks[6]['info'] = t('E-library Sort Form');
+      $blocks[6]['cache'] = BLOCK_NO_CACHE;
+      $blocks[7]['info'] = t('People Sort Form');
+      $blocks[7]['cache'] = BLOCK_NO_CACHE;
+      $blocks[8]['info'] = t('People Latest Blog Sort Form');
+      $blocks[8]['cache'] = BLOCK_NO_CACHE;
+      $blocks[9]['info'] = t('Assets Sort Form');
+      $blocks[10]['info'] = t('Events Sort Form');
+      $blocks[11]['info'] =t('Repository Sort Form');
+      $blocks[12]['info'] =t('Asset Release Sort Form');
+      $blocks[13]['info'] = t('Publisher sort Form');
+      $blocks[14]['info'] = t('Licence sort Form');
+      $blocks[15]['info'] = t('Contact_point sort Form');
+      $blocks[16]['info'] = t('Documentation sort Form');
+      $blocks[17]['info'] = t('Item sort Form');
+      $blocks[18]['info'] = t('Identifier sort Form');
+      $blocks[19]['info'] = t('Associated Project Sort Form');
+      return $blocks;
+      break;
+
+    case 'view' :
+      switch ($delta) {
+        //Block Sort Form for communities list
+        case 0:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "community");
+          break;
+        //Block Sort Form for news and blog list
+        case 1:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "news");
+          break;
+        //Block Sort Form for wikis list
+        case 2:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "wikis");
+          break;
+        //Block Sort Form for blogs list
+        case 3:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "blogs");
+          break;
+        case 4:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "softwares");
+          break;
+        case 5:
+          $block['content'] = drupal_get_form('isa_sort_form_menu_related_projects');
+          break;
+        //Block Sort Form for E-library list
+        case 6:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "e-library");
+          break;
+        //Block Sort Form for People list
+        case 7:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "people");
+          break;
+        case 8:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "people_blog");
+          break;
+        case 9:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "Assets_list");
+          break;
+        case 10:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "events");
+          break;
+          case 11:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "repository");
+          break;
+      case 12:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', "Catalogue");
+          break;
+      //Block Sort Form publisher list
+      case 13:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', 'publisher');
+          break;
+      //Block Sort Form licence list
+      case 14:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', 'licence');
+          break;
+      //Block Sort Form contact point list
+      case 15:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', 'contact_point');
+          break;
+      //Block Sort Form documentation list
+      case 16:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', 'documentation');
+          break;
+      //Block Sort Form item list
+      case 17:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', 'item');
+          break;
+      //Block Sort Form identifier list
+      case 18:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', 'identifier');
+          break;
+      //Block Associated Project Sort Form
+      case 19:
+          $block['content'] = drupal_get_form('isa_sort_form_get_views_sort_form', 'software_associated_projects');
+          break;
+      }
+      $block['subject'] = 'Sort Form';
+      return $block;
+      break;
+  }
+}
+
+/**
+ *  using for isa_sort_form_views_query_alter
+ * Definition the sql options for the view query 
+ */
+function isa_sort_form_get_sql_options($view_type) {
+  switch ($view_type) {
+    // Used for JoinUp
+    case 'news':
+      $options = array(
+          'date' => array('node_created DESC'),
+          'title' => array('node_title ASC', 'node_created DESC'),
+          'name' => array('field_lastname_value ASC', 'field_firstname_value ASC', 'node_created DESC'),
+          'rating' => array('votingapi_cache_node_percent_vote_average_value DESC', 'node_created DESC'),
+      );
+      break;
+    case 'people':
+      $options = array(
+          'date-desc' => array('users_created DESC'),
+          'name' => array('node_users_node_data_field_lastname_field_lastname_value ASC', 'node_users_node_data_field_lastname_field_firstname_value ASC', 'users_created DESC'),
+          'organization' => array('node_data_field_company_name_field_company_name_value ASC'),
+          'location' => array('term_data.name ASC', 'node_users_node_data_field_lastname_field_lastname_value ASC', 'node_users_node_data_field_lastname_field_firstname_value ASC'),
+          'most' => array('userpoints_points DESC'),
+      );
+      break;
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-842
+    //integrate sort options in search
+    case 'Blog_view_user':
+    case 'people_blog':
+      $options = array(
+          'date-desc' => array('node_created DESC'),
+          'date-asc' => array('node_created ASC'),
+          'title-desc' => array('node_title DESC', 'node_created DESC'),
+          'title-asc' => array('node_title ASC', 'node_created DESC'),
+          'rating-desc' => array('votingapi_cache_node_percent_vote_average_value DESC', 'node_created DESC'),
+          'rating-asc' => array('votingapi_cache_node_percent_vote_average_value ASC', 'node_created DESC'),
+      );
+      break;
+    case 'events':
+//      $options = array(
+//          'date' => array('node_data_field_event_dates_field_event_dates_value DESC'),
+//          'name' => array('users_name ASC', 'node_data_field_event_dates_field_event_dates_value DESC'),
+//          'title' => array('node_title ASC', 'node_data_field_event_dates_field_event_dates_value DESC'),
+//          'location' => array('node_data_field_event_dates_field_event_city_value ASC'),
+//          'rating' => array('votingapi_cache_node_percent_vote_average_value DESC', 'node_data_field_event_dates_field_event_dates_value DESC'),
+//      );
+        $options = array(
+          'date-desc' => array('node_data_field_event_dates_field_event_dates_value DESC'),
+          'date-asc' => array('node_data_field_event_dates_field_event_dates_value ASC'),
+          'title' => array('node_title ASC', 'node_data_field_event_dates_field_event_dates_value DESC'),
+          'location' => array('node_data_field_event_dates_field_event_city_value ASC'),
+          'rating' => array('votingapi_cache_node_percent_vote_average_value DESC', 'node_data_field_event_dates_field_event_dates_value DESC'),
+      );
+      break;
+    case 'softwares_required':
+      $options = array(
+          'recent' => array('node_created DESC'),
+          //'top-down'  => array ();
+          'most' => array('post_count DESC'),
+      );
+      break;
+    case 'softwares_depends':
+      $options = array(
+          'recent' => array('node_node_data_field_project_common_using.created DESC'),
+          //'top-down'  => array ();
+          'most' => array('post_count DESC'),
+      );
+      break;
+    case 'federated_forge':
+      $options = array(
+        'date' => array('node.changed DESC'),
+        'title' => array('node_title ASC'),
+        'number_projects' => array('np.number_projects DESC'),
+      );
+      break;
+    case 'softwares':
+    case 'Assets_list':
+      $options = array(
+          'date' => array('node_created DESC'),
+          'title' => array('node_title ASC'),
+          'activity' => array('post_count DESC'),
+          'download' => array('isa_download_statistics_project_downloads_count DESC'),
+      );
+      break;
+    case 'community':
+      $options = array(
+          'date-desc' => array('node_created DESC'),
+          'members-des' => array('member_count DESC', 'node_created DESC'),
+          'title-asc' => array('node_title ASC', 'node_created DESC'),
+          'activity-desc' => array('post_count DESC', 'node_created DESC'),
+      );
+      break;
+    case 'elibrary':
+      $options = array(
+          'date' => array('node_created DESC'),
+          'title' => array('node_title ASC', 'node_created DESC'),
+          'name' => array('users_name ASC', 'node_created DESC'),
+          'rating' => array('votingapi_cache_node_percent_vote_average_value DESC', 'node_created DESC'),
+      );
+      break;
+
+    // No longer used for JoinUp (old - ISA)
+    case 'e-library':
+      $options = array(
+          'date-desc' => array('node_created DESC'),
+          'date-asc' => array('node_created ASC'),
+          'title-desc' => array('node_title DESC', 'node_created DESC'),
+          'title-asc' => array('node_title ASC', 'node_created DESC'),
+      );
+      break;
+   case 'publisher':
+   case 'licence':
+   case 'contact_point':
+   case 'item':
+   case 'documentation':
+   case 'identifier':
+   case 'repository':       
+      $options = array(
+          'date-desc' => array('node_created DESC'),
+          'date-asc' => array('node_created ASC'),
+          'title-desc' => array('node_title DESC', 'node_created DESC'),
+          'title-asc' => array('node_title ASC', 'node_created DESC'),
+      );
+      break;
+    case 'release':
+        $options = array(
+          'date-desc' => array('node_created DESC'),
+          'date-asc' => array('node_created ASC'),
+          'title-desc' => array('node_title DESC', 'node_created DESC'),
+          'title-asc' => array('node_title ASC', 'node_created DESC'),
+          'download' => array('isa_download_statistics_project_downloads_count DESC'),
+      );
+      break;
+   case 'software_associated_projects':
+        $options = array(
+          'title-desc' => array('node_title DESC', 'node_created DESC'),
+          'title-asc'  => array('node_title ASC',  'node_created DESC'),
+          'date-desc'  => array('node.changed DESC'),
+          'date-asc'   => array('node.changed ASC'),
+        );
+      break;
+
+  }
+  return $options;
+}
+
+/**
+ *  Definition of the sort list default value 
+ */
+function isa_sort_form_get_form_default_value($view_type) {
+  switch ($view_type) {
+    case 'people':
+      return 'name';
+      break;
+    case 'softwares':
+    case 'Softwares_list':
+    case 'Assets_list':
+      return 'date';
+      break;
+  }
+}
+
+/**
+ *  Definition of the sort list options 
+ */
+function isa_sort_form_get_form_options($view_type) {
+  $form_options['sort_title'] = 'Sort by:';
+
+  switch ($view_type) {
+    // Used for JoinUp
+    case 'news':
+    case 'AllNews_view':
+    case 'elibrary_view':
+      $form_options['options'] = array(
+          'date' => 'Date',
+          'name' => 'Name',
+          'title' => 'Title',
+          'rating' => 'Rating',
+      );
+      break;
+    case 'people':
+    case 'People_List':
+      $form_options['options'] = array(
+          'date-desc' => 'Date',
+          'name' => 'Name',
+          'organization' => 'Organization',
+          'location' => 'Location',
+          'most' => 'Most active',
+      );
+      break;
+    case 'community':
+    case 'Communities_list':
+      $form_options['options'] = array(
+          'date-desc' => 'Date',
+          'members-des' => 'Members',
+          'title-asc' => 'Title',
+          'activity-desc' => 'Activity',
+      );
+      break;
+    case 'softwares':
+    case 'Softwares_list':
+    case 'Assets_list':
+      $form_options['options'] = array(
+          'date' => 'Date',
+          'title' => 'Title',
+          'activity' => 'Activity',
+          'download' => 'Download'
+      );
+      // If uri path is federated_page, append new option for views sorting
+      if( arg(1) == 'federated_forge') {
+        $form_options['options'] = array(
+          'date' => 'Date',
+          'title' => 'Title',
+          'number_projects' => 'Associated projects'
+        );
+      }
+      break;
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-842
+    //integrate sort options in search
+    case 'Blog_view_user':
+    case 'people_blog':
+      $form_options['options'] = array(
+          'date-desc' => 'Date: Descending',
+          'date-asc' => 'Date: Ascending',
+          'name-desc' => 'Name: Descending',
+          'name-asc' => 'Name: Ascending',
+          'title-desc' => 'Title: Descending',
+          'title-asc' => 'Title: Ascending',
+          'rating-desc' => 'Rating: Descending',
+          'rating-asc' => 'Rating: Ascending',
+      );
+      break;
+    case 'events':
+    case 'event_browser':
+      $form_options['options'] = array(
+          'date-desc' => 'Date: Descending',
+          'date-asc' => 'Date: Ascending',
+          'title' => 'Title',
+          'location' => 'Location',
+          'rating' => 'Rating',
+      );
+      break;
+
+    // No longer used for JoinUp (old - ISA)
+    case 'e-library':
+      $form_options['options'] = array(
+          'date-desc' => 'Date: Descending',
+          'date-asc' => 'Date: Ascending',
+          'title-desc' => 'Title: Descending',
+          'title-asc' => 'Title: Ascending',
+      );
+      break;
+    case 'wikis':
+    case 'blogs':
+      $form_options['options'] = array(
+          'date-desc' => 'Date: Descending',
+          'date-asc' => 'Date: Ascending',
+          'title-desc' => 'Title: Descending',
+          'title-asc' => 'Title: Ascending',
+      );
+      break;
+      case 'item':
+      case 'documentation':
+      case 'contact_point':
+      case 'identifier':
+      case 'publisher':
+      case 'licence':
+		$form_options['options'] = array( 
+          'date-desc' => 'Date: Descending',
+          'date-asc' => 'Date: Ascending',
+          'title-desc' =>'Title: Descending',
+          'title-asc' => 'Title: Ascending',
+        );
+          break;
+      case 'repository':
+       $form_options['options'] = array( 
+		  'title-asc' => 'Title: Ascending',
+		  'title-desc' =>'Title: Descending',          
+          'date-asc' => 'Date: Ascending',
+		  'date-desc' => 'Date: Descending',          
+        );
+          break;
+      //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-792
+	 // Sort the repositories by default in alphabetical order: The order of the view should by default be alphabetical. 
+      case 'Catalogue':
+		if( arg(1) == 'repository') {
+             $form_options['options'] = array( 
+			  'title-asc' => 'Title: Ascending',    
+			  'title-desc' =>'Title: Descending',			    
+			  'date-desc' => 'Date: Descending',
+			  'date-asc' => 'Date: Ascending',  			              		     
+			  'download' => 'Download', 
+			); 
+		} else {
+			$form_options['options'] = array( 
+			  'date-desc' => 'Date: Descending',
+			  'date-asc' => 'Date: Ascending',  
+			  'title-desc' =>'Title: Descending',
+			  'title-asc' => 'Title: Ascending',                  		      
+			  'download' => 'Download', 
+			);
+		}			
+          break;
+      case 'software_associated_projects':
+        $form_options['options'] = array(
+	        'title-asc' => 'Title: Ascending',
+	        'title-desc' =>'Title: Descending',
+	        'date-desc' => 'Last update: Descending',
+	        'date-asc' => 'Last update: Ascending',
+        );
+      break;
+  }
+  return $form_options;
+}
+
+/**
+ * Implement of hook_views_query_alter
+ */
+function isa_sort_form_views_query_alter(&$view, &$query) {
+    if (!empty($view->exposed_raw_input['sort_option'])) {
+        $sort_option = $view->exposed_raw_input['sort_option'];
+        $options = NULL;
+        switch ($view->name) {
+          case 'Communities_list':
+            if ($view->current_display != 'block_2') {
+              $options = isa_sort_form_get_sql_options('community');
+            }
+            break;
+          case 'event_browser':
+            if ($view->current_display != 'block_3' && $view->current_display != 'block_2') {
+              $options = isa_sort_form_get_sql_options('events');
+            }
+            break;
+          case 'highlights':
+            if (in_array($view->current_display,
+                            array(
+                                'page_2', // in a community
+                                'page_11', // in an asset
+                                'page_12', // in a software
+                    ))) {
+              $options = isa_sort_form_get_sql_options('events');
+            }
+            if (in_array($view->current_display,
+                            array(
+                                'page_1', 'page_3', 'page_4', // in a community
+                                'page_9', 'page_6', 'page_8', // in an asset
+                                'page_10', 'page_5', 'page_7', // in a software
+                    ))) {
+              $options = isa_sort_form_get_sql_options('community');
+            }
+            break;
+          case 'software_related_projects' :
+            if ($view->current_display == 'page_1') {
+              $options = isa_sort_form_get_sql_options('softwares_depends');
+            }
+            if ($view->current_display == 'page_2') {
+              $options = isa_sort_form_get_sql_options('softwares_required');
+            }
+            break;
+          case 'Softwares_list':
+            if ($view->current_display == 'page_2' ||
+                    $view->current_display == 'page_3' ||
+                    $view->current_display == 'page_4' ||
+                    $view->current_display == 'page_5' ||
+                    $view->current_display == 'page_6') {
+              $options = isa_sort_form_get_sql_options('softwares');
+            // Federated projects sql options
+            } elseif ($view->current_display == 'block_2') {
+              $options = isa_sort_form_get_sql_options('software_associated_projects');
+            }
+            break;
+          case 'Forges_list':
+            // Federated forge sql options
+            if ($view->current_display == 'page_1') {
+              $options = isa_sort_form_get_sql_options('federated_forge');
+              if($_GET['sorted'] == 'number_projects'){
+                _isa_sort_form_append_subquery($query);
+              }
+            }
+            break;
+          case 'Assets_list':
+            if ($view->current_display == 'page_1' ||
+                    $view->current_display == 'page_2' ||
+                    $view->current_display == 'page_3' ||
+                    $view->current_display == 'page_4' ||
+                    $view->current_display == 'page_5' ||
+                    $view->current_display == 'page_6') {
+              $options = isa_sort_form_get_sql_options($view->name);
+            }
+            break;
+          case 'videos':
+          case 'elibrary_view':
+            if ($view->current_display != 'block_1' && $view->current_display != 'block_2') {
+              $options = isa_sort_form_get_sql_options('elibrary');
+            }
+            break;
+          case 'Editor_choice_view':
+          case 'Blog_view':
+          case 'News_view':
+          case 'newsletters_list':
+            $options = isa_sort_form_get_sql_options('news');
+            break;
+          case 'AllNews_view':
+            if (substr($view->current_display, 0, 4) == 'page') {
+              $options = isa_sort_form_get_sql_options('news');
+            }
+            break;
+          case 'Wiki_listall':
+            $options = isa_sort_form_get_sql_options('elibrary');
+            break;
+          case 'People_List':
+            $options = isa_sort_form_get_sql_options('people');
+            break;
+          case 'Blog_view_user':
+            $options = isa_sort_form_get_sql_options('people_blog');
+            break;
+
+          case 'Event_view':
+              if (in_array($view->current_display,
+                            array(
+                                'page_1', // in a community
+                                'page_2', // in an asset
+                                'page_3', // in a software
+                    ))) {
+              $options = isa_sort_form_get_sql_options('events');
+              break;
+            }
+          case 'repository':
+              $options = isa_sort_form_get_sql_options('people_blog');
+              break;
+
+          case 'release':
+
+              break;
+
+          case 'Catalogue':
+              if($view->current_display == 'page_1'){
+                  $options = isa_sort_form_get_sql_options('release');
+              }
+               else{
+                  $options = isa_sort_form_get_sql_options('repository');
+              }
+        }
+
+        if ($options != NULL) {
+          $query->orderby = $options[$sort_option];
+        }
+    }
+}
+
+/**
+ * Definition of the sort list
+ *
+ * @param type $form_state
+ * @param type $type
+ * @return type 
+ */
+function isa_sort_form_get_views_sort_form($form_state, $type) {
+  $form_options = isa_sort_form_get_form_options($type);
+  $form['sort_option'] = array(
+      '#type' => 'select',
+      '#title' => $form_options['sort_title'],
+      '#options' => $form_options['options'],
+      '#default_value' => isa_sort_form_get_form_default_value($type),
+  );
+  if (isset($_GET['sorted'])) {
+    $form['sort_option']['#default_value'] = $_GET['sorted'];
+  }
+
+  $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Apply')
+  );
+  return $form;
+}
+
+/**
+ *
+ * Manage submit button for sort list
+ * 
+ * @global type $base_url
+ * @param type $form
+ * @param array $form_state 
+ */
+function isa_sort_form_get_views_sort_form_submit($form, &$form_state) {
+  $res = $form_state['values']['sort_option'];
+  global $base_url;
+  $url = $base_url . "/" . $_GET['q'] . "?sorted=" . $res;
+  $form_state['redirect'] = $url;
+}
+
+/**
+ *
+ * @return string 
+ */
+function isa_sort_form_menu_related_projects() {
+  $form['display'] = array(
+      '#type' => 'select',
+      '#title' => t('Display'),
+      '#options' => array('depend' => t('Depends on'), 'required' => t('Required by')),
+  );
+
+  $gid = isa_toolbox_get_community_nid();
+  if (is_numeric($gid)) {
+    $path = explode('/', drupal_get_normal_path($_GET['q']));
+    if ($path[count($path) - 2] == 'related_projects' && isset($path[count($path) - 1])) {
+      $form['display']['#default_value'] = $path[count($path) - 1];
+    }
+  }
+  $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Apply')
+  );
+  return $form;
+}
+
+/**
+ *
+ * @global type $base_url
+ * @param type $form
+ * @param array $form_state 
+ */
+function isa_sort_form_menu_related_projects_submit($form, &$form_state) {
+  $display = $form_state['values']['display'];
+  global $base_url;
+  $gid = isa_toolbox_get_community_nid();
+  $url = $base_url . "/software/" . $gid . "/related_projects/" . $display;
+  $form_state['redirect'] = $url;
+}
+
+/**
+ * Append the capability to sort the federated forge list by number of projects
+ * @param $query
+ */
+function _isa_sort_form_append_subquery($query) {
+  $subquery = sprintf(
+    "(SELECT COUNT(*) AS number_projects, ctfp.field_fed_project_forge_nid as nid
+                  FROM content_type_federated_project ctfp
+                  INNER JOIN workflow_node wn ON wn.nid  = ctfp.nid
+                  INNER JOIN node n ON n.nid = ctfp.nid
+                  WHERE wn.sid = '%d'
+                    AND ctfp.field_fed_project_forge_nid  IS NOT NULL
+                    AND ((n.tnid = 0 OR n.tnid = n.nid AND n.language LIKE 'en') OR (n.tnid != 0 AND n.tnid != n.nid AND n.language LIKE 'en') OR (n.tnid = 0 OR n.tnid = n.nid AND n.language NOT LIKE 'en' AND 'en' NOT IN (select language from node nf where nf.tnid=n.nid)))
+                  GROUP BY nid) ", ISA_SID_FEDPROJ_PUBLISHED );
+  $join = new views_join('', '', '', '');
+  $join->definition = array('table' => $subquery, 'left_field' => 'nid', 'field' => 'nid', 'left_table' => 'node');
+  $join->extra_type = 'AND';
+  $join->table = $subquery;
+  $join->left_field = 'node.nid';
+  $join->field = 'nid';
+  $join->type = 'LEFT';
+  $join->adjusted = true;
+  $query->table_queue['np'] = array(
+    'table' => $subquery,
+    'alias' => 'np',
+    'num' => 1,
+    'join' => $join,
+    'relationship' => '');
+}
+
+/**
+ * Implemetation of hook_form_alter
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
+function isa_sort_form_form_alter(&$form, $form_state, $form_id) {
+
+    if ($form_id == 'views_exposed_form') {	
+        if(!empty($form_state['view']->name)) {
+            $submit_button = $form['submit'];
+            unset($form['submit']);
+
+            // Append js onchange sort creteria detect
+            drupal_add_js(drupal_get_path('module', 'isa_sort_form').'/isa_sort_form.js' );
+            $view_name = $form_state['view']->name;
+            $form_options = isa_sort_form_get_form_options($view_name);
+            if(count($form_options['options']) > 0) {
+                $form['sort_option'] = array(
+                    '#type' => 'select',
+                    '#title' => $form_options['sort_title'],
+                    '#options' => $form_options['options'],
+                    '#default_value' => isa_sort_form_get_form_default_value($view_name),
+                );
+            }
+            $form['submit'] =  $submit_button;
+            
+        }
+		
+		//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-792
+		//Remove the search box: As all repositories are listed on one page, no search box is needed here
+		if($form_state['view']->name == 'Catalogue' && $form_state['view']->current_display == 'page_2') {			
+			$form['#info']['filter-keys']['label'] = '';		
+			$form['keys']['#access'] = FALSE;				
+		}	
+    }
+}

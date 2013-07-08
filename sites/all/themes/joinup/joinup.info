@@ -1,0 +1,77 @@
+; $Id: joinup.info,v 2.00.0.1 2011/07/06 17:00:43 sebastien.millart Exp $
+
+
+ 	; The name and description of the theme used on the admin/build/themes page.
+name		= Joinup
+description	= Tableless, multi-column, fixed width custom theme used for Joinup.
+
+ 	; The screenshot used on the admin/build/themes page.
+screenshot	= screenshot.png
+
+	; "core" specifies the version of Drupal that this theme is compatible with.
+	; The "engine" field uses individual 'something.tpl.php' files to theme Drupal's 'theme_something()' functions.
+	; Drupal's themeable functions are documented on the Drupal API site [http://api.drupal.org/api/5].
+	; Every file contains an HTML skeleton with some simple PHP statements for the dynamic data.
+	; Thus, PHPTemplate is an excellent choice for theming if you know a bit of PHP: with some basic
+	; PHP snippets, you can create advanced themes easily.
+core	= 6.x
+engine	= phptemplate
+
+	; This section adds CSS files to your theme. The media type is specified in
+	; the brackets. Typical CSS media types include "all", "screen", "print", and
+	; "handheld". See http://www.w3.org/TR/CSS21/media.html#media-types for a full
+	; list of stylesheet media types in CSS 2.1. The iPhone's preferred media type
+	; is based on the CSS3 Media queries. http://www.w3.org/TR/css3-mediaqueries/
+	
+stylesheets[all][] 		= styles/commission/ec-2012.css
+stylesheets[all][] 		= styles/commission/system-menus.css
+stylesheets[all][] 		= styles/default/system-menus.css
+stylesheets[all][]		= styles/default/reset.css
+stylesheets[all][]		= styles/default/grid.css
+stylesheets[all][]		= styles/default/common.css
+stylesheets[all][]		= styles/default/style.css
+stylesheets[all][]		= styles/default/home.css
+stylesheets[all][]		= styles/default/forms.css
+stylesheets[all][]		= styles/default/dashboard.css
+stylesheets[all][]		= styles/default/footer.css
+stylesheets[all][]		= styles/default/fixes.css
+stylesheets[all][] 		= styles/default/jcarousel-default.css
+stylesheets[all][] 		= styles/default/font-awesome.css
+
+stylesheets[print][]	= styles/default/print.css
+
+stylesheets[all][]	= styles/default/z_overrides.css
+
+
+; Optionally add some JavaScripts to your theme.
+scripts[]				= scripts/plugins/jquery.cycle.js
+scripts[]				= scripts/init.js
+scripts[]				= scripts/commission/ec-2012.js
+
+	; The regions defined in the page.tpl.php file. The name in brackets
+	; is the name of the variable in the page.tpl.php file, (e.g. "[content_top]"
+	; in the .info file means there should be a $content_top variable in the
+	; page.tpl.php file.) The text after the equals sign is a descriptive text
+	; used on the admin/build/blocks page.
+regions[header]         = Header region
+regions[highlight]      = Highlighted region
+regions[left]           = Left sidebar region
+regions[before_content] = Before content region
+regions[after_content]  = After content region
+regions[right]          = Right sidebar region
+regions[footer]         = Footer region
+
+
+	; Various page elements output by the theme can be toggled on and off. The
+	; "features" control which of these check boxes display on the
+	; admin/build/themes config page. This is useful for suppressing check boxes
+	; for elements not used by your theme. To suppress a check box, omit the
+	; entry for it below. See the Drupal 6 Theme Guide for more info:
+	; http://drupal.org/node/171205#features
+features[]				= logo
+features[]				= name
+features[]				= slogan
+features[]				= mission
+features[]				= favicon
+features[]              = primary_links
+features[]              = secondary_links

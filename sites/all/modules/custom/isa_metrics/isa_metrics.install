@@ -1,0 +1,20 @@
+<?php
+/**
+ * @file 
+ * Install, update, and uninstall functions for the isa_metrics module
+ * @ingroup isa_metrics
+ */
+
+/**
+ * Implement of hook_install().
+ */
+function isa_metrics_install() {
+  
+}
+
+/**
+ * Implement of hook_uninstall().
+ */
+function isa_metrics_uninstall() {
+
+}

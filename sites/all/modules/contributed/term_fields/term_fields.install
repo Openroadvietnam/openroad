@@ -1,0 +1,356 @@
+<?php
+/**
+ * @file
+ * Installation file for the Term Fields module
+ */
+
+/**
+ * Implements hook_install().
+ */
+function term_fields_install() {
+  drupal_install_schema('term_fields');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function term_fields_uninstall() {
+  drupal_uninstall_schema('term_fields');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function term_fields_schema() {
+  $schema['term_fields'] = array(
+    'fields' => array(
+      'fid' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'description' => 'The unique field identifier.',
+      ),
+      'module' => array(
+        'type' => 'varchar',
+        'length' => 127,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The module thats handles this type of fields.',
+      ),
+      'title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'The human readable name of this field.',
+      ),
+      'description' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'description' => 'A description of the field for users.',
+      ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'description' => 'The type of field.',
+      ),
+      'widget' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'description' => 'The widget related to the type of the field.',
+      ),
+      'options' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'description' => 'Serialized array of options used for select type fields.',
+        'serialize' => TRUE,
+      ),
+      'instantiated' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'description' => 'This flag specifies if the columns of the {term_fields_term} table have already been created.',
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('fid'),
+  );
+
+  $schema['term_fields_instance'] = array(
+    'fields' => array(
+      'fid' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'description' => 'The {term_fields} primary key.',
+      ),
+      'vid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The vocabulary id of which field values can be set.',
+      ),
+      'required' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'description' => 'The weight of the field.',
+      ),
+    ),
+    'primary key' => array('fid', 'vid'),
+  );
+  
+  $schema['term_fields_term'] = array(
+    'fields' => array(
+      'tid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'vid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('tid'),
+    'indexes' => array(
+      'vid' => array('vid'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_update_N().
+ * 
+ * Removes abandoned entries of deleted taxonomy terms.
+ */
+function term_fields_update_6100() {
+  $ret = array();
+  $ret[] = update_sql("DELETE FROM {term_fields_term} WHERE tid NOT IN (SELECT tid FROM {term_data})");
+  return $ret;
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function term_fields_update_6101() {
+  $ret = array();
+  
+  if (!db_table_exists('term_fields_instance')) {
+    $term_fields_instance_schema = array(
+      'fields' => array(
+        'fid' => array('type' => 'varchar', 'length' => 32, 'not null' => TRUE, 'description' => 'The {term_fields} primary key.'),
+        'vid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'description' => 'The vocabulary id of which field values can be set.'),
+        'required' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0),
+        'weight' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => FALSE, 'not null' => TRUE, 'description' => 'The weight of the field.'),
+      ),
+      'primary key' => array('fid', 'vid'),
+    );
+    
+    // Creates {term_fields_instance} table.
+    db_create_table($ret, 'term_fields_instance', $term_fields_instance_schema);
+    
+    // Moves field instances to the new created table.
+    $result = db_query("SELECT fid, vid, weight FROM {term_fields}");
+    while ($row = db_fetch_object($result)) {
+      db_query("INSERT INTO {term_fields_instance} (`fid`, `vid`, `weight`) VALUES ('%s', %d, %d)", $row->fid, $row->vid, $row->weight);
+    }
+    
+    // Removes deprecated 'vid' and 'weight' columns in {term_fields} table.
+    db_drop_index($ret, 'term_fields', 'vid');
+    db_drop_field($ret, 'term_fields', 'vid');
+    db_drop_field($ret, 'term_fields', 'weight');
+    
+    // Adds 'module', 'widget' and 'instantiated' columns.
+    db_add_field($ret, 'term_fields', 'module', array('type' => 'varchar', 'length' => 127, 'not null' => TRUE, 'default' => '', 'description' => 'The module thats handles this type of fields.'));
+    db_add_field($ret, 'term_fields', 'widget', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE, 'description' => 'The widget related to the type of the field.'));
+    db_add_field($ret, 'term_fields', 'instantiated', array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'description' => 'This flag specifies if the columns of the {term_fields_term} table have already been created.', 'default' => 0));
+    
+    // Update the value of 'module' column.
+    db_query("UPDATE {term_fields} SET module ='%s'", 'term_fields');
+    
+    // Add the 'vid' column to . This allows to easily reset the values
+    // when a field is removed from a specific vocabulary.
+    db_add_field($ret, 'term_fields_term', 'vid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE), array('indexes' => array('vid' => array('vid'))));
+    
+    // Cheat with cache to avoid a partial update of the database that would
+    // causes errors. We are only concerned by the 'serialize' option yet.
+    cache_set('term_fields_storage', array(), 'cache');
+    
+    // In order to have the new created 'serialize' attribute added to the 'options',
+    // column, we need to rebuild the database schema. Otherwise drupal_write_record()
+    // will not serialize the values as expected.
+    drupal_get_schema(NULL, TRUE);
+    
+    // Update term_fields tables (columns and/or values).
+    term_fields_database_update_6101($ret);
+    
+    // Removes deprecated entries in {variables} table.
+    db_query("DELETE FROM {variable} WHERE name LIKE 'term_fields_%'");
+    
+    // Add permission for uploading files to all roles, if there were any
+    // field of type "file" previously.
+    if (db_result(db_query("SELECT COUNT(*) FROM {term_fields} WHERE type = 'file'"))) {
+      $result = db_query('SELECT p.pid, r.rid, p.perm FROM {role} r LEFT JOIN {permission} p ON r.rid = p.rid');
+      
+      while ($perm = db_fetch_object($result)) {
+        if (! empty($perm->perm)) {
+          $perm->perm .= ', upload term files'; 
+        }
+        else {
+          $perm->perm = 'upload term files';
+        }
+        
+        drupal_write_record('permission', $perm, array('pid'));
+      }
+    }
+  }
+    
+  return $ret;
+}
+
+/**
+ * Helper for updating the databse to 2.x version.
+ */
+function term_fields_database_update_6101(&$ret) {
+  module_load_include('module', 'term_fields');
+  $result = db_query("SELECT * FROM {term_fields}");
+  
+  while ($field = db_fetch_object($result)) {
+    $field->instantiated = 1;
+    $old_options = ! empty($field->options) ? unserialize($field->options) : array();
+    $field->options = array();
+    
+    switch ($field->type) {
+      case 'checkbox':
+        $field->type = 'choice';
+        $field->widget = 'checkbox';
+        term_fields_term_fields_term_update_6101($ret, $field);
+        break;
+        
+      case 'textfield':
+      case 'textarea':
+        $field->widget = $field->type;
+        $field->type = 'text';
+        term_fields_term_fields_term_update_6101($ret, $field);
+        break;
+
+      case 'numeric':
+        $field->type = 'numeric';
+        $field->widget = 'textfield';
+        $field->options['format'] = 'integer';
+        term_fields_term_fields_term_update_6101($ret, $field);
+        break;
+      
+      case 'select':
+        $field->type = 'list';
+        $field->widget = 'select';
+        $field->options['options'] = $old_options;
+        term_fields_term_fields_term_update_6101($ret, $field);
+        break;
+      
+      case 'date':
+        $field->type = 'date';
+        $field->widget = 'datetime';
+        $field->options['todate'] = '';
+        $field->options['tz_handling'] = '';
+        $field->options['granularity'] = array('year', 'month', 'day');
+        term_fields_term_fields_term_update_6101($ret, $field);
+        break;
+
+      case 'file':
+        $field->type = 'file';
+        $field->widget = 'file';
+        $field->options['allowed_extensions'] = 'txt';
+        $field->options['max_size'] = 1;
+        
+        if (! empty($old_options['file_allowed_exts'])) {
+          $exts = array();
+          
+          foreach ($old_options['file_allowed_exts'] as $ext) {
+            $exts[] = trim($ext, ' ,.');
+          }
+          
+          $field->options['allowed_extensions'] = implode('|', $exts);
+        }
+        
+        if (isset($old_options['file_max_size']) && is_numeric($old_options['file_max_size']) && $old_options['file_max_size'] >= 0) {
+          $field->options['max_size'] = (int) $old_options['file_max_size'];
+        }       
+        
+        term_fields_term_fields_term_update_6101($ret, $field, 'fid');
+        break;
+    }
+    
+    drupal_write_record('term_fields', $field, array('fid'));
+  }
+  
+  // Now we can clear all caches and get the fields and schema as expected.
+  term_fields_get_fields(NULL, TRUE);
+  term_fields_get_storage(NULL, TRUE);
+  drupal_get_schema(NULL, TRUE);
+  
+  // Clear Views cache.
+  if (module_exists('views')) {
+    views_invalidate_cache();
+  }
+}
+
+/**
+ * Helper for updating the {term_fields_term} columns.
+ */
+function term_fields_term_fields_term_update_6101(&$ret, &$field, $default_column = 'value') {
+  $t = get_t();
+  
+  if ($new_columns = module_invoke($field->module, 'term_fields_api', 'storage', $field)) {
+    $new_field = $field->fid .'_'. $default_column;
+    
+    if (array_key_exists($new_field, $new_columns)) {
+      db_change_field($ret, 'term_fields_term', $field->fid, $new_field, $new_columns[$new_field]);
+      
+      unset($new_columns[$new_field]);
+      
+      foreach ($new_columns as $field => $spec) {
+        db_add_field($ret, 'term_fields_term', $field, $spec);
+      }
+    }
+    else {
+      $message = 'Term fields: an error occured while changing the column definition for field %fid. Column was not modified and the field was skipped.';
+      $t_args = array('%fid' => $field->fid);
+      drupal_set_message($t($message, $t_args), 'error');
+      watchdog('term_fields', $message, $t_args, WATCHDOG_ALERT);
+      $field-> instantiated = 0;
+      db_query("DELETE FROM {term_fields_instance} WHERE fid = '%s'", $field->fid);
+    }
+  }
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function term_fields_update_6200() {
+  // We now have to set the vid for each row, otherwise they'll be 0
+  // see https://drupal.org/node/1356140
+  $ret = array();
+  $result = db_query("SELECT tf.tid, tf.vid, td.vid AS real_vid FROM {term_fields_term} tf LEFT JOIN {term_data} td ON td.tid = tf.tid");
+  
+  while ($row = db_fetch_object($result)) {
+    // If the vid is 0, it is incorrect and needs to be updated.
+    if (! $row->vid) {
+      $ret[] = update_sql("UPDATE {term_fields_term} SET vid = '". $row->real_vid ."' WHERE tid = '". $row->tid ."'");
+    }
+  }
+  
+  return $ret;
+}

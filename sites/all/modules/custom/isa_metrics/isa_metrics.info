@@ -1,0 +1,15 @@
+; $Id$
+name = ISA metrics
+description = Provides some metrics about groups, contents,...
+package = "ISA Toolbox"
+core = 6.x
+version = "6.x-1.0"
+dependencies[] = isa_toolbox
+dependencies[] = isa_highlight
+dependencies[] = workflow
+dependencies[] = og
+dependencies[] = project_issue
+dependencies[] = project_release
+dependencies[] = taxonomy
+dependencies[] = isa_private_files
+dependencies[] = isa_qa

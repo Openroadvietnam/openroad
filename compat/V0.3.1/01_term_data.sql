@@ -1,0 +1,63 @@
+--Insert the new title in contextHelp_title taxonomy
+INSERT INTO `term_data` (`vid`, `name`,`weight`) VALUES (9,'Search',0);
+INSERT INTO `term_data` (`vid`, `name`,`weight`) VALUES (9,'People',0);
+
+-- Insert all the countries in vocabulary 'represented country'
+
+INSERT INTO `term_data` (`tid`, `vid`, `name`, `description`, `weight`) VALUES
+(1600, 41, 'Bulgaria', '', 0),
+(1601, 41, 'Cyprus', '', 0),
+(1602, 41, 'Czech Republic', '', 0),
+(1603, 41, 'Denmark', '', 0),
+(1604, 41, 'Estonia', '', 0),
+(1605, 41, 'Finland', '', 0),
+(1606, 41, 'France', '', 0),
+(1607, 41, 'Germany', '', 0),
+(1608, 41, 'Greece', '', 0),
+(1609, 41, 'Hungary', '', 0),
+(1610, 41, 'Iceland', '', 0),
+(1611, 41, 'Ireland', '', 0),
+(1612, 41, 'Italy', '', 0),
+(1613, 41, 'Latvia', '', 0),
+(1614, 41, 'Lithuania', '', 0),
+(1615, 41, 'Luxembourg', '', 0),
+(1616, 41, 'Malta', '', 0),
+(1617, 41, 'Netherlands', '', 0),
+(1618, 41, 'Norway', '', 0),
+(1619, 41, 'Poland', '', 0),
+(1620, 41, 'Portugal', '', 0),
+(1621, 41, 'Romania', '', 0),
+(1622, 41, 'Slovakia', '', 0),
+(1623, 41, 'Slovenia', '', 0),
+(1624, 41, 'Spain', '', 0),
+(1625, 41, 'Portugal', '', 0),
+(1652, 9, 'Events', '', 0);
+
+INSERT INTO `term_hierarchy` (`tid`, `parent`) VALUES
+(1600, 780),
+(1601, 780),
+(1602, 780),
+(1603, 780),
+(1604, 780),
+(1605, 780),
+(1606, 780),
+(1607, 780),
+(1608, 780),
+(1609, 780),
+(1610, 780),
+(1611, 780),
+(1612, 780),
+(1613, 780),
+(1614, 780),
+(1615, 780),
+(1616, 780),
+(1617, 780),
+(1618, 780),
+(1619, 780),
+(1620, 780),
+(1621, 780),
+(1622, 780),
+(1623, 780),
+(1624, 780),
+(1625, 780),
+(1652, 0);

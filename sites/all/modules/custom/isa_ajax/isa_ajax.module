@@ -1,0 +1,81 @@
+<?php
+
+/**
+ * Define the menus item which can be used for getting the AJAX information
+ * @return boolean 
+ */
+function isa_ajax_menu() {
+  $items['isa_ajax/%ctools_js/teaser_expand/%/%/%'] = array(
+    'title' => 'Get Node Components',
+    'page callback' => '_isa_ajax_node_expand',
+    'page arguments' => array(1, 3, 4, 5),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['isa_ajax/%ctools_js/teaser_collapse/%/%/%'] = array(
+    'title' => 'Remove Node Components',
+    'page callback' => '_isa_ajax_node_collapse',
+    'page arguments' => array(1, 3, 4, 5),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Page callback to asset_release node and render a container for AJAX stuff.
+ */
+function _isa_ajax_node_expand($js = NULL, $divid = NULL, $ids = NULL, $lang = 'en') {
+  if (empty($ids) || empty($divid) || !$js)
+    return;
+
+  ctools_include('ajax');
+  ctools_include('modal');
+  ctools_modal_add_js();
+
+  $nids = explode(',', $ids);
+  $output = '<div class="boxes">';
+  foreach ($nids as $nid) {
+    $output .= '<div class="box">'.node_view( node_load( $nid), TRUE, FALSE, FALSE ) . '</div>';
+    //$output = "<div class='box'>nid: {$nid} & lang: {$lang}</div>";
+  }
+  $output .= '</div>';
+  $action = ctools_ajax_image_button(
+    isa_ajax_get_image('expanded'),
+    "isa_ajax/ajax/teaser_collapse/{$divid}/{$ids}/{$lang}", t('collapse'));
+
+  $commands = array();
+  $commands[] = ctools_ajax_command_html("#{$divid}", $output);
+  $commands[] = ctools_ajax_command_html("#{$divid}_button", $action);
+  ctools_ajax_render($commands); // this function exits.
+}
+
+/**
+ * Page callback to collapse an expanded nodes
+ */
+function _isa_ajax_node_collapse($js = NULL, $divid = NULL, $ids = NULL, $lang = 'en') {
+  if (empty($ids) || empty($divid) || !$js)
+    return;
+
+  ctools_include('ajax');
+  ctools_include('modal');
+  ctools_modal_add_js();
+
+  $action = ctools_ajax_image_button(
+    isa_ajax_get_image('collapsed'),
+    "isa_ajax/ajax/teaser_expand/{$divid}/{$ids}/{$lang}", t('expand'));
+
+  $commands = array();
+  $commands[] = ctools_ajax_command_html("#{$divid}", "");
+  $commands[] = ctools_ajax_command_html("#{$divid}_button", $action);
+  ctools_ajax_render($commands); // this function exits.
+}
+
+/**
+ * Helper for getting the path of a dedicated image
+ * @param type $image 
+ */
+function isa_ajax_get_image($image) {
+  return path_to_theme() . "/images/forms/fieldset/menu-{$image}.png";
+}

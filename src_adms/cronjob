@@ -1,0 +1,290 @@
+#!/usr/bin/php
+<?php
+// Note: you may have to modify the above shebang for this script to work in
+// any environment
+
+/*
+ * Copyright (C) Atos
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+
+/**
+ * This file is the script which pilot the system
+ */
+require_once 'bootstrap.php';
+// Configuration of the logger without the file output
+Logger::configure(retrieveLogConfiguration());
+$logger = Logger::getLogger('cronjob');
+
+$time = date('Ymd', time());
+// The first parameter can be the date with the format j/m/Y
+if (isset($argv[1])) {
+  // We make a simple regular expression check
+  if (preg_match('#[0-3]?\d/[0-1]?\d/\d{4}#', $argv[1])) {
+    $date = date_parse_from_format('j/m/Y', $argv[1]);
+    $date = mktime( 0,0,0, $date['month'], $date['day'], $date['year'] );
+  } else {
+    $logger->warn( "The argument of the script seems to not fit a regular date ('{$argv[1]}')." );
+    exit(-1);
+  }
+} else {
+  $date = time();
+}
+//Get the information from Drupal
+if (!include_once( DRUPAL_CONFIG_DIR . 'settings.php' )) {
+  $logger->fatal('Drupal settings not loaded, check your configuration');
+  exit(-1);
+}
+
+//Check the repositories which have to be loaded
+$url = parse_url($db_url['default']);
+$connection_string = $url['scheme'] == 'mysqli' ?
+  "mysql:" : "{$url['scheme']}:";
+$connection_string .= "host={$url['host']};dbname=" . trim($url['path'], '/') . ";";
+if (isset($url['port']))
+  $connection_string .= "port={$url['port']};";
+$logger->trace('Try to connect to the database : ' . $connection_string);
+$url['pass'] = isset($url['pass']) ? urldecode($url['pass']) : '';
+
+try {
+  $db = new PDO($connection_string, $url['user'], $url['pass']);
+} catch (\PDOException $e) {
+  $logger->fatal($e->getMessage());
+  exit(-1);
+}
+
+// The first step consists in getting the HTTP files and store them into Drupal to be treated
+// by the existing process
+$query = <<<EOQ
+  SELECT task_id, repository, p1 AS repository_id, p2 AS url, p3 AS frequency, node.uid
+  FROM repositories_management
+    INNER JOIN node ON node.nid = p1
+  WHERE state = 'todo' AND action = 'adms_harvest'
+  ORDER BY request_time ASC;
+EOQ;
+$tasks = $db->query($query);
+
+while ($task = $tasks->fetchObject()) {
+  // Specific configuration of the Logger for the output
+  $time = date('Ymd', time());
+  Logger::configure(retrieveLogConfiguration(
+      DRUPAL_IMPORT_RESULT_DIR . "harvest_{$task->repository_id}_{$time}.log"));
+
+  // We have to check the frequency
+  switch ($task->frequency) {
+    case 0://daily
+      break;
+    case 1://weekly
+      //Sunday
+      $test = date('N', $date);
+      if (date('N', $date) != 7)
+        continue 2;
+      break;
+    case 2: //monthly
+      // Check if we are in the first week of the month
+      $test = date('j', $date);
+      if (date('j', $date) > 1)
+        continue 2;
+      break;
+    default:
+      $logger->error("The frequency is incorrect '{$task->frequency}' for the repository '{$task->repository}'");
+      continue;
+  }
+
+
+  // Register the file with the repository (and remove the other ones)
+  // Remove existing files
+  // Check if there is already a file uploaded in 'todo' state and remove it
+  $query = <<<EOQ
+  SELECT task_id, repository, p2 AS file_id, filepath 
+  FROM repositories_management
+    INNER JOIN files ON p2 = fid
+  WHERE p1 = :rep_id AND state = 'todo';
+EOQ;
+  $statement = $db->prepare($query);
+  $statement->execute(array(':rep_id' => $task->repository_id));
+
+  // First, we are removing not executed tasks
+  while ($datas = $statement->fetchObject()) {
+    $logger->trace("Removing all import not executed for the repository '{$datas->repository}'");
+    if (file_exists(DRUPAL_DIR . $datas->filepath)) {
+      $success = unlink(DRUPAL_DIR . $datas->filepath);
+      if (!$success) {
+        $logger->warn("Impossible to delete the file '{$datas->filepath}'");
+      }
+    } else {
+      $logger->warn("The harvest task for the repository '{$datas->repository}' is not attached to a real file");
+    }
+    $db->exec("DELETE FROM files WHERE fid = '{$datas->file_id}';");
+    $db->exec("DELETE FROM repositories_management WHERE task_id = '{$datas->task_id}';");
+  }
+
+  // We get the http data
+  $filename = "harvest_{$task->repository_id}.rdf";
+  $file = DRUPAL_IMPORT_RESULT_DIR . $filename;
+  $file_rel = substr($file, strlen(DRUPAL_DIR));
+  $http_request = new \util\HttpRequest(
+      $conf['proxy_server'], $conf['proxy_port'], $conf['proxy_username'], $conf['proxy_password'],
+      $conf['proxy_exceptions']
+  );
+  $http_response = $http_request->getResponse($task->url);
+
+  if ($http_response->code != 0) {
+    $logger->error("Error retrieving the content of the url '{$task->url}' for the repository '{$task->repository}', error message: '{$http_response->error}'");
+    continue;
+  }
+  // Save the data into the file
+  $file_handle = fopen($file, "wb");
+  $write_result = fwrite($file_handle, $http_response->data);
+  fclose($file_handle);
+
+  if ($write_result === FALSE) {
+    $logger->error("Impossible to write the content of the url '{$task->url}' to the file '{$file}'");
+    continue;
+  }
+
+  // Then associate the file as a manual import
+  $insert_file = <<<EOQ
+  INSERT INTO files (uid, filename, filepath, filemime, filesize, status) 
+  VALUES (:uid, :filename, :filepath, :filemime, :filesize, :status);
+EOQ;
+
+  try {
+    $db->beginTransaction();
+    $statement = $db->prepare($insert_file);
+    $statement->execute(array(
+      ':uid' => 1,
+      ':filename' => $filename,
+      ':filepath' => $file_rel,
+      ':filemime' => 'application/rdf+xml',
+      ':filesize' => filesize($file),
+      ':status' => 1));
+    $file_id = $db->lastInsertId();
+
+    $insert_task = <<<EOQ
+  INSERT INTO repositories_management (repository, action, p1, p2)
+  VALUES (:repository, 'adms_import', :rep_id, :file_id);
+EOQ;
+    $statement = $db->prepare($insert_task);
+    $statement->execute(array(
+      ':repository' => $task->repository,
+      ':rep_id' => $task->repository_id,
+      ':file_id' => $file_id
+    ));
+    $db->commit();
+  } catch (\Exception $exc) {
+    $logger->error($exc->getMessage(), $exc);
+    $db->rollBack();
+  }
+}
+
+$query = <<<EOQ
+  SELECT task_id, repository, p1 AS repository_id, filepath, filemime, files.uid as user_id
+  FROM repositories_management
+  INNER JOIN files ON files.fid = repositories_management.p2
+  WHERE state = 'todo' AND action = 'adms_import'
+  ORDER BY request_time ASC;
+EOQ;
+$update_status = <<<EOQ
+  UPDATE repositories_management 
+  SET state = :state, result_data = :result, action_time = :time 
+  WHERE task_id = :task_id;
+EOQ;
+$tasks = $db->query($query);
+
+while ($task = $tasks->fetch(PDO::FETCH_ASSOC)) {
+  // Specific configuration of the Logger
+  Logger::configure(retrieveLogConfiguration(
+      DRUPAL_IMPORT_RESULT_DIR . "report_{$task['repository_id']}.log"));
+
+  //Reading of the property of the repository
+  $logger->info("Treatment of the repository '{$task['repository']}', file: '{$task['filepath']}'");
+
+  $pdos_params = array(
+    ':state' => 'done',
+    ':result' => 'ok',
+    ':task_id' => $task['task_id']
+  );
+  try {
+
+    // Read the input file (depending on the filetype)
+    // application/rdf+xml
+    $adapter = \Adapters\AdapterFactory::getAdapter($task['filemime']);
+
+    if (!is_file(DRUPAL_DIR . $task['filepath'])) {
+      throw new \UnexpectedValueException(
+        "The input file '{$task['filepath']}' is not reachable.");
+    }
+    // First check that the XML File is well formed
+    //@$doc = simplexml_load_file($file);
+    @$doc = simplexml_load_file(DRUPAL_DIR . $task['filepath']);
+    if ($doc === FALSE) {
+      throw new \UnexpectedValueException(
+        "The input file '{$task['filepath']}' is not a valid XML file.");
+    }
+    $doc = NULL;
+
+    $adms = $adapter->load(DRUPAL_DIR . $task['filepath']);
+
+    // Export of the adms objects to Drupal
+    // if the export is correct, then I set this file as treated
+    $adapter = \Adapters\AdapterFactory::getAdapter('drupal');
+    $output = array(
+      'repository_id' => $task['repository_id'],
+      'user_id' => $task['user_id'],
+    );
+    $result = $adapter->export($adms, $output);
+    if (!$result) {
+      throw new \RuntimeException(
+        "The export process to Drupal doesn't end correctly"
+      );
+    }
+  } catch (\Exception $e) {
+    $logger->error($e->getMessage());
+    $pdos_params[':state'] = 'failed';
+    $pdos_params[':result'] = $e->getMessage();
+  }
+  $pdos_params[':time'] = date('Y-m-d H:i:s');
+  if (DEV_WRITE_TO_DB) {
+    $logger->info("Updating status of the repository task '{$pdos_params[':task_id']}' to state '{$pdos_params[':state']}', with result '{$pdos_params[':result']}', on '{$pdos_params[':time']}'");
+    $db=null;
+    try {
+      $db = new PDO($connection_string, $url['user'], $url['pass']);
+      $pdos = $db->prepare($update_status);
+      if (!$pdos->execute($pdos_params)) {
+        $logger->error('Impossible to update the status of the repository task');
+      }
+    } catch (\PDOException $e) {
+      $logger->fatal($e->getMessage());
+    }
+  }
+
+  $logger->info("End of the treatment for the repository '{$task['repository']}'");
+}
+
+exit(0);
+
+
+
+
+
+
+
+
+
+
+
+

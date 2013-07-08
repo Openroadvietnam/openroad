@@ -1,0 +1,434 @@
+<?php
+/**
+ * @defgroup isa_ml
+ * @brief Provides an action to create mailing lists for projects and communities.
+ * @file 
+ * Modules main file
+ * @ingroup isa_ml
+ */
+
+define('ISA_ML_DEFAULT_FORUM_TID', 1659);
+
+/* We begin by implementing an authentication method */
+
+/**
+ * Implement of hook_mailhandler_authenticate_info()
+ */
+function isa_ml_mailhandler_authenticate_info() {
+  $info = array(
+      'isa_handler' => array(
+          'title' => 'ISA Way of Life',
+          'description' => 'ISA Way of Life',
+          'callback' => 'isa_ml_mailhandler_authenticate',
+          'module' => 'isa_ml',
+          'extension' => NULL, // as in $type in module_load_include
+          'basename' => NULL, // as in $name in module_load_include
+      )
+  );
+  return $info;
+}
+
+/**
+ * Always affects a static user as $node->uid
+ * @param $node
+ *   Object a node object
+ * @param $header
+ *   Object of message header information
+ * @param $origbody
+ *   String message body text
+ * @param $mailbox
+ *   Array of mailbox configuration
+ *
+ * @return object, the node object
+ */
+function isa_ml_mailhandler_authenticate($node, $header, $origbody, $mailbox) {
+  // Actually, the default Implement is not that bad.
+  // It lets $node->uid to 0 if no user in the database matches the send email address
+  // database
+  $node = mailhandler_authenticate_default($node, $header, $origbody, $mailbox);
+  return $node;
+}
+
+/*
+  Next, we ensure the created node will have:
+ * a group_nid (association with a parent community/project/asset/...)
+ * a term_id (association with a parent forum, e.g. "Mailing List")
+ */
+
+/**
+ * Implement of hook_mailhandler().
+ */
+function isa_ml_mailhandler($node, $unused, $unused, $header, $mailbox) {
+  // Should we handle this mail?
+  if ($mailbox['authentication'] != 'isa_handler') {
+    return $node;
+  }
+
+  $forum_tid = variable_get('isa_ml_forum_tid', ISA_ML_DEFAULT_FORUM_TID);
+  if ($forum_tid != -1) {
+    if (!is_array($node->taxonomy)) {
+      $node->taxonomy = array();
+    }
+    $node->taxonomy[$forum_tid] = $forum_tid;
+    // we also explicitly set a tid attribute so that listhandler_mailhandler
+    // takes a look at this node
+    $node->tid = $forum_tid;
+  }
+
+  $parent_nid = _isa_ml_get_nid_from_list($header);
+  if ($parent_nid !== FALSE) {
+    if (!is_array($node->og_groups)) {
+      $node->og_groups = array();
+    }
+    $node->og_groups[$parent_nid] = $parent_nid;
+  }
+  $node->language = 'en';
+  return $node;
+}
+
+
+/**
+ * @return the nid of the group corresponding to the mailing list
+ * @see isa_ml_mailhandler()
+ */
+function _isa_ml_get_nid_from_list($header) {
+  $ml_name = _isa_ml_extract_shortname(array(), $header, array());
+  if ($ml_name === FALSE) {
+    watchdog(
+      'isa_ml',
+      'Unable to extract a list name from headers :debug',
+      array(':debug' => print_r($header, TRUE)),
+      WATCHDOG_NOTICE
+    );
+  }
+  $query = 'SELECT nid FROM {ml_group} INNER JOIN {mailman_lists} USING (lid) WHERE LOWER(name) = LOWER(\'%s\')';
+  $res = db_query($query, $ml_name);
+  if ($res) {
+    return db_result($res);
+  }
+  return FALSE;
+}
+
+/**
+ * @return the shortname of the mailing list this mail is rattached to, if any.
+ * @see isa_ml_mailhandler()
+ */
+function _isa_ml_extract_shortname($node, $header, $mailbox) {
+  if (preg_match('/^(.+?)?(?:-bounces)?$/', $header->sender[0]->mailbox, $matches)) {
+    return $matches[1];
+  }
+  return FALSE;
+}
+
+/**
+ * @param $shortname Shortname of a mailing list
+ * @return the node id of the parent project/community
+ */
+function _isa_ml_get_parent_nid($shortname) {
+  $num_rows_func = $GLOBALS['db_type'] . '_num_rows';
+
+  $query = 'SELECT nid FROM {ml_group} INNER JOIN {mailman_lists} USING (lid) WHERE LOWER(name) = LOWER(\'%s\')';
+  $res = db_query($query, $shortname);
+  if ($res && $num_rows_func($res)) {
+    return db_result($res);
+  }
+  return FALSE;
+}
+
+/**
+ * Implement of hook_menu_alter().
+ * Delete the menu 'Mailing list'
+ */
+function isa_ml_menu_alter(&$items) {
+  unset($items['user/%user/mailman_manager']);
+}
+
+/**
+ * Create link to subscribe/unsubscribe to a mailing list
+ * @param $gid : group id
+ * @param $uid : user id
+ */
+function isa_ml_subscription_link($node, $uid, $project) {
+  //get the mailing list id
+  $gid = $node->nid;
+  $query = 'SELECT lid FROM {ml_group} WHERE nid = %d AND principal = 1;';
+  $results = db_fetch_array(db_query($query, $gid));
+  $group_type = isa_toolbox_get_node_type_name($node);
+  if ($results === FALSE) { //no mailman_list found
+    return array('access_callback' => FALSE);
+  }
+  if (!isa_links_node_is_validated($node)){
+    return array('access_callback' => FALSE);
+  }
+  $lid = $results['lid'];
+  $subscription = _mailman_manager_get_subscriptions($uid, $lid);
+  if ($subscription['lstatus'] == 0) {
+    $arr = array(
+        'title' => t('Subscribe Mailing list'),
+        'href' => "subscribe_ml/{$lid}",
+        'query' => array('destination' => $_GET['q']),
+        'access_callback' => 'og_is_group_member',
+        'access_arguments' => $node->nid,
+        'permission' => $access_callback,
+        'tooltips' => 'Subscribe to mailing list of this '.$group_type,
+    );
+  }
+  else {
+    $arr = array(
+        'title' => t('Unsubscribe Mailing list'),
+        'href' => "unsubscribe_ml/{$lid}",
+        'query' => array('destination' => $_GET['q']),
+        'access_callback' => 'og_is_group_member',
+        'access_arguments' => $node->nid,
+        'tooltips' => 'Unsubscribe to mailing list of this '.$group_type,
+    );
+  }
+  return $arr;
+}
+
+/**
+ * Implement hook_menu().
+ */
+function isa_ml_menu() {
+  $items = array();
+  $items['subscribe_ml/%'] = array(
+      'title' => 'Mailing List Subscription',
+      'page callback' => 'isa_ml_subscription',
+      'page arguments' => array(1, 'subscribe'),
+      'access callback' => 'user_is_logged_in',
+      'access arguments' => array(),
+      'type' => MENU_LOCAL_TASK,
+  );
+  $items['unsubscribe_ml/%'] = array(
+      'title' => 'Mailing List Unsubscription',
+      'page callback' => 'isa_ml_subscription',
+      'page arguments' => array(1, 'unsubscribe'),
+      'access callback' => 'user_is_logged_in',
+      'access arguments' => array(),
+      'type' => MENU_LOCAL_TASK,
+  );
+  $items['community/%/add_ml'] = array(
+      'title' => 'Add a Mailing List',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('isa_ml_add_ml'),
+      'access callback' => 'isa_ml_access_add_ml',
+      'access arguments' => array(),
+      'type' => MENU_CALLBACK,
+  );
+  $items['software/%/add_ml'] = array(
+      'title' => 'Add a Mailing List',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('isa_ml_add_ml'),
+      'access callback' => 'isa_ml_access_add_ml',
+      'access arguments' => array(),
+      'type' => MENU_CALLBACK,
+  );
+  $items['asset/%/add_ml'] = array(
+      'title' => 'Add a Mailing List',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('isa_ml_add_ml'),
+      'access callback' => 'isa_ml_access_add_ml',
+      'access arguments' => array(),
+      'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Implement hook_perm()
+ *
+ * @return type 
+ */
+function isa_ml_perm() {
+  return (
+  array(
+      'add mailing list', // permission granted to the "administrator","moderator", and "facilitators"  roles
+  )
+  );
+}
+
+/**
+ *
+ * @return type 
+ */
+function isa_ml_access_add_ml() {
+  $group = node_load(variable_get('current_group', isa_toolbox_get_community_nid()));
+  if ($group->_workflow != ISA_SID_COMMUNITY_VALIDATED) {
+    return FALSE;
+  }
+  return (isa_toolbox_is_omnipotent() || user_access('add mailing list'));
+}
+
+/**
+ * Subscribe/unsubscribe to a mailing list
+ * @param $lid : list id
+ * @param $status subscribe or unsubscribe
+ */
+function isa_ml_subscription($lid, $status) {
+  global $user;
+  $map_status = array('subscribe' => 3, 'unsubscribe' => 0);
+  _mailman_manager_update_subscriptions($user->uid, $lid, $map_status[$status], 0, $user->mail, '');
+  drupal_goto();
+}
+
+/**
+ * Form to add a new mailing list
+ */
+function isa_ml_add_ml() {
+  $nid = variable_get('current_group', isa_toolbox_get_community_nid());
+  //ML existing
+  $query = "SELECT name FROM {mailman_lists} INNER JOIN {ml_group} USING (lid) WHERE nid = %d";
+  $result = db_query($query, $nid);
+  $items = array();
+  while ($row = db_fetch_array($result)) {
+    $items[] = $row['name'];
+  }
+  $shortname = isa_links_get_group_short_name(node_load($nid));
+
+  $form = array();
+  $form['#prefix'] = '<h4>' . t('Existing mailing lists') . '</h4>' . theme_item_list($items, NULL, 'ul', array());
+
+  $descr = t(sprintf("The name is used to create the mailing list : %s-name@%s", $shortname,variable_get('isa_ml_domain', 'ec.europa.eu')));
+
+  $form['shortname'] = array('#type' => 'value', '#value' => $shortname);
+  $form['name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('New mailing list :'),
+      '#default_value' => '',
+      '#required' => TRUE,
+      '#description' => $descr,
+  );
+
+  $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Add Mailing list'),
+  );
+
+  $form['#validate'][] = 'isa_ml_add_ml_validate';
+
+  return $form;
+}
+
+/**
+ *
+ * @global type $user
+ * @param type $form
+ * @param type $form_state
+ * @return type 
+ */
+function isa_ml_add_ml_submit(&$form, $form_state) {
+  // we'll display a message to user
+  $message = 'The creation of the `:mailing_list\' mailing list has been planned.';
+  $error_message = 'Unable to require the creation of the `:ml_name\' mailing list: :reason';
+
+  // Retrieve settings that will be applied to the newly created list
+  // unlike normal actions, we fetch these settings from the {variable} table
+  // because it can be easily overridden at deployment time in the settings.php
+  // file.
+  $ml_default_configuration = variable_get('isa_ml_default_configuration', array());
+  $ml_initial_members = variable_get('isa_ml_initial_members', array());
+
+  // Retrieve the name of the future mailing list
+  $ml_name = $form_state['values']['shortname'] . '-' . $form_state['values']['name'];
+
+  if (!strlen(trim($ml_name))) {
+    drupal_set_message(t($error_message, array(':ml_name' => $ml_name, ':reason' => t('invalid name'))), 'error');
+    return FALSE;
+  }
+
+  // Retrieve the owner of the future mailing list
+  global $user;
+  $ml_owner = $user;
+  if (!$ml_owner) {
+    drupal_set_message(t($error_message, array(':ml_name' => $ml_name, ':reason' => t('invalid owner'))), 'error');
+    return FALSE;
+  }
+  $ml_owner_addr = $ml_owner->mail;
+
+  // first, we avoid creating a task record for an already required creation
+  $action = 'ml_creation';
+  $check_query = 'SELECT COUNT(*) FROM {ml_management} WHERE action = \'%s\' AND ml = \'%s\'';
+  $check_res = db_query($check_query, $action, $ml_name);
+  if ($check_res) {
+    if (db_result($check_res) > 0) {
+      drupal_set_message(t($error_message, array(':mailing_list' => $ml_name)));
+      return;
+    }
+  }
+  $check_query = 'SELECT COUNT(*) FROM {mailman_lists} WHERE name = \'%s\'';
+  $check_res = db_query($check_query, $ml_name);
+  if ($check_res) {
+    if (db_result($check_res) > 0) {
+      drupal_set_message(t($error_message, array(':mailing_list' => $ml_name)));
+      return;
+    }
+  }
+
+  // eventually, we insert the task in the table
+  $insert_query = 'INSERT INTO {ml_management} (ml, p1, p2, p3, action, state) VALUES (\'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')';
+  $state = 'todo';
+  db_query($insert_query, $ml_name, $ml_owner_addr, serialize($ml_default_configuration), serialize($ml_initial_members), $action, $state);
+  // we insert the mailing list in the mailman manager table
+  $insert_query = 'INSERT INTO {mailman_lists} (name, command, admin) VALUES (\'%s\', \'%s\', \'%s\')';
+  db_query($insert_query, $ml_name, $ml_name . '-request@' . variable_get('isa_ml_domain', 'ec.europa.eu'), $ml_name . '-admin@' . variable_get('isa_ml_domain', 'ec.europa.eu'));
+  // we insert the link between ML and project into the ml_group table
+  $lid = db_last_insert_id('mailman_lists', 'lid');
+  $nid = variable_get('current_group', isa_toolbox_get_community_nid());
+  $insert_query = 'INSERT INTO {ml_group} (lid, nid, principal) VALUES (%d, %d, 0)';
+  db_query($insert_query, $lid, $nid);
+  drupal_set_message(t($message, array(':mailing_list' => $ml_name)));
+}
+
+/**
+ *
+ * @param type $form
+ * @param type $form_state 
+ */
+function isa_ml_add_ml_validate($form, &$form_state) {
+  $name = $form_state['values']['name'];
+  $word_reserved = array('request', 'admin', 'owner');
+  if (in_array($name, $word_reserved)) {
+    form_set_error('name', t('This name is reserved. Set another please.'));
+  }
+  if (!preg_match('/^[+-_.=a-z0-9]+$/', $name)) {
+    form_set_error('name', t('Please only use lowercase characters, digits, underscores, plusses, dash, equals or dots for the name.'));
+  }
+  $ml_name = $form_state['values']['shortname'] . '-' . $name;
+  $query = "SELECT lid FROM {mailman_lists} WHERE name = '%s'";
+  if (db_result(db_query($query, $ml_name))) {
+    form_set_error('name', t('This mailing list is already existing'));
+  }
+}
+
+/**
+ *
+ * @return array Mailing Lists in a Project
+ */
+// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-600
+function _isa_ml_get_mailing_lists($nid, $only_principal=false) {      
+  //Retrieve available mailing lists for the node
+  $filters = '';
+  if ($only_principal) {
+    $filters .= 'AND principal=1';
+  }
+  $query = "SELECT lid,name FROM {mailman_lists} INNER JOIN {ml_group} USING (lid) WHERE nid = %d $filters ORDER BY principal DESC, name ASC";
+  $result = db_query($query, $nid);
+  while ($row = db_fetch_array($result)) {
+    $rows[] = $row;
+  }
+  return $rows;
+}
+
+/**
+ *
+ * @return string Name of principal Mailing List in a Project
+ */
+// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-600
+function isa_ml_get_principal_mailing_list($nid) {      
+  //Retrieve principal mailing list for the node
+  $rows = _isa_ml_get_mailing_lists($nid, true);
+  if (is_array($rows) && count($rows)) {
+    return $rows[0]['name'];
+  }
+  return false;
+}

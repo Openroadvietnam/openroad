@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rdf:RDF xmlns:xsd="http://www.w3.org/2001/XMLSchema#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:schema="http://schema.org/" xmlns:cc="http://creativecommons.org/ns#" xmlns:skos="http://www.w3.org/2004/02/skos/core" xmlns:dcat="http://www.w3.org/ns/dcat#" xmlns:xhv="http://www.w3.org/1999/xhtml/vocab#" xmlns:wdrs="http://www.w3.org/2007/05/powder-s#" xmlns:vann="http://purl.org/vocab/vann/" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:adms="http://www.w3.org/ns/adms#" xmlns:rad="http://www.w3.org/ns/radion#">
+  <!--rdf:Description rdf:about="https://195.43.52.199/" rdf:type='adms:SemanticAssetRepository' -->
+  <rdf:Description rdf:about="https://195.43.52.199/">
+    <rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository" />
+    <rdfs:label>XRepository</rdfs:label>
+    <adms:accessURL rdf:resource="https://195.43.52.199/" />
+    <dcterms:modified>2012-02-20</dcterms:modified>
+    <dcterms:description xml:lang="en">XRepository is a library for data exchange standards and codelists that were modelled in order to ease up interoperability between eGovernment applications of German Public administration and industry.</dcterms:description>
+    <dcterms:description xml:lang="fr">XRepository est une bibliothèque permettant d'échanger des données standards qui ont été modélisées afin de faciliter l'intéropérabilité entre les applications eGovernement de l'administration et de l'industrie allemande.
+    </dcterms:description>
+    <dcterms:publisher rdf:resource="http://www.xrepository.de/ns/adms/Publisher/Bundesverwaltungsamt"/>
+    <dcterms:publisher rdf:resource="http://www.xrepository.de/ns/adms/Publisher/TheFederalOfficeofAdministration"/>
+    <dcterms:spatial rdf:resource="http://dbpedia.org/resource/Germany"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Germany">
+   <rdf:type rdf:resource="http://purl.org/dc/terms/Location"/>
+   <rdfs:label xml:lang="en">Germany</rdfs:label>
+   <rdfs:label xml:lang="de">Deutschland</rdfs:label>
+   <dcterms:description xml:lang="en">Germany description</dcterms:description>
+   <dcterms:description xml:lang="de">Deutschland Beschreibung</dcterms:description>
+  </rdf:Description>
+</rdf:RDF>

@@ -1,0 +1,24 @@
+When Imagecache creates a new directory it displays a message to the end user "The directory * has been created."
+This patch moves this message in the watchdog ( replaces "drupal_set_message()" by "watchdog()" in the function "file_check_directory()")
+Index: includes/file.inc
+===================================================================
+--- includes/file.inc	(revision 1253)
++++ includes/file.inc	(working copy)
+@@ -101,7 +101,7 @@
+   // Check if directory exists.
+   if (!is_dir($directory)) {
+     if (($mode & FILE_CREATE_DIRECTORY) && @mkdir($directory)) {
+-      drupal_set_message(t('The directory %directory has been created.', array('%directory' => $directory)));
++      watchdog('file system', 'The directory %directory has been created.', array('%directory' => $directory)); 
+       @chmod($directory, 0775); // Necessary for non-webserver users.
+     }
+     else {
+@@ -115,7 +115,7 @@
+   // Check to see if the directory is writable.
+   if (!is_writable($directory)) {
+     if (($mode & FILE_MODIFY_PERMISSIONS) && @chmod($directory, 0775)) {
+-      drupal_set_message(t('The permissions of directory %directory have been changed to make it writable.', array('%directory' => $directory)));
++      watchdog('file system', 'The permissions of directory %directory have been changed to make it writable.', array('%directory' => $directory));
+     }
+     else {
+       form_set_error($form_item, t('The directory %directory is not writable', array('%directory' => $directory)));

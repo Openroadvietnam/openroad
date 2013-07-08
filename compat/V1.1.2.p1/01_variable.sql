@@ -1,0 +1,2 @@
+REPLACE INTO `variable` (`name`, `value`) VALUES
+('user_mail_register_no_approval_required_body', 's:353:"Dear [recipient-firstname],\r\n\r\nThank you for registering Joinup platform.\r\n\r\nYou must confirm your registration by clicking on this link or copying and pasting it in your browser:\r\n\r\n!login_url\r\n\r\nThis is a one-time login, so it can be used only once.\r\n\r\nAfter logging in, you will be redirected to !edit_uri you must change your password.\r\n\r\n!site Team";');

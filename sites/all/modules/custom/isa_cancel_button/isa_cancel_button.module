@@ -1,0 +1,40 @@
+<?php
+/**
+ * @defgroup isa_cancel_button
+ * @brief Add a feature of cancel button to every content edit form
+ * @file 
+ * Modules main file
+ * @ingroup isa_cancel_button
+ */
+
+/**
+ * Implement of hook_form_alter
+ * 
+ */
+function isa_cancel_button_form_alter(&$form, &$form_state, $form_id) {
+	if(strstr($form_id, 'node') && isset($form['#node'])) {
+			$form['buttons']['cancel'] = array(
+				'#type' => 'submit',
+				'#access' => TRUE,
+				'#value' => t('Cancel'),
+				'#weight' => 100,
+				'#submit' => array('_isa_cancel_button_submit')
+			);
+      
+	}
+}
+
+function _isa_cancel_button_submit($form, &$form_state) {
+	$node = $form['#node'];
+  
+	if ($_GET['destination']) {
+		$backurl = $_GET['destination'];
+	}
+	else {
+		$backurl =  ((!isset($node->nid) || isset($node->is_new)) ? 'node/add' : "node/{$node->nid}");
+	}
+  setcookie("PopupRefNid", '', time() - 3600, '/');
+  setrawcookie("PopupRefTitle", '', time() - 3600, '/');
+	
+  drupal_goto($backurl);
+}

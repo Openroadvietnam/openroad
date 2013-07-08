@@ -1,0 +1,158 @@
+<?php
+
+/**
+ * @defgroup isa_og_helper
+ * This modules intends to help og_user_roles to determine the context group node in order to set the adequate roles to the current user.
+ * 
+ * @file
+ * This is the main file of the isa_og_helper module.
+ * 
+ * @ingroup isa_og_helper
+ */
+//Most active block algorithm
+function isa_og_helper_views_query_alter(&$view, &$query) {
+	if ($view->name == 'groups_lists' && $view->current_display == 'block_2'){
+		$query->orderby[0]='post_count_joinup DESC';
+	}
+}
+
+/**
+ * Implementation of hook_views_api().
+*/
+function isa_og_helper_views_api() {
+	return array(
+			'api' => 2,
+			//'path' => drupal_get_path('module', 'isa_og_helper'),
+	);
+}
+
+/**
+ * Implement of hook_enable() used here to ensure this module is
+ * installed with a weight lower than og_user_roles.
+ *
+ */
+function isa_og_helper_enable() {
+  $module_name = 'isa_og_helper';
+  $sql_query = "SELECT weight
+                FROM {system}
+                WHERE name ='og_user_roles'";
+  $query_result = db_query($sql_query);
+  $weight = db_result($query_result);
+
+  if ($weight) {
+    $weight = $weight - 5;
+  } else {
+    $weight = -50;
+  }
+  db_query('UPDATE {system} SET weight = %d WHERE name = \'%s\'', $weight, $module_name);
+}
+
+/**
+ * This function does the same as og_user_roles_init or og_init, i.e.
+ * determining the context group node, if any.
+ * @see og_user_roles_init() -- allows us to override its group context
+ *   detection using og_set_group_context
+ * @see og_init() -- sets the group context only if it can discover it by itself
+ */
+function isa_og_helper_init() {
+  $groups_type = array(ISA_COMMUNITY_TYPE, ISA_PROJECT_TYPE);
+  $potential_group_node_id = isa_og_helper_get_group_nid();
+  //d($potential_group_node_id, sprintf('Potential group id for the %s page', drupal_get_normal_path($_GET['q'])));
+  // So, have we found an interesting node id?
+  $group_node = NULL;
+  if (!is_null($potential_group_node_id)) {
+    $potential_group_node = node_load($potential_group_node_id);
+    if ($potential_group_node && og_is_group_type($potential_group_node->type)) {
+      $group_node = $potential_group_node;
+    }
+  }
+  // So, have we found an interesting group node in our context?
+  if (!is_null($group_node)) {
+    // finally, we set the group context for og_user_roles to use it
+
+    og_set_group_context($group_node);
+  }
+}
+
+/**
+ * Analyzes the current Drupal path in order to determine a potential group node
+ * id.
+ * @return The potential group node id, or NULL if none could be found.
+ */
+function isa_og_helper_get_group_nid() {
+  $groups_type = array(ISA_COMMUNITY_TYPE, ISA_PROJECT_TYPE, ISA_SOFTWARE_TYPE, ISA_ASSET_TYPE);
+//  $group_posts = array (ISA_TOPIC_TYPE, 'wiki', 'blog');
+  //$projects_type = array('project_issue','project_release');
+  $potential_group_node_id = NULL;
+  $path = explode('/', drupal_get_normal_path($_GET['q']));
+  // paths like community/%/* are explicite
+  if (isset($path[1])) {
+    if (in_array($path[0], $groups_type)/* && is_numeric($path[1]) */) {
+      $path = explode('/', drupal_get_normal_path($path[0] . '/' . $path[1] . '/description'));
+      $potential_group_node_id = $path[1];
+      // case when the path alias is not loaded yet : node/gid
+    } elseif ($path[0] == 'node' && is_numeric($path[1])
+            || ($path['0'] == 'hl' && is_numeric($path[1]))
+            || $path['0'] == 'comment' && is_numeric($path[2])) {
+      if ($path['0'] == 'comment') {
+        if ($path[1] == 'edit') {
+          $comment = _comment_load($path[2]);
+          $node = node_load($comment->nid);
+        } else {
+          $node = node_load($path[2]);
+        }
+      } else {
+        $node = node_load($path[1]);
+      }
+      if ($node->type == 'project_issue') {
+        $potential_group_node_id = $node->project_issue['pid'];
+      } elseif ($node->type == 'project_release') {
+        $potential_group_node_id = $node->project_release['pid'];
+      } elseif (og_is_group_type($node->type)) {
+        $potential_group_node_id = $node->nid;
+      } elseif (isset($node->og_groups)) {
+        $potential_group_node_id = array_shift(array_keys($node->og_groups));
+      }
+
+      // creating a content implies creating it under a known context
+      // paths like node/add/content_type with argument gids
+    } elseif ($path[0] == 'node' && $path[1] == 'add') {
+      // news are not into a community
+      if ($path[2] != 'news' && !in_array($path[2], $groups_type) && !empty($_REQUEST['gids'])) {
+        if (is_numeric(current($_REQUEST['gids']))) {
+          $potential_group_node_id = current($_REQUEST['gids']);
+        }
+        //case when creating a project release or issue
+      } elseif ($path[2] == 'project-issue') {
+        $potential_group_node_id = project_get_nid_from_uri($path[3]);
+      } elseif ($path[2] == 'project-release') {
+        $potential_group_node_id = $path[3];
+      }
+    } elseif ($path['0'] == 'hl' && is_numeric($path[1]) && $path['2'] == 'remove') {
+      $hl = isa_highlight_get_highlight($path[1]);
+      $potential_group_node_id = $hl->gid;
+    } elseif (strpos(drupal_get_normal_path($_GET['q']), 'admin/content/taxonomy') !== FALSE) {
+      if ($path['3'] == 'edit' && $path['4'] == 'term') {
+        $term = taxonomy_get_term($path['5']);
+        if ($term->vid == variable_get('package_vid', 66)) {
+          $parent = taxonomy_get_parents($term->tid);
+          if ($parent) {
+            $parent = array_shift($parent);
+            $node = nat_get_nids(array($parent->tid));
+            $potential_group_node_id = array_shift(array_keys($node));
+          }
+        }
+      } elseif ($path['4'] == 'add' && is_numeric($path['3'])) {
+        if (isset($_GET['gid'])) {
+          $potential_group_node_id = $_GET['gid'];
+        }
+      }
+    }
+    else if ($path['0'] == 'repository' && $path['1'] == 'upload-metadata') {
+      $destination = explode('/', $_GET['destination']);
+      $potential_group_node_id = $destination[1];
+    }
+  }
+  return $potential_group_node_id;
+}
+

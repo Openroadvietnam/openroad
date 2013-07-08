@@ -1,0 +1,48 @@
+/* https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-337 */
+.rightFloat{float: right;}
+.brr{clear:both}
+
+
+/* https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-834 */
+.flo-right {
+	border-top:3px solid #DBE4EA;
+	padding:5px 0 0;
+    /* background: #F4F4F2;*/
+    padding: 10px 0 20px;
+    width: 100%;
+}
+
+.flo-right .twtr-timeline{
+	width:90%;
+}
+
+.twrtr-doc{
+	width:200px !important;
+}
+
+.socialHeader {
+    padding: 10px;
+}
+
+.socialHeader.linkedin {
+    font-weight: bold;
+    padding-bottom: 15px;
+    padding-left: 55px;
+
+    background: url(/sites/all/themes/joinup/images/icons/social/linkedin_icon.png) 15px 5px no-repeat; 
+}
+
+.socialHeader.twitter {
+    font-weight: bold;
+    padding-bottom: 15px;
+    padding-left: 55px;
+    background:#F0F6FA url(/sites/all/themes/joinup/images/icons/social/twitter_icon.png) 15px 5px no-repeat;  
+}
+
+.socialHeader.linkedin a {
+    color: #2E8CC2;
+}
+
+.socialHeader.twitter a {
+    color: #37ABE0;
+}

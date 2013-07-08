@@ -1,0 +1,6 @@
+; $Id
+core            = "6.x"
+description     = "Alter subscriptions features for the needs of joinup project"
+name            = "ISA Subscriptions"
+package         = "ISA Toolbox"
+dependencies[]  = subscriptions

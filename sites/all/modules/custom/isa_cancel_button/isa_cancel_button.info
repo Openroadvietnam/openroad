@@ -1,0 +1,7 @@
+
+;ID
+name = "ISA Cancel Button"
+description = Adds a cancel button on every content edit form.
+package = "ISA Toolbox"
+core = 6.x
+

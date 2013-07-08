@@ -1,0 +1,1 @@
+ var jQueryOriginal = $.noConflict(true);  

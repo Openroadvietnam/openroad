@@ -1,0 +1,108 @@
+<?php
+
+/**
+ * @defgroup views_remember_pager
+ * @brief Remember last clicked pager by user
+ * 
+ */
+/**
+ * @file
+ * 
+ * Modules main file
+ * 
+ * @ingroup views_remember_pager
+ */
+
+/**
+ * Implementation of hook_views_pre_execute
+ *
+ * Remember pager per view (only for ajax views)
+ * 
+ */
+function views_remember_pager_views_pre_execute(&$view) {
+  //check if the current display use the default pager
+  if ($view->display_handler->options['defaults']['use_pager']){
+     $display = $view->display_handler->default_display->display->display_options;
+   }else{
+     $display = $view->display_handler->display->display_options;
+   }
+  if (isset($display['remember_pager']) && (@$GLOBALS['user']->uid > 0)) {
+    $view_name = $view->name . '_' . $view->current_display . '_' . $view->args[0];
+    if (!isset($_GET['page']) && !isset($_GET['pager_element']) && $_SESSION[$view_name] > 0) {
+      $_GET['page'] = $_SESSION[$view_name];
+    } else if (isset($_GET['page']) && $_GET['view_name'] == $view->name && $_GET['view_display_id'] == $view->current_display) {
+      $_SESSION[$view_name] = $_GET['page'];
+    } else {
+      $_SESSION[$view_name] = 0;
+    }
+  }
+}
+
+/**
+ *
+ * Implementation of hook_form_alter
+ * 
+ * Add in the views form -> use pager form,a checkbox for enable the remember last clicked
+ * 
+ */
+function views_remember_pager_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'views_ui_edit_display_form' && $form_state['section'] == 'use_pager') {
+    $display = $form_state['view']->display[$form_state['display_id']];
+
+    if ($display->handler->options['defaults']['use_pager'] == TRUE){
+      $display = $display->handler->default_display->display;
+    }
+    $remember_pager = $display->handler->get_option('remember_pager');
+    $default = $remember_pager ? $remember_pager : '0';
+    // add checkbox
+    $form['remember_pager'] = array(
+        '#type' => 'checkbox',
+        '#title' => 'Remember last clicked pager',
+        '#description' => 'Check if you want that the last clicked pager is saved',
+        '#weight' => 5,
+        '#default_value' => $default,
+    );
+
+    $form['buttons']['#weight'] = 6;
+    $form['buttons']['submit']['#submit'] = array('views_remember_pager_views_submission');
+    if (isset($form['override']['button']['#submit'])) {
+      $form['override']['button']['#submit'] = array('views_remember_pager_views_ovveride_submission');
+    }
+  }
+}
+
+/**
+ * Submit handler for views record count form.
+ */
+function views_remember_pager_views_submission(&$form, &$form_state) {
+  $display = &$form_state['view']->display[$form_state['display_id']];
+
+  // Not sure I like this being here, but it seems (?) like a logical place.
+  $cache_plugin = $display->handler->get_cache_plugin();
+  if ($cache_plugin) {
+    $cache_plugin->cache_flush();
+  }
+  
+  $remember_pager = $form_state['values']['remember_pager'];
+  if ($display->handler->options['defaults']['use_pager'] == TRUE){
+      $display->handler->default_display->display->handler->set_option('remember_pager', $remember_pager);
+  }else{
+     $display->handler->set_option('remember_pager', $remember_pager);
+  }
+  
+  $display = &$form_state['view']->display[$form_state['display_id']];
+  $display->handler->options_submit($form, $form_state);
+  views_ui_cache_set($form_state['view']);
+}
+
+/**
+ * Override handler for views record count form.
+ */
+function views_remember_pager_views_ovveride_submission(&$form, &$form_state) {
+  $display = &$form_state['view']->display[$form_state['display_id']];
+  $display->handler->options_override($form, $form_state);
+  
+  views_ui_cache_set($form_state['view']);
+  $form_state['rerender'] = TRUE;
+  $form_state['rebuild'] = TRUE;
+}
