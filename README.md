@@ -1,5 +1,4 @@
-Openroad
-========
+## Openroad
 
 Openroad là một phần mềm tự do nguồn mở phát triển dựa trên Joinup, một nền tảng cộng tác và chia sẻ các công nghệ mở nói chung và các ứng dụng nguồn mở nói riêng dành cho khu vực cộng đồng chính phủ Châu Âu.
 
@@ -13,7 +12,10 @@ Openroad bao gồm các chức năng chính:
 
 Xem thêm tại: <https://github.com/Openroadvietnam/openroad/wiki>.
 
-Tài liệu
-========
+### Tài liệu
 
 Tài liệu hướng dẫn cài đặt được đặt trong file [INSTALL.md](INSTALL.md). Các tài liệu từ nhóm phát triển châu Âu và Úc được đặt trong thư mục [docs](docs).
+
+### Giấy phép sử dụng
+
+Openroad do nhóm phát triển Openroad giữ quyền tác giả và được phân phối kèm theo giấy phép GNU GPL v2.0. Nguyên văn giấy phép sử dụng có thể được xem trong file [LICENSE](LICENSE).
