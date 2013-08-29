@@ -1,24 +1,45 @@
-- Cài đặt LAMP (ubuntu/Debian: tasksel install lamp-server hoặc apt-get install `tasksel --task-packages lamp-server`), cấu hình web server phải bật sẵn url rewrite (server.com/contact thay vì server.com/index.php?q=contact)
-- tải và giải nén pressflow (alternative cho Drupal) vào thư mục web
-- Copy thư mục sites của joinup vào root của pressflow: cp -r joinup/sites pressflow/
-- (optional, cần nghiên cứu thêm) áp dụng các patch của joinup vào pressflow: (joinup/)sites/core_patches/apply_patches.sh
-- Copy default.settings.php -> settings.php, thêm config cần thiết
-- Tạo database bằng script có sẵn trong (joinup/)dbscripts/database_backups/
-$ mysql -u root -p
-mysql > create database joinup;
-mysql > create user joinup;
-mysql > grant all privileges on joinup.* to joinup@"localhost" identified by "<password>";
-mysql > [^D]
-$ mysql -u joinup -p < [tên file sql].sql
-- Sửa thông tin database trong settings.php
+### Cài đặt trang Joinup chính
 
-/var/www/joinup/sites/all/modules/custom/isa_node_form/isa_node_form.module
-Có một số vấn đề với include_paths, lúc nào cũng chỉ là nội dung default, không sử dụng cái trong drupal. -> src_adms/bootstrap.php mới lỗi.
+Quy trình cài đặt Joinup cũng giống như cài đặt một site Drupal bình thường.
 
-- (optional nhưng cần cho ~60% tính năng của joinup) cài đặt hệ thống tìm kiếm solr
-Tải solr 3.6.2 (chưa kiểm tra 4.4 có được không nhưng 3.6.2 là cùng thời kỳ với joinup).
+1. Cài đặt LAMP (Ubuntu/Debian: `tasksel install lamp-server` hoặc <code>apt-get install \`tasksel --task-packages lamp-server\`</code>), cấu hình web server phải bật sẵn url rewrite (server.com/contact thay vì server.com/index.php?q=contact)
+2. Tải và giải nén Pressflow 6 (một bản phân phối Drupal) vào thư mục web, gọi thư mục này là `$JOINUP`, tải và giải nén (hoặc svn checkout, git clone) mã nguồn của Joinup vào thư mục nào đó bất kỳ, gọi là `$SRC`.
+3. Copy thư mục `sites` của Joinup vào root của Pressflow: `cp -r $SRC/sites $JOINUP`
+4. (**optional**) Apply các patch của Joinup vào Pressflow: `sh $JOINUP/sites/core_patches/apply_patches.sh` (*cần nghiên cứu thêm mục đích của các patch này, có vẻ chủ yếu là để hỗ trợ cài đặt với proxy*)
+5. Tạo database bằng script có sẵn trong `$SRC/dbscripts/database_backups/V1.4.3.p4_clean_backup.sql.gz` (cần giải nén thành file *.sql thông thường)
+    
+        $ mysql -u root -p
+        mysql > create database joinup;
+        mysql > create user joinup;
+        mysql > grant all privileges on joinup.* to joinup@"localhost" identified by "<password>";
+        mysql > [^D]
+        $ mysql -u joinup -p < V1.4.3.p4_clean_backup.sql
+
+6. Copy `$JOINUP/sites/default/default.settings.php` -> `$JOINUP/sites/default/settings.php`, thêm thông tin về database mới tạo ở bước trên.
+
+**NOTES**
+`/var/www/joinup/sites/all/modules/custom/isa_node_form/isa_node_form.module`
+Có một số vấn đề với `include_paths`, lúc nào cũng chỉ là nội dung default, không sử dụng cái trong drupal. -> `src_adms/bootstrap.php` mới lỗi.
+
+
+### Cài đặt Solr
+
+Solr optional nhưng cần cho ~60% tính năng của joinup. Bản chúng ta sử dụng là 3.6.2 (chưa tìm hiểu 4.4 có hoạt động không nhưng 3.6.2 cùng thời kỳ ra đời với bản joinup hiện tại).
+
+
+1. Tải Solr, giải nén ở một thư mục nào đó bất kỳ, gọi thư mục này là `$SOLR`. Backup các file `$SOLR/example/solr/conf/{schema.xml,solrconfig.xml,protwords.txt}` và copy các file tương ứng từ `$JOINUP/sites/all/modules/contributed/apachesolr/` vào thế chỗ.
+2. Khởi động Solr bằng cách chạy lệnh `cd $SOLR/example && java -jar start.jar`
+3. Kiểm tra Solr đã hoạt động chưa bằng cách truy cập địa chỉ web: <http://localhost:8983/solr/admin/>
+
+
+### Kết nối Solr với Tomcat
+
 Solr phải cài đặt cùng tomcat (chưa hiểu tại sao).
 
-1. Tải solr, giải nén ở một thư mục nào đó bất kỳ, gọi thư mục này là $SOLR. Backup các file $SOLR/example/solr/conf/{schema.xml,solrconfig.xml,protwords.txt} và copy các file tương ứng từ $JOINUP/sites/all/modules/contributed/apachesolr/ vào thế chỗ.
-2. Khởi động solr bằng cách lệnh `cd $SOLR/example && java -jar start.jar`
-3. Kiểm tra solr đã hoạt động chưa bằng cách truy cập địa chỉ web: <http://localhost:8983/solr/admin/>
+1. Tạo file `$TOMCAT/conf/Catalina/localhost/solr.xml`
+
+        <?xml version="1.0" encoding="utf-8"?>
+             <Context docBase="/path/to/solr/apache-solr.war" debug="1" crossContext="true">
+             <Environment name="solr/home" type="java.lang.String" value="/path/to/solr/" override="true"/>
+        </Context>
+2. Khởi động tomcat bằng lệnh `$TOMCAT/bin/startup.sh`. Truy cập trang điều khiển Solr từ Tomcat bằng địa chỉ <http://localhost:8080/solr>.
