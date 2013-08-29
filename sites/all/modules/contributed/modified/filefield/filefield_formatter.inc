@@ -133,7 +133,7 @@ function theme_filefield_file($file) {
     $options['attributes']['title'] = $file['filename'];
   }
 
-	/** SGS : cut filename if it's too long */
+	/** modified SGS : cut filename if it's too long */
   if (strlen($link_text) > MAX_DISPLAY_FILENAME_WIDTH){
     $link_text = substr($link_text, 0, MAX_DISPLAY_FILENAME_WIDTH );
     $link_text .= '...';

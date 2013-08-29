@@ -9,11 +9,27 @@
  * 
  * @ingroup isa_og_helper
  */
+//Most active block algorithm
+function isa_og_helper_views_query_alter(&$view, &$query) {
+	if ($view->name == 'groups_lists' && $view->current_display == 'block_2'){
+		$query->orderby[0]='post_count_joinup DESC';
+	}
+}
+
+/**
+ * Implementation of hook_views_api().
+*/
+function isa_og_helper_views_api() {
+	return array(
+			'api' => 2,
+			//'path' => drupal_get_path('module', 'isa_og_helper'),
+	);
+}
 
 /**
  * Implement of hook_enable() used here to ensure this module is
  * installed with a weight lower than og_user_roles.
- * 
+ *
  */
 function isa_og_helper_enable() {
   $module_name = 'isa_og_helper';
@@ -131,6 +147,10 @@ function isa_og_helper_get_group_nid() {
           $potential_group_node_id = $_GET['gid'];
         }
       }
+    }
+    else if ($path['0'] == 'repository' && $path['1'] == 'upload-metadata') {
+      $destination = explode('/', $_GET['destination']);
+      $potential_group_node_id = $destination[1];
     }
   }
   return $potential_group_node_id;

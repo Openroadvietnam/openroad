@@ -1,0 +1,74 @@
+/**************************************************BUSCADOR PEOPLE*/
+div.view div.view-header div.alpha-sort ul.links li{
+    float:left;
+    margin-left: 9px;
+}    
+/**************************************************HIGHLIGHTS*/
+#introduction-title h2,
+#introduction-title .bracket,
+#introduction-title .field-rating{
+    float:left;
+}
+#introduction-title .field-rating{
+    padding-top: 15px;
+}
+#introduction-title .bracket,
+#introduction-title .field-rating{
+    padding-top: 14px;
+}
+#block-isa_blocks-1 .fields-details-after-rating{
+    padding-left: 12px;
+}
+.layout-body #additional-tools{
+    z-index: 2;
+}
+/**************************************************HEADER*/
+#block-user-1 h3{
+    background: none;
+    padding: 0;
+}
+.menu-logged h3{
+    font-size: 13px;
+}
+.menu-logged .content{
+    font-size: 11px;
+}
+#header #user-box  .menu-logged h3{
+    margin-top: -18px;
+}
+#header #user-box #block-user-1 {
+    float: left;
+}
+
+#block-user-1 div.block h3{
+    background: none;
+}
+/*****************************************************FOOTER*/
+.goto-top a:hover{
+    cursor: pointer;
+}
+/*****************************************************HELP WINDOW*/
+html.modal, .modal html, body.modal, .modal body {
+    overflow: inherit;
+}
+/************************************************************/
+div.node div.node-content div.edit-link {
+    margin: -25px 0 1px;
+    height: 15px;
+}
+
+/***********************************************SEMANTIC ASSET SEARCH*/
+/****************FIX THE LAYOUT PROBLEMS DUE TO SMALLER COLUMN WIDTH*/
+#views-exposed-form-Catalogue-page-1 div.views-exposed-widgets {
+    height: 130px;
+}
+
+div.view div.view-filters form div.views-exposed-widgets div.views-exposed-widget input.form-submit {
+    margin: 20px 0 0 40px;
+}
+/***********************************************DATE POPUP SELECTOR*/
+.ui-datepicker{
+    display: block;
+}
+
+

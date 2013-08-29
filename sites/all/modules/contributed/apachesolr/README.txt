@@ -29,12 +29,7 @@ Before enabling it, you must also do the following:
 
 Get the PHP library from the external project. The project is
 found at:  http://code.google.com/p/solr-php-client/
-
-If you use drush make, run this command from the apachesolr module directory:
-
-drush make --no-core -y  --contrib-destination=. apachesolr.make
-
-Otherwise, from the apachesolr module directory, run this command:
+From the apachesolr module directory, run this command:
 
 svn checkout -r22 http://solr-php-client.googlecode.com/svn/trunk/ SolrPhpClient
 
@@ -151,7 +146,7 @@ behavior:
 
  - apachesolr_exclude_nodeapi_types: an array of node types each of which is
    an array of one or more module names, such as 'comment'.  Any type listed
-   will have any listed modules' nodeapi 'update_index' implementation skipped
+   will have any list module's nodeapi 'update_index' implementation skipped
    when indexing. This can be useful for excluding comments or taxonomy links.
 
  - apachesolr_ping_timeout: the timeout (in seconds) after which the module will
@@ -168,6 +163,9 @@ behavior:
    with the Apache Solr server.
 
  - apachesolr_query_class: the default query class to use.
+ 
+ - apachesolr_index_comments_with_node: TRUE | FALSE. Whether to index comments
+   along with each node.
 
  - apachesolr_cron_mass_limit: update or delete at most this many documents in
    each Solr request, such as when making {apachesolr_search_node} consistent
@@ -234,22 +232,22 @@ hook_apachesolr_cck_fields_alter(&$mappings)
   text fields with option widgets:
 
     $mappings['text'] = array(
-      'optionwidgets_select' => array('callback' => '', 'index_type' => 'string'),
-      'optionwidgets_buttons' => array('callback' => '', 'index_type' => 'string')
+      'optionwidgets_select' => array('indexing_callback' => '', 'index_type' => 'string', 'facets' => TRUE),
+      'optionwidgets_buttons' => array('indexing_callback' => '', 'index_type' => 'string', 'facets' => TRUE)
     );
 
   In your _alter hook implementation you can add additional field types such as:
 
-    $mappings['number_integer']['number'] = array('callback' => '', 'index_type' => 'integer');
+    $mappings['number_integer']['number'] = array('indexing_callback' => '', 'index_type' => 'integer', 'facets' => TRUE);
 
   You can allso add a mapping for a specific field.  This will take precedence over any
   mapping for a general field type. A field-specific mapping would look like:
 
-    $mappings['per-field']['field_model_name'] = array('callback' => '', 'index_type' => 'string');
+    $mappings['per-field']['field_model_name'] = array('indexing_callback' => '', 'index_type' => 'string', 'facets' => TRUE);
 
   or
 
-    $mappings['per-field']['field_model_price'] = array('callback' => '', 'index_type' => 'float');
+    $mappings['per-field']['field_model_price'] = array('indexing_callback' => '', 'index_type' => 'float', 'facets' => TRUE);
 
   If a custom field needs to be searchable but does not need to be faceted you can change the 'facets'
   parameter to FALSE, like:
@@ -283,6 +281,7 @@ hook_apachesolr_search_result_alter(&$doc)
 hook_apachesolr_sort_links_alter(&$sort_links)
 
   Called by the sort link block code. Allows other modules to modify, add or remove sorts.
+
 
 Themers
 ----------------

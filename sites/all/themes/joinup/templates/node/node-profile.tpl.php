@@ -50,7 +50,11 @@
  * 
  */
 $user = user_load($node->uid);
+drupal_add_css(drupal_get_path('theme', 'joinup').'/styles/default/tableofcontents.css');
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-834
 ?>
+
+
 
 <div id="node-<?php print $node->nid; ?>" class="node<?php if ($sticky) { print ' sticky'; } ?><?php if (!$status) { print ' node-unpublished'; } ?> clear-block">
 	<div class="node-content">
@@ -65,7 +69,7 @@ $user = user_load($node->uid);
 			</dl>
 		</div>
 		<div id="node-personal-data" class="box personal-data">
-			<h3><?php print t('Personal data'); ?></h3>
+			<h3 class="page-subtitle-content"><?php print t('Personal data'); ?></h3>
 			<div class="odd nodes-row-first nodes-row-last clearfix">
 				<div class="colspan-2 first fields">
 					<div class="field field-picture"><?php print $node->picture; ?></div>
@@ -97,10 +101,60 @@ $user = user_load($node->uid);
 				</dl>
 			</div>
 		</div>
+		<?php 
+		//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-834
+		if((isa_toolbox_check_visibility($node, 'facebook') && isset($node->field_facebook[0]['url'])) 
+			|| (isa_toolbox_check_visibility($node, 'twitter') && isset($node->field_twitter[0]['url'])) 
+			|| (isa_toolbox_check_visibility($node, 'linkedin') && isset($node->field_linkedin[0]['url']))){	
+		?>
+		<div id="node-social-networks" class="box social-networks">
+			<h3 class="page-subtitle-content"><?php print t('Social Networks'); ?></h3>
+			<div class="odd nodes-row-first nodes-row-last clearfix">
+				<dl class="colspans-2-4 last fields">
+				
+				    <?php //if (isa_toolbox_check_visibility($node, 'field_facebook') && !empty($node->field_facebook)): ?>
+				    <?php if(isa_toolbox_check_visibility($node, 'facebook') && isset($node->field_facebook[0]['url'])): ?>
+					<dt class="field field-users-facebook-term"><?php print t('Facebook'); ?>:</dt>
+					<dd class="field field-users-facebook-description"><a href="<?php print $node->field_facebook[0]['url'] ?>" target="_blank"><img src="<?php echo base_path(). path_to_theme() ?>/images/icons/social/facebook.png" /></a> <a href="<?php print $node->field_facebook[0]['url'] ?>" target="_blank"><?php print $node->field_facebook[0]['display_title'] ?></a></dd>
+					<?php endif; ?>
+					
+                    <?php //if (isa_toolbox_check_visibility($node, 'field_twitter') && !empty($node->field_twitter)): ?>
+                    <?php if(isa_toolbox_check_visibility($node, 'twitter') && isset($node->field_twitter[0]['url'])): ?>
+                    <dt class="field field-users-twitter-term"><?php print t('Twitter'); ?>:</dt>
+					<dd class="field field-users-twitter-description"><a href="<?php print $node->field_twitter[0]['url'] ?>" target="_blank"><img src="<?php echo base_path(). path_to_theme() ?>/images/icons/social/twitter.png" /></a> <a href="<?php print $node->field_twitter[0]['url'] ?>" target="_blank"><?php print $node->field_twitter[0]['display_title'] ?></a></dd>
+                    <?php endif; ?>
+
+                    <?php //if (isa_toolbox_check_visibility($node, 'field_linkedin') && !empty($node->field_linkedin)): ?>
+                    <?php if(isa_toolbox_check_visibility($node, 'linkedin') && isset($node->field_linkedin[0]['url'])): ?>
+                    <dt class="field field-users-linkedin-term"><?php print t('Linkedin'); ?>:</dt>
+					<dd class="field field-users-linkedin-description"><a href="<?php print $node->field_linkedin[0]['url'] ?>" target="_blank"><img src="<?php echo base_path(). path_to_theme() ?>/images/icons/social/linkedin.png" /></a> <a href="<?php print $node->field_linkedin[0]['url'] ?>" target="_blank"><?php print $node->field_linkedin[0]['display_title'] ?></a></dd>
+                    <?php endif; ?>
+
+				</dl>
+			</div>
+		</div>
+		<?php } ?>
+		
+		<?php 
+		//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-834
+		if(isa_toolbox_check_visibility($node, 'professional_profile') && (isset($node->field_professional_profile[0]['value']))){	
+		?>
+		<div id="node-professional_profile" class="box professional_profile">
+			<h3 class="page-subtitle-content"><?php print t('Professional profile'); ?></h3>
+			<div class="odd nodes-row-first nodes-row-last clearfix">				
+			    <?php //if (isa_toolbox_check_visibility($node, 'field_professional_profile') && !empty($node->field_professional_profile)): ?>
+			    <?php if(isset($node->field_professional_profile)): ?>
+				<p class="field field-users-professional_profile-description"><?php print $node->field_professional_profile[0]['value'] ?></p>
+                <?php endif; ?>
+			</div>
+		</div>
+		<?php } ?>
+		
+		
   <?php if (isa_toolbox_check_visibility($node, 'company') && ($node->field_company_name[0]['value'] || $node->field_street[0]['value'] || $node->field_number[0]['value'] || $node->field_zipcode[0]['value'] ||
           $node->field_city[0]['value'] || $node->field_company_country[0]['value'] || $node->field_company_phone[0]['value'] || $node->field_company_type[0]['value'] || $node->field_company_scope[0]['value'])): ?>
 		<div id="node-organization-company" class="box organization-company">
-			<h3><?php print t('Organization/Company'); ?></h3>
+			<h3 class="page-subtitle-content"><?php print t('Organization/Company'); ?></h3>
 			<div class="odd nodes-row-first nodes-row-last clearfix">
 				<dl class="colspans-2-4 push-2 last fields">
 					<?php if ($node->field_company_name[0]['value']): ?>
@@ -131,18 +185,35 @@ $user = user_load($node->uid);
                      <?php endif; ?>
 				</dl>
 			</div>
-		</div>
- <?php endif; ?>
- <?php if (isset($profile_cv)): ?>
+		</div>	
+<?php endif; ?>
+<?php
+if (isa_toolbox_check_visibility($node, 'linkedin') && isset($node->field_linkedin[0]['url'])){
+$linkedin_url = $node->field_linkedin[0]['url'];
+ if (!is_null($linkedin_url)) {
+	if(strpos($linkedin_url,'company')){
+		$linkedin_type = "IN/CompanyProfile";
+	}else{
+		$linkedin_type = "IN/MemberProfile";
+	}
+?>
+<div class="flo-right">
+	<div class="socialHeader linkedin">
+		<a href="<?php print $linkedin_url;?>" target="_blank">Linkedin</a>
+	</div>
+	<div class="socialContent">
+		<script src="https://platform.linkedin.com/in.js" type="text/javascript"></script>
+		<script type="<?php print $linkedin_type;?>" data-id="<?php print($linkedin_url);?>" data-format="inline"></script>
+	</div>
+</div>
+<?php
+}
+}
+?>		
+ <?php if (isset($field_profile_cv_rendered)): ?>
         <div class="field field-documentation">
-          <h3><?php print t('Curriculum Vitae'); ?></h3>
-           <ul>
-             <?php foreach ($profile_cv as $key => $value): ?>
-               <?php if ($value): ?>
-                 <li><?php print $value; ?></li>
-               <?php endif; ?>
-              <?php endforeach; ?>
-            </ul>
+          <h3 class="page-subtitle-content"><?php print t('Curriculum Vitae'); ?></h3>
+          <?php print $field_profile_cv_rendered; ?>
           </div>
          <?php endif; ?>
 	</div>

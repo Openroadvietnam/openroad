@@ -244,7 +244,7 @@ function apachesolr_search_type_boost_form_submit($form_id, &$form_state) {
       try {
         $solr = apachesolr_get_solr();
         $solr->deleteByQuery("type:$type");
-        apachesolr_index_updated(time());
+        apachesolr_index_set_last_updated(time());
       }
       catch (Exception $e) {
         watchdog('Apache Solr', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);

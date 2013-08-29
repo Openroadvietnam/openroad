@@ -6,15 +6,6 @@
  */
 
 /**
- * Add a document to the $documents array based on a node ID.
- */
-function apachesolr_add_node_document(&$documents, $nid, $namespace) {
-  if ($document = apachesolr_node_to_document($nid, $namespace)) {
-    $documents[] = $document;
-  }
-}
-
-/**
  * Strip html tags and also control characters that cause Jetty/Solr to fail.
  */
 function apachesolr_clean_text($text) {
@@ -25,15 +16,9 @@ function apachesolr_clean_text($text) {
 }
 
 /**
- * Given a node ID, return a document representing that node.
+ * Given a node, return a document representing that node.
  */
-function apachesolr_node_to_document($nid, $namespace) {
-  // Set reset = TRUE to avoid static caching of all nodes that get indexed.
-  $node = node_load($nid, NULL, TRUE);
-  if (empty($node)) {
-    return FALSE;
-  }
-
+function apachesolr_node_to_document($node, $namespace) {
   $document = FALSE;
   // Let any module exclude this node from the index.
   $build_document = TRUE;
@@ -52,6 +37,9 @@ function apachesolr_node_to_document($nid, $namespace) {
     $node->title = apachesolr_clean_text($node->title);
 
     // Fetch extra data normally not visible, including comments.
+    // We do this manually (with module_implements instead of node_invoke_nodeapi)
+    // because we want a keyed array to come back. Only in this way can we decide
+    // whether to index comments or not.
     $extra = array();
     $excludes = variable_get('apachesolr_exclude_nodeapi_types', array());
     $exclude_nodeapi = isset($excludes[$node->type]) ? $excludes[$node->type] : array();
@@ -64,6 +52,10 @@ function apachesolr_node_to_document($nid, $namespace) {
           $extra[$module] = $output;
         }
       }
+
+    }
+    if (!variable_get('apachesolr_index_comments_with_node', TRUE)) {
+      unset($extra['comment']);
     }
 
     $text = $node->body . "\n\n" . implode(' ', $extra);
@@ -90,6 +82,12 @@ function apachesolr_node_to_document($nid, $namespace) {
       $document->language = $node->language;
     }
     $document->body = apachesolr_clean_text($text);
+    if (isset($node->teaser)) {
+      $document->teaser = apachesolr_clean_text($node->teaser);
+    }
+    else {
+      $document->teaser = truncate_utf8($document->body, 300, TRUE);
+    }
     $document->type = $node->type;
     $document->type_name = node_get_types('name', $node);
     $document->created = apachesolr_date_iso($node->created);
@@ -116,26 +114,28 @@ function apachesolr_node_to_document($nid, $namespace) {
 
     // Get CCK fields list
     $cck_fields = apachesolr_cck_fields();
+    // NOTE: One CCK field might result in multiple Solr fields.
     foreach ($cck_fields as $key => $cck_info) {
       if (isset($node->$key)) {
         // Got a CCK field. See if it is to be indexed.
-        $function = $cck_info['callback'];
-        if ($cck_info['callback'] && function_exists($function)) {
-          $field = $function($node, $key);
+        $function = $cck_info['indexing_callback'];
+        $fields = NULL;
+        if ($cck_info['indexing_callback'] && function_exists($function)) {
+          // NOTE: This function should always return an array.
+          $fields = $function($node, $key, $cck_info);
         }
-        else {
-          $field = $node->$key;
-        }
-        $index_key = apachesolr_index_key($cck_info);
-        foreach ($field as $value) {
-          // Don't index NULLs or empty strings
-          // We can use 'value' rather than 'safe' since we strip tags and later check_plain().
-          if (isset($value['value']) && strlen($value['value'])) {
+        // NOTE: This is now being done in the mandatory indexing callback.
+        // $index_key = apachesolr_index_key($cck_info);
+        if (is_array($fields)) {
+          // NOTE: If this were done as $key => $value, and the $index_key were
+          // done within the loop, could we support indexing one CCK field to
+          // multiple Solr fields?
+          foreach ($fields as $field) {
             if ($cck_info['multiple']) {
-              $document->setMultiValue($index_key, apachesolr_clean_text($value['value']));
+              $document->setMultiValue($field['key'], apachesolr_clean_text($field['value']));
             }
             else {
-              $document->$index_key = apachesolr_clean_text($value['value']);
+              $document->{$field['key']} = apachesolr_clean_text($field['value']);
             }
           }
         }
@@ -159,6 +159,70 @@ function apachesolr_node_to_document($nid, $namespace) {
     }
   }
   return $document;
+}
+
+function apachesolr_cck_text_indexing_callback($node, $field_name, $cck_info) {
+  $fields = array();
+  if (isset($node->{$field_name})) {
+    $index_key = apachesolr_index_key($cck_info);
+    foreach ($node->$field_name as $field) {
+      if ($index_value = (isset($field['safe']) && strlen($field['safe'])) ? $field['safe'] : FALSE) {
+        $fields[] = array(
+          'key' => $index_key,
+          'value' => $index_value,
+        );
+      }
+    }
+  }
+  return $fields;
+}
+
+function apachesolr_cck_integer_indexing_callback($node, $field_name, $cck_info) {
+  $fields = array();
+  if (isset($node->{$field_name})) {
+    $index_key = apachesolr_index_key($cck_info);
+    foreach ($node->$field_name as $field) {
+      if ($index_value = isset($field['value']) ? (int) $field['value'] : FALSE) {
+        $fields[] = array(
+          'key' => $index_key,
+          'value' => $index_value,
+        );
+      }
+    }
+  }
+  return $fields;
+}
+
+function apachesolr_cck_nodereference_indexing_callback($node, $field_name, $cck_info) {
+  $fields = array();
+  if (isset($node->{$field_name})) {
+    $index_key = apachesolr_index_key($cck_info);
+    foreach ($node->$field_name as $field) {
+      if ($index_value = (isset($field['nid']) && strlen($field['nid'])) ? $field['nid'] : FALSE) {
+        $fields[] = array(
+          'key' => $index_key,
+          'value' => $index_value,
+        );
+      }
+    }
+  }
+  return $fields;
+}
+
+function apachesolr_cck_userreference_indexing_callback($node, $field_name, $cck_info) {
+  $fields = array();
+  if (isset($node->$field_name)) {
+    $index_key = apachesolr_index_key($cck_info);
+    foreach ($node->{$field_name} as $field) {
+      if ($index_value = (isset($field['uid']) && strlen($field['uid'])) ? $field['uid'] : FALSE) {
+        $fields[] = array(
+          'key' => $index_key,
+          'value' => $index_value,
+        );
+      }
+    }
+  }
+  return $fields;
 }
 
 /**
@@ -268,7 +332,7 @@ function apachesolr_cron_check_node_table() {
       $nodes = array();
     }
   }
-  // Any remaning ones if the limit is not reached.
+  // Any remaining ones if the limit is not reached.
   if (count($nodes)) {
     $node_lists[] = $nodes;
   }
@@ -279,6 +343,7 @@ function apachesolr_cron_check_node_table() {
       break;
     }
   }
+
   // Check for deleted content that wasn't deleted from the index.
   $result = db_query("SELECT asn.nid FROM {apachesolr_search_node} asn LEFT JOIN {node} n ON n.nid = asn.nid WHERE n.nid IS NULL");
   $node_lists = array();
@@ -326,14 +391,14 @@ function apachesolr_nodeapi_mass_update($nodes) {
   try {
     $solr = apachesolr_get_solr();
     $solr->deleteByMultipleIds($unpublished_ids);
-    apachesolr_index_updated($time);
+    apachesolr_index_set_last_updated(time());
 
-      // There was no exception, so update the table.
+    // There was no exception, so update the table.
     if ($published_ids) {
-      db_query('UPDATE {apachesolr_search_node} SET changed = %d, status = 1 WHERE nid IN ('. db_placeholders($published_ids) .')', array_merge((array) $time, array_keys($published_ids)));
+      db_query("UPDATE {apachesolr_search_node} SET changed = %d, status = 1 WHERE nid IN (". db_placeholders($published_ids) .")", array_merge(array($time), array_keys($published_ids)));
     }
     if ($unpublished_ids) {
-      db_query('UPDATE {apachesolr_search_node} SET changed = %d, status = 0 WHERE nid IN ('. db_placeholders($unpublished_ids) .')', array_merge((array) $time, array_keys($unpublished_ids)));
+      db_query("UPDATE {apachesolr_search_node} SET changed = %d, status = 0 WHERE nid IN (". db_placeholders($unpublished_ids) .")", array_merge(array($time), array_keys($unpublished_ids)));
     }
     return TRUE;
   }
@@ -358,12 +423,13 @@ function apachesolr_nodeapi_mass_delete($nodes) {
     $ids[] = apachesolr_document_id($node->nid);
     $nids[] = $node->nid;
   }
+  $time = time();
   try {
     $solr = apachesolr_get_solr();
     $solr->deleteByMultipleIds($ids);
-    apachesolr_index_updated($time);
+    apachesolr_index_set_last_updated($time);
     // There was no exception, so update the table.
-    db_query("DELETE FROM {apachesolr_search_node} WHERE nid  IN (" . db_placeholders($nids) . ")", $nids);
+    db_query("DELETE FROM {apachesolr_search_node} WHERE nid IN (" . db_placeholders($nids) . ")", $nids);
     return TRUE;
   }
   catch (Exception $e) {

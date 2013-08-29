@@ -73,7 +73,7 @@ function isa_release_packages_form_alter(&$form, &$form_state, $form_id) {
         drupal_set_title (t('Add a release package for %group_title @group_type', array('%group_title' => $node->title,'@group_type' => isa_toolbox_get_node_type_name($node))));
       }
     }
-  }elseif ($form_id == 'project_release_node_form'){
+  }elseif ($form_id == 'project_release_node_form' || $form_id == 'asset_release_node_form'){
     $group_id = variable_get ('current_group',  isa_toolbox_get_community_nid());
   
     $term = nat_get_term($group_id, array(variable_get('package_vid', 66)));

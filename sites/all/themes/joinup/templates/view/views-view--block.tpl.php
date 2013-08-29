@@ -13,9 +13,6 @@
 			<?php print $admin_links; ?>
 		</div>
 	<?php endif; ?>
-	<?php if ($more): ?>
-		<?php print $more; ?>
-	<?php endif; ?>
 	<?php if ($header): ?>
 		<div class="view-header">
 			<?php print $header; ?>
@@ -57,6 +54,9 @@
 		<div class="feed-icon">
 			<?php print $feed_icon; ?>
 		</div>
+	<?php endif; ?>
+	<?php if ($more): ?>
+		<?php print $more; ?>
 	<?php endif; ?>
 </div>
 <?php /* class view */ ?>

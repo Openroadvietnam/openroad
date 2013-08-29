@@ -116,7 +116,6 @@ li.sortableItem {
     margin: 3px 1px 1px 0px;
     border: 1px solid #CCC;
     background-color: #F0F0EE;
-    disc-type: none;
     z-index: 99;
 }
 

@@ -28,10 +28,6 @@ function doSVNRepositoryCreation($svn_creation_request) {
 		return;
 	}
 
-	//Copy the hook post-commit
-    copy('conf/post-commit.tmpl', $repos_path . '/hooks/post-commit');
-    chmod(sprintf('%s/hooks/post-commit', $repos_path), fileperms(sprintf('%s/hooks/post-commit', $repos_path)) | 0110);
-
 	// Initialize the created repository using a skeleton (typically: the usual
 	// tags-trunk-branches structure)
 	if (defined('SVN_SKELETON')) {
@@ -49,6 +45,14 @@ function doSVNRepositoryCreation($svn_creation_request) {
 			return;
 		}
 	}
+
+	//Copy the hook post-commit
+    copy('conf/post-commit.tmpl', $repos_path . '/hooks/post-commit');
+    chmod(sprintf('%s/hooks/post-commit', $repos_path), fileperms(sprintf('%s/hooks/post-commit', $repos_path)) | 0110);
+
+	//Copy the hook pre-commit
+    copy('conf/pre-commit.tmpl', $repos_path . '/hooks/pre-commit');
+    chmod(sprintf('%s/hooks/pre-commit', $repos_path), fileperms(sprintf('%s/hooks/pre-commit', $repos_path)) | 0110);
 
 	// log the work is done
 	taskSucceeded(REPOSITORIES_MANAGEMENT_TABLE, $svn_creation_request['task_id']);

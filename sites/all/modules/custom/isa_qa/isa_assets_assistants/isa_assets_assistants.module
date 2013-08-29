@@ -443,7 +443,7 @@ This is an auto-generated Asset Development Assistant. Please refer to the libra
 ');
   
   $description[1][3] = array('label'=>'1.1.4 List technological requirements',
-                          'description'=> 'Collect standards, frameworks, and technical environments in your project\'s domain and environment at an early stage. They may be considered for additional requirements.
+                          'description'=> 'Collect standards, frameworks, and technical environments in your project\'s theme and environment at an early stage. They may be considered for additional requirements.
 
   This is an auto-generated Asset Development Assistant. Please refer to the library item '.l("Asset Development Assistant","asset_assistant",array('attributes'=>array('class' => 'popups'))).' for further information.
 ');
@@ -499,7 +499,7 @@ This is an auto-generated Asset Development Assistant. Please refer to the libra
 ');
 
   $description[5][0] = array('label'=>'3.1.1 Search for assets to be reused',
-                      'description'=>'Keywords, domains and free text search of the SEMIC repository are ways to check whether there are assets developed by others which you can base your solution on.
+                      'description'=>'Keywords, themes and free text search of the SEMIC repository are ways to check whether there are assets developed by others which you can base your solution on.
 
 This is an auto-generated Asset Development Assistant. Please refer to the library item '.l("Asset Development Assistant","asset_assistant",array('attributes'=>array('class' => 'popups'))).' for further information.
 ');

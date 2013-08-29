@@ -1,8 +1,8 @@
 Index: includes/common.inc
 ===================================================================
---- includes/common.inc	(revision 470)
-+++ includes/common.inc	(working copy)
-@@ -458,7 +458,19 @@
+--- includes/common.inc	Fri Aug 24 08:21:10 2012
++++ includes/common.inc	Fri Aug 24 08:51:18 2012
+@@ -457,13 +458,63 @@
      case 'feed':
        $port = isset($uri['port']) ? $uri['port'] : 80;
        $host = $uri['host'] . ($port != 80 ? ':'. $port : '');
@@ -17,12 +17,56 @@ Index: includes/common.inc
 +      ///PROXYHACK
        $fp = @fsockopen($uri['host'], $port, $errno, $errstr, 15);
 +      //PROXYHACK
-+      }
++      }
 +      ///PROXYHACK
        break;
      case 'https':
        // Note: Only works for PHP 4.3 compiled with OpenSSL.
-@@ -489,10 +501,19 @@
+       $port = isset($uri['port']) ? $uri['port'] : 443;
+       $host = $uri['host'] . ($port != 443 ? ':'. $port : '');
+       $fp = @fsockopen('ssl://'. $uri['host'], $port, $errno, $errstr, 20);
++
++      // PROXYHACK
++      // return an object containing the HTTP request headers, response code, protocol,
++      // *   status message, headers, data and redirect status.
++      $proxy_not_required = is_in_no_proxy_list($uri['host']);
++      if ((variable_get('proxy_server', '') != '') && (FALSE == $proxy_not_required)) {
++        // Full treatment using CURL and return
++        // Initialisation
++        $ch = curl_init();
++
++        // Configuration
++        curl_setopt($ch, CURLOPT_URL, $url);
++        curl_setopt($ch, CURLOPT_HEADER, FALSE);
++        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
++        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
++        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
++        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
++
++        curl_setopt($ch, CURLOPT_PROXY, variable_get('proxy_server', ''));
++        curl_setopt($ch, CURLOPT_PROXYPORT, variable_get('proxy_port', 8080));
++        $proxy_username = variable_get('proxy_username', '');
++        if (!empty($proxy_username)) {
++          curl_setopt($ch, CURLOPT_PROXYUSERPWD,
++            variable_get('proxy_username', '') . ':' . variable_get('proxy_password', ''));
++        }
++
++        // Get the result
++        $result->data = curl_exec($ch);
++        $result->code = curl_errno($ch);
++        $result->error = curl_error($ch);
++        $result->redirect_url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
++        $result->request = $url;
++
++        // Close the resources
++        curl_close($ch);
++        return $result;
++      }
++      ///PROXYHACK
+       break;
+     default:
+       $result->error = 'invalid schema '. $uri['scheme'];
+@@ -488,10 +539,19 @@
    }
  
    // Construct the path to act on.
@@ -42,7 +86,7 @@ Index: includes/common.inc
  
    // Create HTTP request.
    $defaults = array(
-@@ -527,6 +548,15 @@
+@@ -526,6 +586,15 @@
      $defaults['User-Agent'] = 'User-Agent: ' . drupal_generate_test_ua($matches[0]);
    }
  
@@ -58,7 +102,7 @@ Index: includes/common.inc
    foreach ($headers as $header => $value) {
      $defaults[$header] = $header .': '. $value;
    }
-@@ -606,6 +636,26 @@
+@@ -605,6 +674,26 @@
    $result->code = $code;
    return $result;
  }

@@ -9,7 +9,7 @@
  */
 function isa_surveys_menu() {
   $items = array();
-  $items[ISA_ASSET_TYPE . '/%/release/%/survey'] = array(
+  $items[ISA_ASSET_TYPE . '/%/asset_release/%/survey'] = array(
     'title' => 'Semantic asset usage survey',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('isa_surveys_edit_form', 1),
@@ -327,13 +327,24 @@ function isa_surveys_user_access_survey($release_id) {
  */
 function isa_surveys_trigger_download_project_event($filepath) {
   global $user;
+  //Get the project release nid associated to the filename
   $sql = "SELECT prf.nid
           FROM {files} f
           INNER JOIN {project_release_file} prf ON prf.fid = f.fid
           WHERE filepath = '%s'";
   $release_nid = db_result(db_query($sql, $filepath));
   // check the file is associated to a release
-  if ($release_nid)
+  if (!$release_nid) {
+    //There is no project release associated : get the asset release (distribution) associated
+    $sql = "SELECT cfad.nid
+            FROM {files} f
+            INNER JOIN {content_type_distribution} ctd ON ctd.field_distribution_access_url_fid = f.fid
+            INNER JOIN {content_field_asset_distribution} cfad ON cfad.field_asset_distribution_nid = ctd.nid
+            WHERE filepath = '%s'";
+    $release_nid = db_result(db_query($sql, $filepath));
+  }
+  if ($release_nid) {
     $release = node_load($release_nid);
-  rules_invoke_event('download_project', $user, $release);
+    rules_invoke_event('download_project', $user, $release);
+  }
 }

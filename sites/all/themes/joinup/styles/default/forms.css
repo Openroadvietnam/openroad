@@ -23,8 +23,8 @@ fieldset.collapsible div.fieldset-wrapper, html.js fieldset.collapsible div.fiel
 /*	Form */
 form { margin-bottom:2em; }
 /*	Form - Input field - Button/Submit */
-input.form-button, input.form-submit { margin:2em .5em 1em 0; }
-.members-filters input.form-submit { margin: 2.5em 0 0 0; }
+input.form-button, input.form-submit { margin:1em .5em 1em 0; }
+.members-filters input.form-submit { margin: 2em 0 0 0; }
 /*	Form - Five Stars Widget */
 form.fivestar-widget { margin:0; }
 form.fivestar-widget div.form-item div.description { display:none; }
@@ -42,3 +42,16 @@ div.block.sort-form div.content form { height:24px; }
 div.block.sort-form div.content form * { display:inline; }
 div.block.sort-form div.content form div.form-item label { margin-right:5px; }
 div.block.sort-form div.content form div.form-item select.form-select * { display:block; }
+
+/* Specific needs for flexifields on the assets */
+#edit-field-language-multiple-value-wrapper,
+#edit-field-metadata-language-multiple-value-wrapper,
+#edit-field-asset-version-0-wrapper,
+#edit-field-asset-version-note-0-wrapper { border-width: 0 0 1px 0; border-style: dashed; border-color: #AEAEAE; padding: 10px 5px; }
+#edit-field-language-multiple-value-wrapper label,
+#edit-field-metadata-language-multiple-value-wrapper label,
+#edit-field-asset-version-0-wrapper label,
+#edit-field-asset-version-note-0-wrapper label { background: #F7F7F7; height: 35px; line-height: 35px; padding: 0 0 0 10px; margin-bottom: 10px; }
+#edit-field-asset-version-0-value-wrapper label,
+#edit-field-asset-version-note-0-value-wrapper label { background: none; height:19px; line-height:19px; }
+

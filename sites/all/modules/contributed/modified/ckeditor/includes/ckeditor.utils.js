@@ -308,6 +308,11 @@ Drupal.ckeditorEnterModeConvert = function(enterMode){
 }
 
 Drupal.ckeditorLinebreakConvert = function(textarea_id, text) {
+  if(typeof(Drupal.settings.ckeditor.settings[textarea_id]) == 'undefined' ){
+    Drupal.settings.ckeditor.settings[textarea_id] = {
+      enterMode: 1
+    };
+  }
   var enterMode = Drupal.ckeditorEnterModeConvert(Drupal.settings.ckeditor.settings[textarea_id].enterMode);
   if (!text.match(/<(div|p|br).*\/?>/i) && text) {
     text = enterMode.startTag +  text.replace(/\r\n|\n\r/g, '\n').replace(/\n\n/g, enterMode.endTag+enterMode.startTag).replace(/\n/g, '<br />')  + enterMode.endTag;

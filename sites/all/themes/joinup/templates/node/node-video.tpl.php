@@ -64,7 +64,7 @@
 		<div class="field field-content-body"><?php print $node->content['body']['#value']; ?></div>
 		<div class="field field-video"><?php print $node->field_video_link_to_video[0]['view']; ?></div>
 		<div id="node-information" class="box information">
-			<h3 class="accessibility-info"><?php print t('Information'); ?></h3>
+			<h3 class="page-subtitle-content"><?php print t('Information'); ?></h3>
 			<div class="odd nodes-row-first nodes-row-last clearfix">
 				<dl class="colspans-2-5 push-1 last fields">
 					<?php foreach ($taxonomy_terms as $vocab => $terms): ?>

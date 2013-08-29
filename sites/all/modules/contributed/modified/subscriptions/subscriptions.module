@@ -286,6 +286,12 @@ function subscriptions_queue($event) {
     // Allow hook_subscriptions_queue_alter() modules to set uids that won't get any notifications queued:
     $noqueue_uids_where = "s.recipient_uid NOT IN (". implode(', ', array_fill(0, count($event['noqueue_uids']), '%d')) .")";
   }
+  // ISAICP-403
+  // restrict users to enqueue
+  if (!empty($event['onlyqueue_uids'])) {
+    // Allow hook_subscriptions_queue_alter() modules to set uids that will be notified exclusively:
+    $onlyqueue_uids_where = "s.recipient_uid IN (". implode(', ', array_fill(0, count($event['onlyqueue_uids']), '%d')) .")";
+  }
 
   foreach (module_implements('subscriptions') as $subs_module) {
     $subs_module_query = module_invoke($subs_module, 'subscriptions', 'queue', $event);
@@ -314,6 +320,10 @@ function subscriptions_queue($event) {
         if (!empty($event['noqueue_uids'])) {
           $where[] = $noqueue_uids_where;
           $args = array_merge($args, $event['noqueue_uids']);
+        }
+        if (!empty($event['onlyqueue_uids'])) {
+          $where[] = $onlyqueue_uids_where;
+          $args = array_merge($args, $event['onlyqueue_uids']);
         }
         $conditions = implode(' AND ', $where);
         $sql = "

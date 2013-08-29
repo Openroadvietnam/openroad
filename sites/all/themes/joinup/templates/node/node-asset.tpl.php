@@ -60,21 +60,18 @@
 <div id="node-<?php print $node->nid; ?>" class="node node-type-<?php print $node->type?> <?php if ($sticky) { print ' sticky'; } ?> <?php if (!$status) { print ' node-unpublished'; } ?> clear-block">
 	<div class="node-content">
       <?php if ($page): ?>
-		<?php if ($flags_view): ?>
-			<div class="field field-flags-view"><?php print $flags_view; ?></div>
-		<?php endif; ?>
 		<div class="field field-submitted"><?php print $submitted; ?></div>
 		<div class="field field-vote-rating"><?php print $vote_rating; ?></div>
-		<div class="field field-usage -count"><?php print $i_use_this_project ?></div>
+		<div class="field field-usage-count"><?php print $i_use_this_project ?></div>
 		<div class="field field-mission-description">
-			<h3><?php print t('Description'); ?></h3>
+			<h3 class="page-subtitle-content"><?php print t('Description'); ?></h3>
 			<?php print $node->content['og_mission']['#value']; ?>
 		</div>
 	  <?php else: ?>
         <?php if ($edit_link): ?><div class="edit-link"><?php print $edit_link; ?> </div><?php endif; ?>
       <?php endif; ?>
 		<div id="node-information" class="box information">
-			<h3 class="accessibility-info"><?php print t('Information'); ?></h3>
+			<h3 class="page-subtitle-content"><?php print t('Information'); ?></h3>
 			<div class="odd nodes-row-first nodes-row-last clearfix">
 				<dl class="colspans-3-5 first last fields">
 					<?php  if(!empty($node->og_description)):?>

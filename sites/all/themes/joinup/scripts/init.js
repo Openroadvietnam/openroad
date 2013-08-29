@@ -4,14 +4,23 @@
 	$Modify date: 2011-08-05 $
 	$Version: 006 $
  */
-
 // Initialize the slideshow when the DOM is ready
-$(document).ready(        
+$(document).ready(
+
+    
+
     function (){
+        // no longer needed, causes rightmost table columns to extend beyond the container limits
+        /*
         if (document.getElementById('homebox') != null) {
             addEvent(window, "load", resizeDiv);
             addEvent(window, "resize", resizeDiv);
         }
+        */
+
+        
+        
+        
      
         // The Cycle Plugin is a slideshow that supports many different types of transition effects for the "Lasted News" displayed in the homepage.
         sColspanContentClass = 'colspan-6 first last';
@@ -83,6 +92,14 @@ $(document).ready(
             );
 		
         // Expand/Collapse text using the "Read more" or "Hide text" button.
+        
+        //add space after h5  in div class field  for ie
+        if($.browser.msie)
+        {
+            $("div.field h5").css("padding-right","5px");
+        }
+        
+        
         aViews = Array(
             Array('view-project-node', 66)
             ,	Array('view-homepage', 120)
@@ -114,26 +131,54 @@ $(document).ready(
             if(iBeginShare!=undefined)
                 iBeginShare.hide();
         });
+
+	//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-840
+	//Apply only to the expandable sections in semantic asset an semantic repository node, to avoid the same behaviour in the menu system
+        $('.togglable > .expanded').hide();
+        $(".togglable").click(function(){
+            $(this).parent().children("div").slideToggle("slow");
+            if (!$(this).find(".expanded").is(":visible")) {
+                $(this).find(".expanded").show();
+                $(this).find(".collapsed").hide();
+            }
+            else {
+                $(this).find(".expanded").hide();
+                $(this).find(".collapsed").show();
+            }
+            return false;
+        });
+    
+    
         
     }
+    
+    
+    
+   
   
   
-
   
   
     );
   
-function advanced_search(facet) {
+function advanced_search(facets) {
     var hrefval  = $('#adsearch').attr('href').valueOf() + "/";
     var val = $('#edit-keys').val();
     if (val == undefined) {
         val = $('#edit-text').val();
-    } 
+    }    
+    if (val == undefined) {
+        val='';
+    }
+    //ISAICP-726
+    //Modify the advanced search link
     if (facet != '0'){
-        var facet = '?filters=sm_facetbuilder_facet_node_type%3A"facet_node_type%3A'+facet+'"&retain-filters=1';
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-818
+        //Change filters vars, the facets var has to contain al the facet filters
+        var facet = '?filters='+facets+'&retain-filters=1&hidden_type=1';
         $('#adsearch').attr("href", hrefval + val + facet);
     }else{
-        $('#adsearch').attr("href", hrefval + val);
+        $('#adsearch').attr("href", hrefval + val); 
     }
 };
 

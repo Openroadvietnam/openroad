@@ -117,7 +117,7 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
   protected $available_sorts;
 
   // Makes sure we always have a valid sort.
-  protected $solrsort = array('#name' => 'score', '#direction' => 'asc');
+  protected $solrsort = array('#name' => 'score', '#direction' => 'desc');
 
   /**
    * @param $solr
@@ -267,7 +267,7 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
     $sortstring = strtr($this->sortstring, array_flip($this->field_map));
     // Score is a special case - it's the default sort for Solr.
     if ('' == $sortstring) {
-      $this->set_solrsort('score', 'asc');
+      $this->set_solrsort('score', 'desc');
     }
     else {
       // Validate and set sort parameter
@@ -285,7 +285,7 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
   protected function default_sorts() {
     // The array keys must always be real Solr index fields.
     return array(
-      'score' => array('title' => t('Relevancy'), 'default' => 'asc'),
+      'score' => array('title' => t('Relevancy'), 'default' => 'desc'),
       'sort_title' => array('title' => t('Title'), 'default' => 'asc'),
       'type' => array('title' => t('Type'), 'default' => 'asc'),
       'sort_name' => array('title' => t('Author'), 'default' => 'asc'),
@@ -335,11 +335,19 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
 
   public function get_url_queryvalues() {
     $queryvalues = array();
-    if ($fq = $this->rebuild_fq(TRUE)) {
-      $queryvalues['filters'] = implode(' ', $fq);
+    $filters = array();
+    foreach ($this->fields as $pos => $field) {
+      // Look for a field alias.
+      if (isset($this->field_map[$field['#name']])) {
+        $field['#name'] = $this->field_map[$field['#name']];
+      }
+      $filters[] = $this->make_filter($field);
+    }
+    if ($filters) {
+      $queryvalues['filters'] = implode(' ', $filters);
     }
     $solrsort = $this->solrsort;
-    if ($solrsort && ($solrsort['#name'] != 'score' || $solrsort['#direction'] != 'asc')) {
+    if ($solrsort && ($solrsort['#name'] != 'score' || $solrsort['#direction'] != 'desc')) {
       if (isset($this->field_map[$solrsort['#name']])) {
         $solrsort['#name'] = $this->field_map[$solrsort['#name']];
       }
@@ -380,7 +388,11 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
       }
       $progressive_crumb[] = $this->make_filter($field);
       $options = array('query' => 'filters=' . rawurlencode(implode(' ', $progressive_crumb)));
-      if ($themed = theme("apachesolr_breadcrumb_" . $name, $field['#value'], $field['#exclude'])) {
+      $breadcrumb_name = 'apachesolr_breadcrumb_' . $name;
+      // Modules utilize this alter to consolidate several fields into one
+      // theme function. This is how CCK breadcrumbs are handled.
+      drupal_alter('apachesolr_theme_breadcrumb', $breadcrumb_name);
+      if ($themed = theme($breadcrumb_name, $field)) {
         $breadcrumb[] = l($themed, $base, $options);
       }
       else {
@@ -420,7 +432,7 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
         $filter_pos_string = $this->filterstring . ' ';
         foreach ($extracted as $filter) {
           // The trailing space on $filter['#query'] avoids incorrect
-          // matches to a substring. See http://drupal.org/node/891962
+          //  matches to a substring. See http://drupal.org/node/891962
           $pos = strpos($filter_pos_string, $filter['#query'] . ' ');
           // $solr_keys and $solr_crumbs are keyed on $pos so that query order
           // is maintained. This is important for breadcrumbs.
@@ -454,13 +466,19 @@ class Solr_Base_Query implements Drupal_Solr_Query_Interface {
       if ($aliases && isset($this->field_map[$field['#name']])) {
         $field['#name'] = $this->field_map[$field['#name']];
       }
-      $fq[] = $this->make_filter($field);
+      $fq[$field['#name']][] = $this->make_filter($field);
     }
     foreach ($this->subqueries as $id => $data) {
       $subfq = $data['#query']->rebuild_fq($aliases);
       if ($subfq) {
         $operator = $data['#fq_operator'];
-        $fq[] = "(" . implode(" {$operator} ", $subfq) .")";
+        $subqueries = array();
+        foreach ($subfq as $key => $values) {
+          foreach ($values as $value) {
+            $subqueries[] = $value;
+          }
+        }
+        $fq['subqueries'][$id] =  " (" . implode(" $operator " , $subqueries) . ")";
       }
     }
     return $fq;

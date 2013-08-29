@@ -26,7 +26,7 @@ function views_remember_pager_views_pre_execute(&$view) {
    }else{
      $display = $view->display_handler->display->display_options;
    }
-  if ($display['remember_pager']) {
+  if (isset($display['remember_pager']) && (@$GLOBALS['user']->uid > 0)) {
     $view_name = $view->name . '_' . $view->current_display . '_' . $view->args[0];
     if (!isset($_GET['page']) && !isset($_GET['pager_element']) && $_SESSION[$view_name] > 0) {
       $_GET['page'] = $_SESSION[$view_name];

@@ -3,12 +3,9 @@
 // Note: you may have to modify the above shebang for this script to work in
 // any environment
 chdir(dirname(__FILE__) . '/..');
+
 require 'conf/isasvn-conf.inc.php';
 require 'lib/authentication.inc.php';
-
-// $fh = fopen('/tmp/debug.txt', 'a');
-// fwrite($fh, sprintf('authenticating %s/%s for %s' . "\n", getenv('USER'), getenv('PASS'), getenv('URI')));
-// fclose($fh);
 
 $authentication = new Authentication(
 	LOCAL_SERVER,
@@ -18,6 +15,8 @@ $authentication = new Authentication(
 	ISA_SERVER,
 	ISA_DB_USERNAME,
 	ISA_DB_PASSWORD,
-	ISA_DB_NAME
+    ISA_DB_NAME,
+    getenv('CONTEXT'),
+    constant('URI_PREFIX')
 );
-$authentication->exit_auth_status();
+exit($authentication->exit_auth_status(getenv('USER'), getenv('PASS'), getenv('URI')));

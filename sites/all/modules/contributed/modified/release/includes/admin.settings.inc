@@ -28,14 +28,16 @@ function project_release_settings_form() {
     '#maxlength' => 255,
     '#description' => t('Customize the default format of the version strings for releases of projects on this site. Users with "administer projects" permissions can override this setting for each project.') .' '. PROJECT_RELEASE_VERSION_FORMAT_HELP,
   );
-
+//ISAICP-884
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-884
+//include option <all> in the description
   $form['project_release_file_extensions'] = array(
     '#type' => 'textfield',
     '#title' => t('Permitted file extensions'),
     '#default_value' => variable_get('project_release_file_extensions', PROJECT_RELEASE_FILE_EXTENSIONS),
     '#size' => 50,
     '#maxlength' => 255,
-    '#description' => t('Files uploaded to release nodes will only be allowed if they have an extension that is included in this list.'),
+    '#description' => t('Files uploaded to release nodes will only be allowed if they have an extension that is included in this list. Use &lt;all&gt; to allow all file extensions.'),
   );
 
   if ($tree = project_release_get_api_taxonomy()) {

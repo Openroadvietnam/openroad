@@ -1,4 +1,8 @@
 #!/bin/bash
+
+set -e
+set -x
+
 current_script=$(readlink -f $0)
 # we assume the script is in the patches directory
 patch_dir=$(dirname "${current_script}")

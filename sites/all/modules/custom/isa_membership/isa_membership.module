@@ -150,10 +150,9 @@ function isa_membership_community_members_add() {
   $type = $community_node->group_type;
   drupal_set_title(t('Add new members to the ":title" ', array(':title' => $community_node->title)) . $type);
 
-  $sql_query = isa_membership_community_candidate_users_sql($community_nid);
-  $query_result = pager_query($sql_query, ISA_MAX_USERS_LIST, 0);
+  $sql_query = isa_membership_community_candidate_users_sql();
+  $query_result = pager_query($sql_query, ISA_MAX_USERS_LIST, 0, NULL, $community_nid, $_GET['lastname'], $_GET['firstname'], $_GET['mail']);
   $candidates = isa_membership_candidate_users_organical_groups($query_result);
-
 
   if (!count($candidates)) {
     $output .= t("There is no candidate users for this {$type}.");
@@ -190,8 +189,7 @@ function isa_membership_community_members_edit() {
 
   // get the community subscribers, along with their og roles
   $sql = isa_membership_community_users_sql($community_nid);
-
-  $subscribers_resource = pager_query($sql, ISA_MAX_USERS_LIST, 0, NULL, $community_node->nid);
+  $subscribers_resource = pager_query($sql, ISA_MAX_USERS_LIST, 0, NULL, $community_nid, $_GET['lastname'], $_GET['firstname'], $_GET['mail']);
 
   $subscribers = array();
   while ($subscriber = db_fetch_object($subscribers_resource)) {
@@ -215,10 +213,9 @@ function isa_membership_community_members_edit() {
 }
 
 /**
- * @param $community_nid The node id of a community
  * @return A SQL query to select the candidate users for the given community
  */
-function isa_membership_community_candidate_users_sql($community_nid) {
+function isa_membership_community_candidate_users_sql() {
   // base variables needed to handle the job
   //
   // return user who are not in the group
@@ -236,19 +233,14 @@ function isa_membership_community_candidate_users_sql($community_nid) {
      )';
 
   //Add filters to query
-  $base_sql_query .= ' AND field_lastname_value LIKE \'%%%s%%\' ';
-  $base_sql_query .= ' AND field_firstname_value LIKE \'%%%s%%\' ';
-  $base_sql_query .= ' AND mail LIKE \'%%%s%%\' ';
+  $base_sql_query .= ' AND UPPER(field_lastname_value) LIKE UPPER("%s%") ';
+  $base_sql_query .= ' AND UPPER(field_firstname_value) LIKE UPPER("%s%") ';
+  $base_sql_query .= ' AND UPPER(mail) LIKE UPPER("%s%%") ';
 
   //Sort query
   $base_sql_query .= ' ORDER BY lastname, firstname';
 
-  // mandatory parameter: the community nid
-  if (!is_numeric($community_nid)) {
-    return (FALSE);
-  }
-  $query = sprintf($base_sql_query, $community_nid, $_GET['lastname'], $_GET['firstname'], $_GET['mail']);
-  return ($query);
+  return ($base_sql_query);
 }
 
 /**
@@ -268,9 +260,9 @@ function isa_membership_community_users_sql($community_nid) {
      AND u.status > 0 ';
 
   //Add filters to query
-  $base_sql_query .= ' AND field_lastname_value LIKE \'%%%s%%\' ';
-  $base_sql_query .= ' AND field_firstname_value LIKE \'%%%s%%\' ';
-  $base_sql_query .= ' AND u.mail LIKE \'%%%s%%\' ';
+  $base_sql_query .= ' AND field_lastname_value LIKE "%s%" ';
+  $base_sql_query .= ' AND field_firstname_value LIKE "%s%" ';
+  $base_sql_query .= ' AND u.mail LIKE "%s%" ';
 
 
   if (isset($_GET['ogur_rid']) && $_GET['ogur_rid'] == 'Facilitator') {
@@ -290,12 +282,7 @@ function isa_membership_community_users_sql($community_nid) {
 
   //Sort query
   $base_sql_query .= ' ORDER BY lastname, firstname';
-  // mandatory parameter: the community nid
-  if (!is_numeric($community_nid)) {
-    return (FALSE);
-  }
-  $query = sprintf($base_sql_query, $community_nid, $_GET['lastname'], $_GET['firstname'], $_GET['mail']);
-  return ($query);
+  return ($base_sql_query);
 }
 
 /**
@@ -304,16 +291,16 @@ function isa_membership_community_users_sql($community_nid) {
  */
 function isa_membership_candidate_users_organical_groups($query_result) {
   if (!$query_result) {
-    drupal_set_message(t('Failed to get candidate users for this community'), 'error');
+    drupal_set_message(t('Failed to get candidate users for this group'), 'error');
     return (FALSE);
   }
   else {
     // fetch every candidate
     $candidate_users = array();
     while ($candidate_user = db_fetch_object($query_result)) {
-
       $candidate_users[$candidate_user->uid] = $candidate_user;
     }
+
     // try to associate users with their profile informations
     $candidate_users = isa_membership_get_profile_fields_for_users($candidate_users);
 
@@ -878,6 +865,7 @@ function isa_membership_form_alter(&$form, $form_state, $form_id) {
             'Manager' => t('Project owner'),
             'Developer' => t('Developer'),
             'Release manager' => t('Release manager'),
+            'Contributor' => t('Contributor'),
         );
       }
     }
@@ -916,6 +904,11 @@ function isa_membership_views_query_alter(&$view, &$query) {
       }
       if ($_GET['ogur_rid'] == 'Release manager') {
         $users = isa_toolbox_get_users_by_og_roles($gid, variable_get("release_manager_rid", 17));
+        $str_roles = implode(",", array_keys($users));
+        $query->where[0]['clauses'][] = 'users.uid IN (' . $str_roles . ')';
+      }
+      if ($_GET['ogur_rid'] == 'Contributor') {
+        $users = isa_toolbox_get_users_by_og_roles($gid, variable_get("contributor_rid", 18));
         $str_roles = implode(",", array_keys($users));
         $query->where[0]['clauses'][] = 'users.uid IN (' . $str_roles . ')';
       }

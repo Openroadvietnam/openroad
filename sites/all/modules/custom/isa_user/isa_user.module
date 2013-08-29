@@ -222,3 +222,20 @@ function isa_user_static_texts_form() {
 
   return system_settings_form($form);
 }
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-854
+//Use user first and last name as author
+/**
+* Ger last and first name from user
+* @param object $user
+* @return string
+*/
+function _isa_user_get_real_name($user_profile){
+  if(!$user_profile->uid){
+    return 'Former User';
+  }
+  $first_name = $user_profile->field_firstname[0]['value'] ?: '';
+  ($first_name && $user_profile->field_lastname[0]['value']) 
+      ? $last_name = " " . $user_profile->field_lastname[0]['value'] 
+      : ($last_name = $user_profile->field_lastname[0]['value'] ?: '');
+  return sprintf("%s%s", $first_name, $last_name);
+}

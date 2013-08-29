@@ -250,10 +250,51 @@ function subscriptions_content_nodeapi(&$node, $op, $arg = 0) {
         _subscriptions_content_autosubscribe($node->type, 'node', 'nid', $node->nid, ($op == 'insert' ? 'on_post' : 'on_update'));
       }
 
-      if ((!isset($node->subscriptions_notify) || $node->subscriptions_notify) && !subscriptions_content_suppress_notifications()) {
+      // ISAICP-403
+      // even if the "notify" checkbox is not checked, at least notify moderators / facilitators (unless supress_notifications)
+      // then check inside subscriptions_queue whether to notify every one (if notify is trully set) or only moderators/project facilitators-owners;
+      if (!subscriptions_content_suppress_notifications()) {
         //queue the event for non group items when the workflow is VALIDATED and for all group item
         if(!isset($validated) || $validated == 1) {
-          subscriptions_queue($event);
+          // if user did not want to notify, send notificatios to moderators / project owners-facilitators
+          if (!(!isset($node->subscriptions_notify) || $node->subscriptions_notify)) {
+            $users_always_notify = array();
+            // Get messages so far. We do not want to queue notifications to subscribed moderators/facilitators
+            // if they already have been notified of a change (via workflow state change notifications, etc)
+            $msgs = drupal_get_messages('status', FALSE);
+            if ($msgs && $msgs['status']) {
+              $msgs = $msgs['status'];
+            }
+            else {
+              $msgs = null;
+            }
+            if (!$msgs || !in_array(t('A notification has been sent to moderators'), $msgs)) {
+              if (isset($node->_workflow)) {
+                $sid = $node->_workflow;
+              }
+              else {
+                $sid = workflow_node_current_state($node);
+              }
+              if (isset($sid) && ($sid == ISA_SID_NEWS_VALIDATED || $sid == ISA_SID_NEWS_PUBLISHED)) {
+                // content published platform-wide: queue notification to subscribed moderators
+                $users_always_notify = array_merge($users_always_notify, array_keys(isa_toolbox_get_users_by_roles(variable_get("moderator_rid", NULL))));
+              }
+            }
+            if (!$msgs || !(in_array(t('A notification has been sent to moderators'), $msgs) || in_array(t('A notification has been sent to facilitators'), $msgs) || in_array(t('A notification has been sent to the facilitator'), $msgs))) {
+              //don't send notification for topic in 'mailing list' forum
+              if ($node->type != ISA_TOPIC_TYPE || !isset($node->taxonomy[variable_get('isa_ml_forum_tid', ISA_ML_DEFAULT_FORUM_TID)])) {
+                if(!empty($node->og_groups)) {
+                  // community or project content: queue notification to subscribed facilitators
+                  $users_always_notify = array_merge($users_always_notify, array_keys(isa_toolbox_get_users_by_og_roles(array_shift(array_keys($node->og_groups)), variable_get("facilitator_rid", NULL))));
+                }
+              }
+            }
+            // restrict users to enqueue
+            $event['onlyqueue_uids'] = $users_always_notify;
+          }
+          if (!isset($users_always_notify) || count($users_always_notify)) {
+            subscriptions_queue($event);
+          }
         }
       }
       break;
@@ -452,23 +493,32 @@ function subscriptions_content_node_type_form_submit($form, &$form_state) {
  */
 function subscriptions_content_form_alter(&$form, &$form_state, $form_id) {
   global $user;
-
+	//ISAICP-403 - Tick box "send subscription notifications" is only available to moderators
+	//Added moderator/administrator condition and unckeck the subscriptions_notify checkbox.
+	//MODERATOR / ADMINISTRATOR
   if (isset($form['type']['#value']) && $form['type']['#value'] .'_node_form' == $form_id) {
     if (isset($form['options'])) {
       $tr = 't';
       $form['options']['subscriptions_notify'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Send subscriptions notifications'),
-        '#description' => t('You may want to turn this OFF when you only change %Promoted_to_front_page or %Sticky_at_top_of_lists, otherwise Subscriptions will send out "update" notifications; this option is not saved.<br />Subscriptions does not send notifications for unpublished nodes (except to users who have the %administer_nodes permission), but when you set %Published to ON, Subscriptions will send out "new" notifications, unless you turn this off here.',
-                            array('%Promoted_to_front_page' => $tr('Promoted to front page'),
-                                  '%Sticky_at_top_of_lists' => $tr('Sticky at top of lists'),
-                                  '%administer_nodes' => $tr('administer nodes'),
-                                  '%Published' => $tr('Published'))),
-        '#weight' => 5,
-        '#default_value' => (isset($form['#node']->subscriptions_notify) ? $form['#node']->subscriptions_notify : TRUE),
+      '#type' => 'checkbox',
+      '#title' => t('Send subscriptions notifications'),
+      '#description' => t('You may want to turn this OFF when you only change %Promoted_to_front_page or %Sticky_at_top_of_lists, otherwise Subscriptions will send out "update" notifications; this option is not saved.<br />Subscriptions does not send notifications for unpublished nodes (except to users who have the %administer_nodes permission), but when you set %Published to ON, Subscriptions will send out "new" notifications, unless you turn this off here.',
+                array('%Promoted_to_front_page' => $tr('Promoted to front page'),
+                    '%Sticky_at_top_of_lists' => $tr('Sticky at top of lists'),
+                    '%administer_nodes' => $tr('administer nodes'),
+                    '%Published' => $tr('Published'))),
+      '#weight' => 5,
+      '#default_value' => FALSE,
       );
+      if (!(in_array('moderator', array_values($user->roles))||in_array('administrator', array_values($user->roles)))) {
+			  unset($form['options']['status']);
+			  unset($form['options']['promote']);
+			  unset($form['options']['sticky']);
+        $form['options']['subscriptions_notify']['#weight'] = 1;
+      }
     }
   }
+
 }
 
 /**

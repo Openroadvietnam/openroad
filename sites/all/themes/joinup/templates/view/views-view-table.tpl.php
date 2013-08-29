@@ -64,14 +64,25 @@
 <?php
 //	If table headers are empty (no label value).
 	else:
-?>
+      ?>
+    <?php if (!empty($title)) : ?>
+        <h3><?php print $title; ?></h3>
+    <?php endif; ?>
+
 	<?php foreach ($rows as $count => $row): ?>
 		<div class="<?php print implode(' ', $row_classes[$count]); ?> clearfix">
 			<?php $col_number = 0; ?>
 			<?php foreach ($row as $field => $content): ?>
 				<?php
-					
-					$col_count = count($row);
+					if($view -> name == 'AllNews_view'){
+						if($view -> current_display == 'page_3' | $view -> current_display == 'page_4' | $view -> current_display == 'page_5')
+							$col_count = 2;
+						else
+							$col_count = count($row);
+					}else{
+						$col_count = count($row);
+					}
+
 					$col_class = '';
 					if ($col_number == 0) $col_class = ' first';
 					if (count($row) == ($col_number + 1)) $col_class = ' last';

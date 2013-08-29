@@ -374,7 +374,14 @@ function project_release_validate_file_extension($file) {
   // Make sure that the extension on the file is one of the allowed
   // extensions for release files. Most of this validation code was
   // modified from the code in file_check_upload().
+  
+	//ISAICP-884
+	//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-884
+	//include option <all> in order to allow all file extensions
   $extensions = variable_get('project_release_file_extensions', PROJECT_RELEASE_FILE_EXTENSIONS);
+  if($extensions=="<all>"){
+  	return array();
+  }
   $regex = '/\.('. ereg_replace(' +', '|', preg_quote($extensions)) .')$/i';
   if (!preg_match($regex, $file->filename)) {
     return array(t('It is only possible to attach files with the following extensions: %files-allowed.', array('%files-allowed' => $extensions)));

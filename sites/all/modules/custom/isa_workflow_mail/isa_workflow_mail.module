@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @defgroup isa_workflow_mail
  * @brief Customized actions and functions to sent email for workflow
@@ -24,9 +25,36 @@ function isa_workflow_mail_action_info() {
           'hooks' => array('any' => TRUE),
           'configurable' => FALSE
       ),
-      'isa_workflow_mail_release' => array(
+      'isa_workflow_mail_repository' => array(
           'type' => 'node',
-          'description' => t('Send email for release moderation'),
+          'description' => t('Send email for repository workflow'),
+          'hooks' => array('any' => TRUE),
+          'configurable' => FALSE
+      ),
+//      'isa_workflow_mail_release' => array(
+//          'type' => 'node',
+//          'description' => t('Send email for release moderation'),
+//          'hooks' => array('any' => TRUE),
+//          'configurable' => FALSE
+//      ),
+      // use 2 action for asset release workflow.
+      // - for transitions: proposed -> validated
+      // - for transition in assessment -> validated (assessment reject)
+      'isa_workflow_mail_asset' => array(
+          'type' => 'node',
+          'description' => t('Send email for asset release moderation'),
+          'hooks' => array('any' => TRUE),
+          'configurable' => FALSE
+      ),
+      'isa_workflow_mail_asset_assessment' => array(
+          'type' => 'node',
+          'description' => t('Send email for asset release assessment moderation'),
+          'hooks' => array('any' => TRUE),
+          'configurable' => FALSE
+      ),
+      'isa_workflow_mail_asset_release_deletion' => array(
+          'type' => 'node',
+          'description' => t('Send email for asset release deletion moderation'),
           'hooks' => array('any' => TRUE),
           'configurable' => FALSE
       ),
@@ -36,7 +64,7 @@ function isa_workflow_mail_action_info() {
 /**
  * Implement of function email for release workflow
  */
-function isa_workflow_mail_release(&$object, $context = array()) {
+function isa_workflow_mail_asset_assessment(&$object, $context = array()) {
   $node = $object;
   $params['message'] = "";
   $params['nid'] = $node->nid;
@@ -44,30 +72,155 @@ function isa_workflow_mail_release(&$object, $context = array()) {
 
   $current_state = workflow_node_current_state($node);
   switch ($current_state) {
-    case ISA_SID_RELEASE_REQUESTED:
+    case ISA_SID_ASSET_VALIDATED:
+      drupal_mail('isa_workflow_mail', 'asset_reject_assessment', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
+      drupal_set_message(t('A notification has been sent to the author'));
+      break;
+    case ISA_SID_ASSET_ASSESSMENT:
+      drupal_mail('isa_workflow_mail', 'asset_request_assessment_author', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
       $cp_manager = isa_toolbox_get_users_by_roles(variable_get('clearing_process_manager_rid', NULL));
       foreach ($cp_manager as $key => $value) {
         $addr_mail = $value->mail;
-        drupal_mail('isa_workflow_mail', 'release_requested_to_cp_manager', $addr_mail, NULL, $params, $from, TRUE);
+        drupal_mail('isa_workflow_mail', 'asset_request_assessment_cm', $addr_mail, NULL, $params, $from, TRUE);
       }
-      $addr_mail = isa_toolbox_get_mail_address_from_user($node->uid);
-      drupal_mail('isa_workflow_mail', 'release_requested_to_author', $addr_mail, NULL, $params, $from, TRUE);
       drupal_set_message(t('A notification has been sent to clearing process managers'));
       break;
-    case ISA_SID_RELEASE_APPROVED:
-      $addr_mail = isa_toolbox_get_mail_address_from_user($node->uid);
-      drupal_mail('isa_workflow_mail', 'release_approved', $addr_mail, NULL, $params, $from, TRUE);
-      drupal_set_message(t('A notification has been sent the author'));
-
-      break;
-    case ISA_SID_RELEASE_CREATED:
-      $addr_mail = isa_toolbox_get_mail_address_from_user($node->uid);
-      drupal_mail('isa_workflow_mail', 'release_rejected', $addr_mail, NULL, $params, $from, TRUE);
-      drupal_set_message(t('A notification has been sent the author'));
-
+    case ISA_SID_ASSET_ASSESSED:
+      drupal_mail('isa_workflow_mail', 'asset_approve_assessment', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
+      drupal_set_message(t('A notification has been sent to the author'));
       break;
   }
 }
+
+/**
+ * Implement of function email for release workflow
+ */
+function isa_workflow_mail_asset(&$object, $context = array()) {
+  global $user;
+  $node = $object;
+  $params['message'] = "";
+  $params['nid'] = $node->nid;
+  $params['uid'] = $user->uid;
+
+  $current_state = workflow_node_current_state($node);
+  switch ($current_state) {
+    case ISA_SID_ASSET_PROPOSED:
+      $moderators = isa_toolbox_get_users_by_roles(variable_get('moderator_rid', 3));
+
+      foreach ($moderators as $key => $value) {
+        $addr_mail = $value->mail;
+        drupal_mail('isa_workflow_mail', 'asset_proposal_moderator', $addr_mail, NULL, $params, $from, TRUE);
+      }
+      drupal_mail('isa_workflow_mail', 'asset_proposal_author', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
+      drupal_set_message(t('A notification has been sent to moderators'));
+      break;
+    case ISA_SID_ASSET_VALIDATED:
+      drupal_mail('isa_workflow_mail', 'asset_validated', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
+      drupal_set_message('A notification has been sent to the author');
+
+      //change to send email to moderator if asset release owner validated his release
+      if ($user->uid == $node->uid) {
+        $moderators = isa_toolbox_get_users_by_roles(variable_get('moderator_rid', 3));
+        if (!in_array($user->uid, $moderators) && $user->uid !=1) {
+          foreach ($moderators as $key => $value) {
+            $addr_mail = $value->mail;
+            // https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-674
+            // Changed the label to take the moderator message
+            drupal_mail('isa_workflow_mail', 'asset_release_asset_validated_mail_moderator', $addr_mail, NULL, $params, $from, TRUE);
+          }
+          drupal_set_message(t('A notification has been sent to moderators'));
+        }
+      }
+
+      break;
+    case ISA_SID_ASSET_SUSPENDED: //transition to state "suspended"
+      drupal_mail('isa_workflow_mail', 'asset_suspended', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
+      drupal_set_message('A notification has been sent to the author');
+      break;
+  }
+}
+
+/**
+ * Implement of function email for release workflow
+ */
+function isa_workflow_mail_asset_release_deletion(&$object, $context = array()) {
+  $node = $object;
+  $params['message'] = "";
+  $params['nid'] = $node->nid;
+  $params['uid'] = $node->uid;
+
+  $current_state = workflow_node_current_state($node);
+
+  if (isset($current_state)) {
+    switch ($current_state) {
+      case ISA_SID_ASSET_REQUEST_DELETED: //user ask to delete the asset release
+        //send mail to moderator
+        $moderators = isa_toolbox_get_users_by_roles(variable_get('moderator_rid', 3));
+        foreach ($moderators as $key => $value) {
+          $addr_mail = $value->mail;
+          drupal_mail('isa_workflow_mail', 'asset_release_request_deletion', $addr_mail, NULL, $params, $from, TRUE);
+        }
+        drupal_set_message(t('A notification has been sent to moderators'));
+        break;
+      case ISA_SID_ASSET_VALIDATED: //the deletion of asset release has been refused
+        drupal_mail('isa_workflow_mail', 'asset_release_reject_deletion', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
+        drupal_set_message('A notification has been sent to the author');
+        break;
+    
+      case ISA_SID_ASSET_BLACKLISTED://the asset release is blacklisted
+        drupal_mail('isa_workflow_mail', 'asset_release_blacklisted', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
+        drupal_set_message('A notification has been sent to the author');
+        break;
+      
+    }
+  }
+  else { //the asset release was deleted
+    drupal_mail('isa_workflow_mail', 'asset_release_reject_deletion', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
+    drupal_set_message('A notification has been sent to the author');
+  }
+}
+
+//asset_validated_mail_title
+//asset_suspended_mail_title
+//asset_rejected_mail_title
+//asset_suspended_mail_body
+
+
+/**
+ * Implement of function email for release workflow
+ */
+//function isa_workflow_mail_release(&$object, $context = array()) {
+//  $node = $object;
+//  $params['message'] = "";
+//  $params['nid'] = $node->nid;
+//  $params['uid'] = $node->uid;
+//
+//  $current_state = workflow_node_current_state($node);
+//  switch ($current_state) {
+//    case ISA_SID_RELEASE_REQUESTED:
+//      $cp_manager = isa_toolbox_get_users_by_roles(variable_get('clearing_process_manager_rid', NULL));
+//      foreach ($cp_manager as $key => $value) {
+//        $addr_mail = $value->mail;
+//        drupal_mail('isa_workflow_mail', 'release_requested_to_cp_manager', $addr_mail, NULL, $params, $from, TRUE);
+//      }
+//      $addr_mail = isa_toolbox_get_mail_address_from_user($node->uid);
+//      drupal_mail('isa_workflow_mail', 'release_requested_to_author', $addr_mail, NULL, $params, $from, TRUE);
+//      drupal_set_message(t('A notification has been sent to clearing process managers'));
+//      break;
+//    case ISA_SID_RELEASE_APPROVED:
+//      $addr_mail = isa_toolbox_get_mail_address_from_user($node->uid);
+//      drupal_mail('isa_workflow_mail', 'release_approved', $addr_mail, NULL, $params, $from, TRUE);
+//      drupal_set_message(t('A notification has been sent the author'));
+//
+//      break;
+//    case ISA_SID_RELEASE_CREATED:
+//      $addr_mail = isa_toolbox_get_mail_address_from_user($node->uid);
+//      drupal_mail('isa_workflow_mail', 'release_rejected', $addr_mail, NULL, $params, $from, TRUE);
+//      drupal_set_message(t('A notification has been sent the author'));
+//
+//      break;
+//  }
+//}
 
 /**
  * Implement of function email for news workflow
@@ -80,7 +233,9 @@ function isa_workflow_mail_news(&$object, $context = array()) {
   $params['uid'] = $node->uid;
   $current_state = $node->_workflow;
   switch ($current_state) {
-    case ISA_SID_NEWS_PROPOSED: //transition to state "proposed"
+    case ISA_SID_COMMUNITY_PROPOSED:
+    case ISA_SID_NEWS_PROPOSED:
+    case ISA_SID_REPOSITORY_PROPOSED: //transition to state "proposed"
       $params['subject'] = variable_get("news_proposal_moderator_mail_title", "title...");
       $role_id = variable_get("moderator_rid", NULL);
       $sql = 'SELECT a.mail FROM {users} a LEFT JOIN {users_roles} b ON (a.uid = b.uid)'
@@ -95,17 +250,23 @@ function isa_workflow_mail_news(&$object, $context = array()) {
       drupal_mail('isa_workflow_mail', 'workflow_news_proposal_author', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
       drupal_set_message('A notification has been sent to the author');
       break;
-    case ISA_SID_NEWS_VALIDATED: //transition to state "validated"
+    case ISA_SID_COMMUNITY_VALIDATED:
+    case ISA_SID_NEWS_VALIDATED:
+    case ISA_SID_REPOSITORY_VALIDATED: //transition to state "validated"
       $params['subject'] = variable_get("news_validated_mail_title", "title...");
       drupal_mail('isa_workflow_mail', 'workflow_news_validated', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
       drupal_set_message('A notification has been sent to the author');
       break;
-    case ISA_SID_NEWS_SUSPENDED: //transition to state "suspended"
+    case ISA_SID_COMMUNITY_REJECTED:
+    case ISA_SID_NEWS_SUSPENDED:
+    case ISA_SID_REPOSITORY_SUSPENDED: //transition to state "suspended"
       $params['subject'] = variable_get("news_suspended_mail_title", "title...");
       drupal_mail('isa_workflow_mail', 'workflow_news_suspended', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
       drupal_set_message('A notification has been sent to the author');
       break;
     case ISA_SID_NEWS_REQUEST_PUBLICATION:
+    // ISAICP-907 send email to moderators on new federated projects created awaiting for moderation
+    case ISA_SID_FEDPROJ_CREATED:
       $moderators = isa_toolbox_get_users_by_roles(array(variable_get("moderator_rid", NULL)));
       foreach ($moderators as $key => $value) {
         $addr_mail = $value->mail;
@@ -134,6 +295,8 @@ function isa_workflow_mail_news(&$object, $context = array()) {
  * Implement of function email for community workflow
  */
 function isa_workflow_mail_community($node) {
+  //not for the publisher and the licence (they use news template)
+  if ($node->type!='publisher' && $node->type !='licence'){
   $params['message'] = "";
   $params['nid'] = $node->nid;
   $params['uid'] = $node->uid;
@@ -207,17 +370,15 @@ function isa_workflow_mail_community($node) {
     /////////////////////////////////////
     case ISA_SID_COMMUNITY_VALIDATED: //
       $addr_mail = db_result(db_query("SELECT mail FROM {users} WHERE uid = '%d'", $node->uid));
-      if ($node->type == ISA_COMMUNITY_TYPE){
-        $params['subject'] = variable_get("community_validated_mail_title", "title...");
-        drupal_mail('isa_workflow_mail', 'workflow_community_validated', $addr_mail, NULL, $params, $from, TRUE);
-      }elseif ($node->type == ISA_PROJECT_TYPE){
+      if ($node->type == ISA_PROJECT_TYPE) {
         $params['subject'] = variable_get("project_validated_mail_title", "title...");
         drupal_mail('isa_workflow_mail', 'workflow_project_validated', $addr_mail, NULL, $params, $from, TRUE);
-      }else{
+      }
+      else {
         $params['subject'] = variable_get("community_validated_mail_title", "title...");
         drupal_mail('isa_workflow_mail', 'workflow_community_validated', $addr_mail, NULL, $params, $from, TRUE);
       }
-      
+
       drupal_set_message('a notification has been sent to the author');
 
       $vf_vid = variable_get('isa_vf_access_vid_virtual_forge');
@@ -289,6 +450,57 @@ function isa_workflow_mail_community($node) {
       break;
   }
 }
+}
+
+/**
+ * Implement of function email for repository workflow
+ */
+function isa_workflow_mail_repository($node) {
+  $params['message'] = "";
+  $params['nid'] = $node->nid;
+  $params['uid'] = $node->uid;
+  $current_state = workflow_node_current_state($node);
+
+  switch ($current_state) {
+    ///////////////////////////////////////////////
+    // transition to state "requested deletion"  //
+    ///////////////////////////////////////////////
+    case ISA_SID_REPOSITORY_REQUESTED_DELETION :
+      $params['subject'] = variable_get("repository_request_deletion_mail_moderator_title", "title...");
+      $moderators = isa_toolbox_get_users_by_roles(array(variable_get("moderator_rid", NULL)));
+      foreach ($moderators as $key => $value) {
+        $addr_mail = $value->mail;
+        drupal_mail('isa_workflow_mail', 'repository_request_deletion_moderator', $addr_mail, NULL, $params, $from, TRUE);
+      }
+      drupal_set_message(t('A notification has been sent to moderators : if they approve the deletion, the repository and all its associated asset releases will be removed from the federation.'));
+
+      $params['subject'] = variable_get("repository_request_deletion_mail_author_title", "title...");
+      drupal_mail('isa_workflow_mail', 'repository_request_deletion_author', isa_toolbox_get_mail_address_from_user($node->uid), NULL, $params, $from, TRUE);
+      drupal_set_message('A notification has been sent to the author');
+      break;
+
+    /////////////////////////////////////////////
+    // transition to state "rejected deletion" //
+    /////////////////////////////////////////////
+    case ISA_SID_REPOSITORY_REJECTED_DELETION :
+      $params['subject'] = variable_get("repository_rejected_deletion_mail_author_title", "title...");
+      $addr_mail = db_result(db_query("SELECT mail FROM {users} WHERE uid = '%d'", $node->uid));
+      drupal_mail('isa_workflow_mail', 'repository_rejected_deletion', $addr_mail, NULL, $params, $from, TRUE);
+      drupal_set_message('a notification has been sent to the author.');
+      break;
+
+    //////////////////////////////////////////////
+    // transition to state "postponed deletion" //
+    //////////////////////////////////////////////
+    case ISA_SID_REPOSITORY_POSTPONED_DELETION :
+      $params['subject'] = variable_get("repository_postponed_deletion_mail_author_title", "title...");
+      $addr_mail = db_result(db_query("SELECT mail FROM {users} WHERE uid = '%d'", $node->uid));
+      drupal_mail('isa_workflow_mail', 'repository_postponed_deletion', $addr_mail, NULL, $params, $from, TRUE);
+      drupal_set_message('a notification has been sent to the author.');
+      break;
+  }
+}
+
 
 /**
  * Implement of hook_mail().
@@ -308,6 +520,10 @@ function isa_workflow_mail_mail($key, &$message, $params) {
       break;
     case 'new_pending_revision':
       $body_token_converted = token_replace(variable_get("new_pending_revision_mail_body", "message..."), 'node', $node);
+      $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
+      break;
+    case 'new_revision':
+      $body_token_converted = token_replace(variable_get("new_revision_new_revision_mail_moderator_body", "message..."), 'node', $node);
       $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
       break;
     case 'delete_pending_revision':
@@ -331,13 +547,29 @@ function isa_workflow_mail_mail($key, &$message, $params) {
       $body_token_converted = $params['message'];
       break;
     case 'workflow_community_proposal':
-      $body_token_converted = token_replace(variable_get("community_proposal_mail_body", "message..."), 'node', $node);
-      $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
-      $params['subject'] = token_replace($params['subject'], 'node', $node);
+      $body_token =  variable_get("community_proposal_mail_body", "message...");
+      if($_GET['type'] == 'asset'){
+	    $tokens = token_get_values('node', $node);
+		$isa_group_type_token_key = array_search('isa_group_type', $tokens->tokens);
+		$tokens->values[$isa_group_type_token_key] .= ' project';
+		$params['subject'] = str_replace('['.$tokens->tokens[$isa_group_type_token_key].']', $tokens->values[$isa_group_type_token_key], $params['subject']);
+	    $body_token = str_replace('['.$tokens->tokens[$isa_group_type_token_key].']', $tokens->values[$isa_group_type_token_key], $body_token);
+      }
+	  $body_token_converted = token_replace($body_token, 'node', $node);
+	  $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
+	  $params['subject'] = token_replace($params['subject'], 'node', $node);
       break;
 
     case 'workflow_community_proposal_author' :
-      $body_token_converted = token_replace(variable_get("community_proposal_author_mail_body", "message..."), 'node', $node);
+	  $body_token =  variable_get("community_proposal_author_mail_body", "message...");
+      if($_GET['type'] == 'asset'){
+	    $tokens = token_get_values('node', $node);
+	    $isa_group_type_token_key = array_search('isa_group_type', $tokens->tokens);
+	    $tokens->values[$isa_group_type_token_key] .= ' project';
+	    $params['subject'] = str_replace('['.$tokens->tokens[$isa_group_type_token_key].']', $tokens->values[$isa_group_type_token_key], $params['subject']);
+	    $body_token = str_replace('['.$tokens->tokens[$isa_group_type_token_key].']', $tokens->values[$isa_group_type_token_key], $body_token);
+	  }
+      $body_token_converted = token_replace($body_token, 'node', $node);
       $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
       $params['subject'] = token_replace($params['subject'], 'node', $node);
       break;
@@ -347,7 +579,7 @@ function isa_workflow_mail_mail($key, &$message, $params) {
       $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
       $params['subject'] = token_replace($params['subject'], 'node', $node);
       break;
-    
+
     case 'workflow_project_validated':
       $body_token_converted = token_replace(variable_get("project_validated_mail_body", "message..."), 'node', $node);
       $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
@@ -379,14 +611,14 @@ function isa_workflow_mail_mail($key, &$message, $params) {
       break;
 
 
-    case 'release_approved':
-    case 'release_rejected':
-    case 'release_requested_to_author':
-    case 'release_requested_to_cp_manager':
-      $body_token_converted = token_replace(variable_get($key . "_mail_body", "message..."), 'node', $node);
-      $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
-      $params['subject'] = token_replace(variable_get($key . "_mail_title", "title..."), 'node', $node);
-      break;
+//    case 'release_approved':
+//    case 'release_rejected':
+//    case 'release_requested_to_author':
+//    case 'release_requested_to_cp_manager':
+//      $body_token_converted = token_replace(variable_get($key . "_mail_body", "message..."), 'node', $node);
+//      $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
+//      $params['subject'] = token_replace(variable_get($key . "_mail_title", "title..."), 'node', $node);
+//      break;
 
     case 'workflow_news_requested_publication':
       $params['subject'] = variable_get("news_requested_publication_mail_title", "title...");
@@ -407,6 +639,67 @@ function isa_workflow_mail_mail($key, &$message, $params) {
       $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
       $params['subject'] = token_replace($params['subject'], 'node', $node);
       break;
+    case 'asset_release_request_deletion':
+      $params['subject'] = variable_get("asset_release_request_deletion_mail_moderator_title", "title...");
+      $body_token_converted = token_replace(variable_get("asset_release_request_deletion_mail_moderator_body", "message..."), 'node', $node);
+      $body_token_converted = token_replace($body_token_converted, 'workflow', $node);
+      $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
+      break;
+    case 'asset_release_reject_deletion':
+      $params['subject'] = variable_get("asset_release_reject_deletion_mail_moderator_title", "title...");
+      $body_token_converted = token_replace(variable_get("asset_release_reject_deletion_mail_moderator_body", "message..."), 'node', $node);
+      $body_token_converted = token_replace($body_token_converted, 'workflow', $node);
+      $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
+      break;
+    case 'asset_proposal':
+    case 'asset_validated':
+    case 'asset_suspended':
+    case 'asset_proposal_author':
+    case 'asset_proposal_moderator':
+    case 'asset_rejected':
+    case 'asset_reject_assessment':
+    case 'asset_request_assessment_author':
+    case 'asset_request_assessment_cm':
+    case 'asset_approve_assessment':
+      $params['subject'] = variable_get($key . '_mail_title', "title...");
+      $body_token_converted = token_replace(variable_get($key . '_mail_body', "message..."), 'node', $node);
+      $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
+      break;
+    case 'asset_release_asset_validated_mail_moderator':
+    	$params['subject'] = variable_get("asset_release_asset_validated_mail_moderator_title", "title...");
+    	$body_token_converted = token_replace(variable_get("asset_release_asset_validated_mail_moderator_body", "message..."), 'node', $node);
+    	$body_token_converted = token_replace($body_token_converted, 'workflow', $node);
+    	$body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
+    	break;
+    // https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-674
+    //Added moderator message
+    case 'repository_request_deletion_moderator':
+      $params['subject'] = variable_get("repository_request_deletion_mail_moderator_title", "title...");
+      $body_token_converted = token_replace(variable_get("repository_request_deletion_mail_moderator_body", "message..."), 'node', $node);
+      $body_token_converted = token_replace($body_token_converted, 'workflow', $node);
+      $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
+      break;
+    case 'repository_request_deletion_author':
+      $params['subject'] = variable_get("repository_request_deletion_mail_author_title", "title...");
+      $body_token_converted = token_replace(variable_get("repository_request_deletion_mail_author_body", "message..."), 'node', $node);
+      $body_token_converted = token_replace($body_token_converted, 'workflow', $node);
+      $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
+      break;
+    case 'repository_rejected_deletion':
+      $params['subject'] = variable_get("repository_rejected_deletion_mail_author_title", "title...");
+      $body_token_converted = token_replace(variable_get("repository_rejected_deletion_mail_author_body", "message..."), 'node', $node);
+      $body_token_converted = token_replace($body_token_converted, 'workflow', $node);
+      $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
+      break;
+    case 'repository_postponed_deletion':
+      $params['subject'] = variable_get("repository_postponed_deletion_mail_author_title", "title...");
+      $body_token_converted = token_replace(variable_get("repository_postponed_deletion_mail_author_body", "message..."), 'node', $node);
+      $body_token_converted = token_replace($body_token_converted, 'workflow', $node);
+      $body_token_converted = token_replace($body_token_converted, 'node', $profile_node);
+      break;
+  }
+  if (empty($body_token_converted)) {
+    $body_token_converted = $params['message'];
   }
 
   $params['subject'] = token_replace($params['subject'], 'node', $node);
@@ -418,6 +711,7 @@ function isa_workflow_mail_mail($key, &$message, $params) {
   else {
     $body_token_converted = str_replace('[project_in_vf]', '', $body_token_converted);
   }
+
   $message['subject'] = decode_entities($params['subject']);
   $message['body'] = "<html>\n" .
           "<head>\n" .
@@ -433,6 +727,20 @@ function isa_workflow_mail_mail($key, &$message, $params) {
       'X-Mailer' => 'Drupal',
       'From' => variable_get('site_mail', ini_get('sendmail_from')),
   );
+}
+
+function isa_workflow_mail_token_list($type = 'all') {
+	$tokens = array();
+
+	if ($type == 'global' || $type == 'all') {
+		$tokens['global']['random-number'] = t('A randomly generated number.');
+
+	}
+	if ($type == 'node' || $type == 'all') {
+		$tokens['node']['node-random-nid'] = t("A randomly generated number between one and the node's unique ID.");
+	}
+
+	return $tokens;
 }
 
 /**
@@ -460,19 +768,20 @@ function isa_workflow_mail_mail_alter(&$message) {
 
   // add the ISA footer mail body
   if (variable_get('footer_mail_body', NULL)) {
-     $footer = token_replace(variable_get('footer_mail_body', NULL));
-     if (strpos( $message['headers']['Content-Type'], 'html') === FALSE){
-       // for no-html mails 
-       $footer = PHP_EOL.PHP_EOL.strip_tags($footer);
-     }
-     if (is_array($message['body'])){
-       // for user register mails
-       foreach ($message['body'] as $key => $value){
-         $message['body'][$key].= $footer;
-       }
-     }else{
-       $message['body'] .= $footer;
-     }
+    $footer = token_replace(variable_get('footer_mail_body', NULL));
+    if (strpos($message['headers']['Content-Type'], 'html') === FALSE) {
+      // for no-html mails 
+      $footer = PHP_EOL . PHP_EOL . strip_tags($footer);
+    }
+    if (is_array($message['body'])) {
+      // for user register mails
+      foreach ($message['body'] as $key => $value) {
+        $message['body'][$key].= $footer;
+      }
+    }
+    else {
+      $message['body'] .= $footer;
+    }
   }
   //add the ISA prefix of the mail subject if not there
   //$message['subject'] = ereg_replace('^(ISA-ICP:)*(.*)', 'ISA-ICP:\\2', $message['subject']);
@@ -509,42 +818,49 @@ function workflow_template_message() {
       '#type' => 'item',
       '#value' => theme('token_tree', array('node'), TRUE, FALSE),
   );
+
+  $form['news_moderation'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Workflow: News moderation'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
   //////////////////////
   //  news proposal   //
   //////////////////////
   // Template for news proposal (to moderators)
-  $form['news_proposal_moderator'] = array(
+  $form['news_moderation']['news_proposal_moderator'] = array(
       '#type' => 'fieldset',
       '#title' => t('News/document/case proposal notification to moderators'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['news_proposal_moderator']['news_proposal_moderator_mail_title'] = array(
+  $form['news_moderation']['news_proposal_moderator']['news_proposal_moderator_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('mail title'),
       '#default_value' => variable_get("news_proposal_moderator_mail_title", "Approval request for [type] item"),
       '#description' => t('mail title for the news proposal notification.')
   );
-  $form['news_proposal_moderator']['news_proposal_moderator_mail_body'] = array(
+  $form['news_moderation']['news_proposal_moderator']['news_proposal_moderator_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('mail body'),
       '#default_value' => variable_get("news_proposal_moderator_mail_body", "<p>Dear [recipient-firstname],</p><p>User [field_firstname-formatted] [field_lastname-formatted] has proposed the following content.</p><p>Title: [title]</p><p>The publication of this content requires your validation.&nbsp;Please click on the link below to reach the validation or denial form.</p><p>[news_workflow_url]</p><p>ISA-ICP&nbsp;Team</p>"),
       '#description' => t('mail body for the news proposal notification.')
   );
   // Template for news proposal (to news author)
-  $form['news_proposal_author'] = array(
+  $form['news_moderation']['news_proposal_author'] = array(
       '#type' => 'fieldset',
       '#title' => t('News/document/case proposal notification to author'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['news_proposal_author']['news_proposal_author_mail_title'] = array(
+  $form['news_moderation']['news_proposal_author']['news_proposal_author_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('mail title'),
       '#default_value' => variable_get("news_proposal_author_mail_title", "[type] has been submitted to moderators for approval"),
       '#description' => t('mail title for the news proposal notification.')
   );
-  $form['news_proposal_author']['news_proposal_author_mail_body'] = array(
+  $form['news_moderation']['news_proposal_author']['news_proposal_author_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('mail body'),
       '#default_value' => variable_get("news_proposal_author_mail_body", "<p>Dear [recipient-firstname],</p><p>Your [type] (title: [title]) has been submitted. It requires the validation from site moderator, before it will be visible on the ISA-ICP&nbsp;site.</p><p>You will receive another message when the [type] is accepted and published.</p><p>In case it has been refused, you will be notified about the reasons, and eventually the possibility to submit your content again, after some updates.</p><p>Thank you for sharing information on the ISA-ICP site.</p><p>ISA-ICP&nbsp;Team</p>"),
@@ -554,19 +870,19 @@ function workflow_template_message() {
   ///////////////////////
   //  news validated   //
   ///////////////////////
-  $form['news_validated'] = array(
+  $form['news_moderation']['news_validated'] = array(
       '#type' => 'fieldset',
       '#title' => t('News/document/case validated'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['news_validated']['news_validated_mail_title'] = array(
+  $form['news_moderation']['news_validated']['news_validated_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('mail title'),
       '#default_value' => variable_get("news_validated_mail_title", "[type] item has been published"),
       '#description' => t('mail title for the news validation notification.')
   );
-  $form['news_validated']['news_validated_mail_body'] = array(
+  $form['news_moderation']['news_validated']['news_validated_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('mail body'),
       '#default_value' => variable_get("news_validated_mail_body", "<p>Dear&nbsp;[recipient-firstname],</p><p>Your [type] (title: [title]) has been accepted and published.</p><p>It is now visible for any registered or not users on the ISA-ICP site.</p><p>Thank you for sharing information on the ISA-ICP site.</p><p>ISA-ICP&nbsp;Team</p>"),
@@ -576,19 +892,19 @@ function workflow_template_message() {
   //////////////////////
   //  news suspended   //
   //////////////////////
-  $form['news_suspended'] = array(
+  $form['news_moderation']['news_suspended'] = array(
       '#type' => 'fieldset',
       '#title' => t('News/document/case suspended'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['news_suspended']['news_suspended_mail_title'] = array(
+  $form['news_moderation']['news_suspended']['news_suspended_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('mail title'),
       '#default_value' => variable_get("news_suspended_mail_title", "title..."),
       '#description' => t('mail title for the news suspend notification.')
   );
-  $form['news_suspended']['news_suspended_mail_body'] = array(
+  $form['news_moderation']['news_suspended']['news_suspended_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('mail body'),
       '#default_value' => variable_get("news_suspended_mail_body", "body..."),
@@ -597,19 +913,19 @@ function workflow_template_message() {
   //////////////////////
   //  news rejected   //
   //////////////////////
-  $form['news_rejected'] = array(
+  $form['news_moderation']['news_rejected'] = array(
       '#type' => 'fieldset',
       '#title' => t('News/document/case rejected'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['news_rejected']['news_rejected_mail_title'] = array(
+  $form['news_moderation']['news_rejected']['news_rejected_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('mail title'),
       '#default_value' => variable_get("news_rejected_mail_title", "[type] item (title: [title]) has been rejected"),
       '#description' => t('mail title for the news reject notification.')
   );
-  $form['news_rejected']['news_rejected_mail_body'] = array(
+  $form['news_moderation']['news_rejected']['news_rejected_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('mail body'),
       '#default_value' => variable_get("news_rejected_mail_body", "<p>Dear [recipient-firstname],</p><p>Your [type] (title: [title]) has been refused for the following reason.</p><p>[workflow-current-state-log-entry]</p><p>ISA-ICP&nbsp;Team</p>"),
@@ -618,19 +934,19 @@ function workflow_template_message() {
   ////////////////////////////////
   //  news request publication  //
   ////////////////////////////////
-  $form['news_requested'] = array(
+  $form['news_moderation']['news_requested'] = array(
       '#type' => 'fieldset',
       '#title' => t('News/document/case requested publication'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['news_requested']['news_requested_publication_mail_title'] = array(
+  $form['news_moderation']['news_requested']['news_requested_publication_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Mail title'),
       '#default_value' => variable_get("news_requested_publication_mail_title", "title..."),
       '#description' => t('Mail title for the news requested publication notification.')
   );
-  $form['news_requested']['news_requested_publication_mail_body'] = array(
+  $form['news_moderation']['news_requested']['news_requested_publication_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Mail body'),
       '#default_value' => variable_get("news_requested_publication_mail_body", "body..."),
@@ -639,19 +955,19 @@ function workflow_template_message() {
   //////////////////////////////////////
   //  news request publication denied //
   //////////////////////////////////////
-  $form['news_requested_denied'] = array(
+  $form['news_moderation']['news_requested_denied'] = array(
       '#type' => 'fieldset',
       '#title' => t('News/document/case requested publication denied'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['news_requested_denied']['news_requested_publication_denied_mail_title'] = array(
+  $form['news_moderation']['news_requested_denied']['news_requested_publication_denied_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Mail title'),
       '#default_value' => variable_get("news_requested_publication_denied_mail_title", "title..."),
       '#description' => t('Mail title for the notification when the news requested publication is denied.')
   );
-  $form['news_requested_denied']['news_requested_publication_denied_mail_body'] = array(
+  $form['news_moderation']['news_requested_denied']['news_requested_publication_denied_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Mail body'),
       '#default_value' => variable_get("news_requested_publication_denied_mail_body", "body..."),
@@ -661,71 +977,77 @@ function workflow_template_message() {
   //////////////////////////////////////
   //  news request publication accept //
   //////////////////////////////////////
-  $form['news_published'] = array(
+  $form['news_moderation']['news_published'] = array(
       '#type' => 'fieldset',
       '#title' => t('News/document published'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['news_published']['news_published_mail_title'] = array(
+  $form['news_moderation']['news_published']['news_published_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Mail title'),
       '#default_value' => variable_get("news_published_mail_title", "title..."),
       '#description' => t('Mail title for the notification when the news is published')
   );
-  $form['news_published']['news_published_mail_body'] = array(
+  $form['news_moderation']['news_published']['news_published_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Mail body'),
       '#default_value' => variable_get("news_published_mail_body", "body..."),
       '#description' => t('Mail body for the notification when the news is published.')
   );
 
+  $form['community_moderation'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Workflow: Community_moderation'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
   ///////////////////////////
   //  community proposal   //
   ///////////////////////////
   // Template for community proposal notification to moderators
-  $form['community_proposal'] = array(
+  $form['community_moderation']['community_proposal'] = array(
       '#type' => 'fieldset',
       '#title' => t('Community/project proposed'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['community_proposal']['community_proposal_mail_title'] = array(
+  $form['community_moderation']['community_proposal']['community_proposal_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Mail to moderators title'),
       '#default_value' => variable_get("community_proposal_mail_title", "Approval request for a new [isa_group_type]"),
       '#description' => t('mail title for the community/project proposal notification.')
   );
-  $form['community_proposal']['community_proposal_mail_body'] = array(
+  $form['community_moderation']['community_proposal']['community_proposal_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Mail to moderators body'),
-      '#default_value' => variable_get("community_proposal_mail_body", "<p>Dear [recipient-firstname],</p><p>A registered user wants to start a new [isa_group_type][project_in_vf].</p><p>The user enters the following information for the [isa_group_type]:</p><p>Title: [title]</p><p>Description: [community_description]</p><p>Domains: [community_domains]</p><p>Languages: [community_languages]</p><p>Kind of [isa_group_type]: [community_privacy]</p><p>The start of the [isa_group_type] requires your validation.&nbsp;Please click on the link below to reach the validation or denial form.</p><p>[community_workflow_url]</p><p>ISA-ICP&nbsp;Team</p>"),
+      '#default_value' => variable_get("community_proposal_mail_body", "<p>Dear [recipient-firstname],</p><p>A registered user wants to start a new [isa_group_type][project_in_vf].</p><p>The user enters the following information for the [isa_group_type]:</p><p>Title: [title]</p><p>Description: [community_description]</p><p>Themes: [community_domains]</p><p>Languages: [community_languages]</p><p>Kind of [isa_group_type]: [community_privacy]</p><p>The start of the [isa_group_type] requires your validation.&nbsp;Please click on the link below to reach the validation or denial form.</p><p>[community_workflow_url]</p><p>ISA-ICP&nbsp;Team</p>"),
       '#description' => t('mail body for the community proposal notification.')
   );
   // mail to author
-  $form['community_proposal']['community_proposal_author_mail_title'] = array(
+  $form['community_moderation']['community_proposal']['community_proposal_author_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Mail to author title'),
       '#default_value' => variable_get("community_proposal_author_mail_title", "[type] has been submitted to moderators for approval"),
       '#description' => t('mail title for the community/project proposal notification.')
   );
-  $form['community_proposal']['community_proposal_author_mail_body'] = array(
+  $form['community_moderation']['community_proposal']['community_proposal_author_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Mail to author body'),
       '#default_value' => variable_get("community_proposal_author_mail_body", "<p>Dear [recipient-firstname],</p><p>Your [type] (title: [title]) has been submitted. It requires the validation from site moderator, before it will be visible on the ISA-ICP&nbsp;site.</p><p>You will receive another message when the [type] is accepted and published.</p><p>In case it has been refused, you will be notified about the reasons, and eventually the possibility to submit your content again, after some updates.</p><p>Thank you for sharing information on the ISA-ICP site.</p><p>ISA-ICP&nbsp;Team</p>"),
       '#description' => t('mail body for the community proposal notification.')
   );
   // Template for community proposal notification to VF-admins
-  $form['community_proposal']['community_proposal_vf_mail_title'] = array(
+  $form['community_moderation']['community_proposal']['community_proposal_vf_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Mail to virtual forge administrators title'),
       '#default_value' => variable_get("community_proposal_vf_mail_title", "Approval request for a new [isa_group_type]"),
       '#description' => t('mail title for the community proposal notification.')
   );
-  $form['community_proposal']['community_proposal_vf_mail_body'] = array(
+  $form['community_moderation']['community_proposal']['community_proposal_vf_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Mail to virtual forge administrators body'),
-      '#default_value' => variable_get("community_proposal_vf_mail_body", "<p>Dear [recipient-firstname],</p><p>[author_firstname]&nbsp;[author_lastname]&nbsp;wants to start a new [isa_group_type][project_in_vf].</p><p>The user enters the following information for the [isa_group_type]:</p><p>Title: [title]</p><p>Description: [community_description]</p><p>Domains: [community_domains]</p><p>Languages: [community_languages]</p><p>Kind of [isa_group_type]: [community_privacy]</p><p>The start of the [isa_group_type] requires validation by a moderator.</p><p>ISA-ICP&nbsp;Team</p>"),
+      '#default_value' => variable_get("community_proposal_vf_mail_body", "<p>Dear [recipient-firstname],</p><p>[author_firstname]&nbsp;[author_lastname]&nbsp;wants to start a new [isa_group_type][project_in_vf].</p><p>The user enters the following information for the [isa_group_type]:</p><p>Title: [title]</p><p>Description: [community_description]</p><p>Themes: [community_domains]</p><p>Languages: [community_languages]</p><p>Kind of [isa_group_type]: [community_privacy]</p><p>The start of the [isa_group_type] requires validation by a moderator.</p><p>ISA-ICP&nbsp;Team</p>"),
       '#description' => t('mail body for the community proposal notification.')
   );
 
@@ -733,44 +1055,44 @@ function workflow_template_message() {
   //  community validated   //
   ////////////////////////////
   // Template for community validation notification
-  $form['community_validated'] = array(
+  $form['community_moderation']['community_validated'] = array(
       '#type' => 'fieldset',
       '#title' => t('Community/project validated'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['community_validated']['community_validated_mail_title'] = array(
+  $form['community_moderation']['community_validated']['community_validated_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Community: Mail to authors title'),
       '#default_value' => variable_get("community_validated_mail_title", 'The [isa_group_type] "[title]" has been started'),
       '#description' => t('mail title for the community validation notification.')
   );
-  $form['community_validated']['community_validated_mail_body'] = array(
+  $form['community_moderation']['community_validated']['community_validated_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Community: Mail to authors body'),
       '#default_value' => variable_get("community_validated_mail_body", "<p>Dear [field_firstname-formatted],</p><p>Your proposal for a new [isa_group_type][project_in_vf]&nbsp;has been approved.</p><p>The&nbsp;[isa_group_type]&nbsp;&quot;[title]&quot; has been started.</p><p>This is a [community_privacy] [isa_group_type].</p><p>Click on the following link to go to your [isa_group_type]:</p><p>[community_overview_url]</p><p>From now, you have the facilitator role for the [isa_group_type] &quot;[title]&quot;.</p><p>You can now invite registered users to join the [isa_group_type].</p><p>As the facilitator of this [isa_group_type], you can delegate this role to other members.</p><p>From now, you can add contents to the [isa_group_type] (highlight public contents, complete wiki pages, create forum topics...).</p><p>ISA-ICP&nbsp;Team</p>"),
       '#description' => t('Mail body for the community validation notification.')
   );
-    $form['community_validated']['project_validated_mail_title'] = array(
+  $form['community_moderation']['community_validated']['project_validated_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Project: Mail to authors title'),
       '#default_value' => variable_get("project_validated_mail_title", 'The [isa_group_type] "[title]" has been started'),
       '#description' => t('mail title for the project validation notification.')
   );
-  $form['community_validated']['project_validated_mail_body'] = array(
+  $form['community_moderation']['community_validated']['project_validated_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Project: Mail to authors body'),
       '#default_value' => variable_get("project_validated_mail_body", "<p>Dear [field_firstname-formatted],</p><p>Your proposal for a new [isa_group_type][project_in_vf]&nbsp;has been approved.</p><p>The&nbsp;[isa_group_type]&nbsp;&quot;[title]&quot; has been started.</p><p>This is a [community_privacy] [isa_group_type].</p><p>Click on the following link to go to your [isa_group_type]:</p><p>[community_overview_url]</p><p>From now, you have the facilitator role for the [isa_group_type] &quot;[title]&quot;.</p><p>You can now invite registered users to join the [isa_group_type].</p><p>As the facilitator of this [isa_group_type], you can delegate this role to other members.</p><p>From now, you can add contents to the [isa_group_type] (highlight public contents, complete wiki pages, create forum topics...).</p><p>ISA-ICP&nbsp;Team</p>"),
       '#description' => t('mail body for the project validation notification.')
   );
   // Template for community validation notification to VF-admins
-  $form['community_validated']['community_validated_vf_mail_title'] = array(
+  $form['community_moderation']['community_validated']['community_validated_vf_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Mail to virtual forge administrators title'),
       '#default_value' => variable_get("community_validated_vf_mail_title", 'The [isa_group_type] "[title]" has been started'),
       '#description' => t('mail title for the community proposal notification.')
   );
-  $form['community_validated']['community_validated_vf_mail_body'] = array(
+  $form['community_moderation']['community_validated']['community_validated_vf_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Mail to virtual forge administrators body'),
       '#default_value' => variable_get("community_validated_vf_mail_body", "<p>Dear [recipient-firstname],</p><div><p>The&nbsp;[isa_group_type]&nbsp;&quot;[title]&quot; created by&nbsp;[author_firstname]&nbsp;[author_lastname]&nbsp;has been started[project_in_vf].</p><p>This is a [community_privacy] [isa_group_type].</p><p>Click on the following link to go to the [isa_group_type]:</p><p>[community_overview_url]</p><p>ISA-ICP&nbsp;Team</p></div>"),
@@ -780,32 +1102,32 @@ function workflow_template_message() {
   /////////////////////////////
   //  community suspended   //
   ////////////////////////////
-  $form['community_suspended'] = array(
+  $form['community_moderation']['community_suspended'] = array(
       '#type' => 'fieldset',
       '#title' => t('Community/project suspended'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['community_suspended']['community_suspended_mail_title'] = array(
+  $form['community_moderation']['community_suspended']['community_suspended_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('mail title'),
       '#default_value' => variable_get("community_suspended_mail_title", "title..."),
       '#description' => t('mail title for the group suspend notification.')
   );
-  $form['community_suspended']['community_suspended_mail_body'] = array(
+  $form['community_moderation']['community_suspended']['community_suspended_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('mail body'),
       '#default_value' => variable_get("community_suspended_mail_body", "body..."),
       '#description' => t('mail body for the group suspend notification.')
   );
   // Template for community rejection notification to VF-admins
-  $form['community_suspended']['community_suspended_vf_mail_title'] = array(
+  $form['community_moderation']['community_suspended']['community_suspended_vf_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Mail to virtual forge administrators title'),
       '#default_value' => variable_get("community_suspended_vf_mail_title", 'The [isa_group_type] "[title]" has been suspended'),
       '#description' => t('Mail title for the community rejection notification.')
   );
-  $form['community_suspended']['community_suspended_vf_mail_body'] = array(
+  $form['community_moderation']['community_suspended']['community_suspended_vf_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Mail to virtual forge administrators body'),
       '#default_value' => variable_get("community_suspended_vf_mail_body", "<p>Dear [recipient-firstname],</p><div><p>The [isa_group_type] &quot;[title]&quot;[project_in_vf] created by&nbsp;[author_firstname]&nbsp;[author_lastname]&nbsp;has been suspended by the moderator for the following reason:</p><p>[workflow-current-state-log-entry]</p><p>ISA-ICP&nbsp;Team</p></div><p>&nbsp;</p><p>&nbsp;</p>"),
@@ -816,19 +1138,19 @@ function workflow_template_message() {
   //  community rejected   //
   ///////////////////////////
   // Template for community rejection notification to moderators
-  $form['community_rejected'] = array(
+  $form['community_moderation']['community_rejected'] = array(
       '#type' => 'fieldset',
       '#title' => t('Community/project rejected'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
   );
-  $form['community_rejected']['community_rejected_mail_title'] = array(
+  $form['community_moderation']['community_rejected']['community_rejected_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Mail to author title'),
       '#default_value' => variable_get("community_rejected_mail_title", 'The [isa_group_type] "[title]" has been rejected'),
       '#description' => t('mail title for the community rejection notification.')
   );
-  $form['community_rejected']['community_rejected_mail_body'] = array(
+  $form['community_moderation']['community_rejected']['community_rejected_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Mail to author body'),
       '#default_value' => variable_get("community_rejected_mail_body", "<p>Dear [field_firstname-formatted],</p><p>The [isa_group_type] &quot;[title]&quot;[project_in_vf]&nbsp;has been refused by the moderator for the following reason:</p><p>[workflow-current-state-log-entry]</p><p>ISA-ICP&nbsp;Team</p>"),
@@ -836,13 +1158,13 @@ function workflow_template_message() {
   );
 
   // Template for community rejection notification to VF-admins
-  $form['community_rejected']['community_rejected_vf_mail_title'] = array(
+  $form['community_moderation']['community_rejected']['community_rejected_vf_mail_title'] = array(
       '#type' => 'textfield',
       '#title' => t('Mail to virtual forge administrators title'),
       '#default_value' => variable_get("community_rejected_vf_mail_title", 'The [isa_group_type] "[title]" has been suspended'),
       '#description' => t('Mail title to the vf admin for the community rejection notification.')
   );
-  $form['community_rejected']['community_rejected_vf_mail_body'] = array(
+  $form['community_moderation']['community_rejected']['community_rejected_vf_mail_body'] = array(
       '#type' => 'textarea',
       '#title' => t('Mail to virtual forge administrators body'),
       '#default_value' => variable_get("community_rejected_vf_mail_body", "<p>Dear [recipient-firstname],</p><div><p>The [isa_group_type] &quot;[title]&quot;[project_in_vf] created by&nbsp;[author_firstname]&nbsp;[author_lastname]&nbsp;has been suspended by the moderator for the following reason:</p><p>[workflow-current-state-log-entry]</p><p>ISA-ICP&nbsp;Team</p></div><p>&nbsp;</p><p>&nbsp;</p>"),
@@ -851,87 +1173,91 @@ function workflow_template_message() {
   //////////////////////////////////
   //  Project release requested   //
   //////////////////////////////////
-  $form['release_requested_to_author'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Release requested to author'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-  );
-  $form['release_requested_to_author']['release_requested_to_author_mail_title'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Mail title'),
-      '#default_value' => variable_get("release_requested_to_author_mail_title", "Release has been submitted to clearing process manager for approval"),
-      '#description' => t('mail title for thethe release requested notification to author.')
-  );
-  $form['release_requested_to_author']['release_requested_to_author_mail_body'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Mail body'),
-      '#default_value' => variable_get("release_requested_to_author_mail_body", "<p>Dear [recipient-firstname],</p><div><p>Your release (title [title]) has been submitted. It requires the validation by clearing process manager, before it will be visible on the ISA-ICP&nbsp;site.</p><p>You will receive another message when this release is accepted and published.</p><p>In case it has been refused, you will be notified about the reasons, and eventually the possibility to submit your release again, after some updates.</p><p>Thank you for sharing information on the ISA-ICP site.</p><p>ISA-ICP&nbsp;Team</p></div><p>&nbsp;</p>"),
-      '#description' => t('Mail body for the release requested notification to author.')
-  );
-  $form['release_requested_to_cp_manager'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Release requested to clearing process manager'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-  );
-  $form['release_requested_to_cp_manager']['release_requested_to_cp_manager_mail_title'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Mail title'),
-      '#default_value' => variable_get("release_requested_to_cp_manager_mail_title", "Approval request for release item"),
-      '#description' => t('Mail title for the release requested notification to clearing process manager.')
-  );
-  $form['release_requested_to_cp_manager']['release_requested_to_cp_manager_mail_body'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Mail body'),
-      '#default_value' => variable_get("release_requested_to_cp_manager_mail_body", "<p>Dear [recipient-firstname],</p><div><p>User [field_firstname-formatted] [field_lastname-formatted] has proposed the following release:</p><p>Title: [title]</p><p>The publication of this release requires your validation.&nbsp;Please click on the link below to reach the approvation or denial form.</p><p>[release_url]</p><p>ISA-ICP&nbsp;Team</p></div><p>&nbsp;</p>"),
-      '#description' => t('Mail body for the release requested notification to clearing process manager.')
-  );
-
+//      $form['project_release_moderation'] = array(
+//      '#type' => 'fieldset',
+//      '#title' => t('Workflow: Release_moderation'),
+//      '#collapsible' => TRUE,
+//      '#collapsed' => TRUE,
+//  );
+//      
+//  $form['project_release_moderation']['release_requested_to_author'] = array(
+//      '#type' => 'fieldset',
+//      '#title' => t('Release requested to author'),
+//      '#collapsible' => TRUE,
+//      '#collapsed' => TRUE,
+//  );
+//  $form['project_release_moderation']['release_requested_to_author']['release_requested_to_author_mail_title'] = array(
+//      '#type' => 'textfield',
+//      '#title' => t('Mail title'),
+//      '#default_value' => variable_get("release_requested_to_author_mail_title", "Release has been submitted to clearing process manager for approval"),
+//      '#description' => t('mail title for thethe release requested notification to author.')
+//  );
+//  $form['project_release_moderation']['release_requested_to_author']['release_requested_to_author_mail_body'] = array(
+//      '#type' => 'textarea',
+//      '#title' => t('Mail body'),
+//      '#default_value' => variable_get("release_requested_to_author_mail_body", "<p>Dear [recipient-firstname],</p><div><p>Your release (title [title]) has been submitted. It requires the validation by clearing process manager, before it will be visible on the ISA-ICP&nbsp;site.</p><p>You will receive another message when this release is accepted and published.</p><p>In case it has been refused, you will be notified about the reasons, and eventually the possibility to submit your release again, after some updates.</p><p>Thank you for sharing information on the ISA-ICP site.</p><p>ISA-ICP&nbsp;Team</p></div><p>&nbsp;</p>"),
+//      '#description' => t('Mail body for the release requested notification to author.')
+//  );
+//  $form['project_release_moderation']['release_requested_to_cp_manager'] = array(
+//      '#type' => 'fieldset',
+//      '#title' => t('Release requested to clearing process manager'),
+//      '#collapsible' => TRUE,
+//      '#collapsed' => TRUE,
+//  );
+//  $form['project_release_moderation']['release_requested_to_cp_manager']['release_requested_to_cp_manager_mail_title'] = array(
+//      '#type' => 'textfield',
+//      '#title' => t('Mail title'),
+//      '#default_value' => variable_get("release_requested_to_cp_manager_mail_title", "Approval request for release item"),
+//      '#description' => t('Mail title for the release requested notification to clearing process manager.')
+//  );
+//  $form['project_release_moderation']['release_requested_to_cp_manager']['release_requested_to_cp_manager_mail_body'] = array(
+//      '#type' => 'textarea',
+//      '#title' => t('Mail body'),
+//      '#default_value' => variable_get("release_requested_to_cp_manager_mail_body", "<p>Dear [recipient-firstname],</p><div><p>User [field_firstname-formatted] [field_lastname-formatted] has proposed the following release:</p><p>Title: [title]</p><p>The publication of this release requires your validation.&nbsp;Please click on the link below to reach the approvation or denial form.</p><p>[release_url]</p><p>ISA-ICP&nbsp;Team</p></div><p>&nbsp;</p>"),
+//      '#description' => t('Mail body for the release requested notification to clearing process manager.')
+//  );
   //////////////////////////////////
   //  Project release rejected   //
   //////////////////////////////////
-  $form['release_rejected'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Release rejected'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-  );
-  $form['release_rejected']['release_rejected_mail_title'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Mail title'),
-      '#default_value' => variable_get("release_rejected_mail_title", "Release has been rejected"),
-      '#description' => t('mail title for thethe release rejected notification.')
-  );
-  $form['release_rejected']['release_rejected_mail_body'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Mail body'),
-      '#default_value' => variable_get("release_rejected_mail_body", "<p>Dear [recipient-firstname],</p><div><p>Your release (title [title]) has been refused for the following reason.</p><p>[workflow-current-state-log-entry]</p><p>ISA-ICP&nbsp;Team</p></div><p>&nbsp;</p>"),
-      '#description' => t('Mail body for the release rejected notification.')
-  );
-
+//  $form['project_release_moderation']['release_rejected'] = array(
+//      '#type' => 'fieldset',
+//      '#title' => t('Release rejected'),
+//      '#collapsible' => TRUE,
+//      '#collapsed' => TRUE,
+//  );
+//  $form['project_release_moderation']['release_rejected']['release_rejected_mail_title'] = array(
+//      '#type' => 'textfield',
+//      '#title' => t('Mail title'),
+//      '#default_value' => variable_get("release_rejected_mail_title", "Release has been rejected"),
+//      '#description' => t('mail title for thethe release rejected notification.')
+//  );
+//  $form['project_release_moderation']['release_rejected']['release_rejected_mail_body'] = array(
+//      '#type' => 'textarea',
+//      '#title' => t('Mail body'),
+//      '#default_value' => variable_get("release_rejected_mail_body", "<p>Dear [recipient-firstname],</p><div><p>Your release (title [title]) has been refused for the following reason.</p><p>[workflow-current-state-log-entry]</p><p>ISA-ICP&nbsp;Team</p></div><p>&nbsp;</p>"),
+//      '#description' => t('Mail body for the release rejected notification.')
+//  );
   //////////////////////////////////
   //  Project release approved    //
   //////////////////////////////////
-  $form['release_approved'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Release approved'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-  );
-  $form['release_approved']['release_approved_mail_title'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Mail title'),
-      '#default_value' => variable_get("release_approved_mail_title", "Release has been approved"),
-      '#description' => t('mail title for thethe release approved notification.')
-  );
-  $form['release_approved']['release_approved_mail_body'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Mail body'),
-      '#default_value' => variable_get("release_approved_mail_body", "<p>Dear&nbsp;[recipient-firstname],</p><div><p>Your release (title [title]) has been accepted and published.</p><p>It is now visible for any registered or not users on the ISA-ICP site.</p><p>Thank you for sharing information on the ISA-ICP site.</p><p>ISA-ICP&nbsp;Team</p></div><p>&nbsp;</p>"),
-      '#description' => t('Mail body for the release approved notification.')
-  );
-
+//  $form['project_release_moderation']['release_approved'] = array(
+//      '#type' => 'fieldset',
+//      '#title' => t('Release approved'),
+//      '#collapsible' => TRUE,
+//      '#collapsed' => TRUE,
+//  );
+//  $form['project_release_moderation']['release_approved']['release_approved_mail_title'] = array(
+//      '#type' => 'textfield',
+//      '#title' => t('Mail title'),
+//      '#default_value' => variable_get("release_approved_mail_title", "Release has been approved"),
+//      '#description' => t('mail title for thethe release approved notification.')
+//  );
+//  $form['project_release_moderation']['release_approved']['release_approved_mail_body'] = array(
+//      '#type' => 'textarea',
+//      '#title' => t('Mail body'),
+//      '#default_value' => variable_get("release_approved_mail_body", "<p>Dear&nbsp;[recipient-firstname],</p><div><p>Your release (title [title]) has been accepted and published.</p><p>It is now visible for any registered or not users on the ISA-ICP site.</p><p>Thank you for sharing information on the ISA-ICP site.</p><p>ISA-ICP&nbsp;Team</p></div><p>&nbsp;</p>"),
+//      '#description' => t('Mail body for the release approved notification.')
+//  );
   //Template for a new pending revision
   $form['new_pending_revision'] = array(
       '#type' => 'fieldset',
@@ -972,6 +1298,391 @@ function workflow_template_message() {
       '#description' => t('mail body for the deletion of pending revision.')
   );
 
+  $form['asset_release'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Workflow: Asset release'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+
+  //template to a new published revision
+  create_template_mail(&$form, 'new_revision', 'new_revision', 'new published revision (mail to moderator)', NULL, true);
+
+
+  //////////////////////
+  //  asset proposal   //
+  //////////////////////
+  // Template for asset proposal (to moderators)
+  $form['asset_release']['asset_proposal'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Proposed'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['asset_release']['asset_proposal']['to_moderator'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('to moderator'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['asset_release']['asset_proposal']['to_author'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('to author'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['asset_release']['asset_proposal']['to_moderator']['asset_proposal_moderator_mail_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("asset_proposal_moderator_mail_title", "Approval request for [type] item"),
+      '#description' => t('mail title for the asset release proposal notification.')
+  );
+  $form['asset_release']['asset_proposal']['to_moderator']['asset_proposal_moderator_mail_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("asset_proposal_moderator_mail_body", "<p>Dear [recipient-firstname],</p><p>User [field_firstname-formatted] [field_lastname-formatted] has proposed the following content.</p><p>Title: [title]</p><p>The publication of this content requires your validation.&nbsp;Please click on the link below to reach the validation or denial form.</p><p>[news_workflow_url]</p><p>ISA-ICP&nbsp;Team</p>"),
+      '#description' => t('mail body for the asset release proposal notification.')
+  );
+  // Template for news proposal (to news author)
+  $form['asset_release']['asset_proposal']['to_author']['asset_proposal_author_mail_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("asset_proposal_author_mail_title", "[type] has been submitted to moderators for approval"),
+      '#description' => t('mail title for the asset release proposal notification.')
+  );
+  $form['asset_release']['asset_proposal']['to_author']['asset_proposal_author_mail_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("asset_proposal_author_mail_body", "<p>Dear [recipient-firstname],</p><p>Your [type] (title: [title]) has been submitted. It requires the validation from site moderator, before it will be visible on the ISA-ICP&nbsp;site.</p><p>You will receive another message when the [type] is accepted and published.</p><p>In case it has been refused, you will be notified about the reasons, and eventually the possibility to submit your content again, after some updates.</p><p>Thank you for sharing information on the ISA-ICP site.</p><p>ISA-ICP&nbsp;Team</p>"),
+      '#description' => t('mail body for the asset release proposal notification.')
+  );
+
+  ///////////////////////
+  //  Asset validated   //
+  ///////////////////////
+//  $form['asset_release']['asset_validated'] = array(
+//      '#type' => 'fieldset',
+//      '#title' => t('Validated'),
+//      '#collapsible' => TRUE,
+//      '#collapsed' => TRUE,
+//  );
+//  $form['asset_release']['asset_validated']['asset_validated_mail_title'] = array(
+//      '#type' => 'textfield',
+//      '#title' => t('mail title'),
+//      '#default_value' => variable_get("asset_validated_mail_title", ""),
+//      '#description' => t('mail title for the asset release validation notification.')
+//  );
+//  $form['asset_release']['asset_validated']['asset_validated_mail_body'] = array(
+//      '#type' => 'textarea',
+//      '#title' => t('mail body'),
+//      '#default_value' => variable_get("asset_validated_mail_body", ""),
+//      '#description' => t('mail body for the asset release validation notification.')
+//  );
+create_template_mail(&$form, 'asset_release', 'asset_validated', 'Validated', true, true);
+  //////////////////////
+  //  asset suspended   //
+  //////////////////////
+  $form['asset_release']['asset_suspended'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Suspended'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['asset_release']['asset_suspended']['asset_suspended_mail_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("asset_suspended_mail_title", "title..."),
+      '#description' => t('mail title for the asset release suspend notification.')
+  );
+  $form['asset_release']['asset_suspended']['asset_suspended_mail_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("asset_suspended_mail_body", "body..."),
+      '#description' => t('mail body for the asset release suspend notification.')
+  );
+  //////////////////////
+  //  asset rejected   //
+  //////////////////////
+  $form['asset_release']['asset_rejected'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Rejected'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['asset_release']['asset_rejected']['asset_rejected_mail_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("asset_rejected_mail_title", ""),
+      '#description' => t('mail title for the asset release reject notification.')
+  );
+  $form['asset_release']['asset_rejected']['asset_rejected_mail_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("asset_rejected_mail_body", ""),
+      '#description' => t('mail body for the asset release reject notification.')
+  );
+  ////////////////////////
+  //  asset assessment  //
+  ////////////////////////
+  $form['asset_release']['asset_request_assessment'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Request assessment'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+
+  // TO AUTHOR
+  $form['asset_release']['asset_request_assessment']['to_author'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Mail to author'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['asset_release']['asset_request_assessment']['to_author']['asset_request_assessment_author_mail_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("asset_request_assessment_author_mail_title", "title..."),
+      '#description' => t('')
+  );
+  $form['asset_release']['asset_request_assessment']['to_author']['asset_request_assessment_author_mail_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("asset_request_assessment_author_mail_body", "body..."),
+      '#description' => t('')
+  );
+//  // TO MODERATOR
+//    $form['asset_release']['asset_request_assessment']['to_moderators'] = array(
+//      '#type' => 'fieldset',
+//      '#title' => t('Mail to moderators'),
+//      '#collapsible' => TRUE,
+//      '#collapsed' => TRUE,
+//  );
+//  $form['asset_release']['asset_request_assessment']['to_moderators']['asset_request_assessment_moderator_mail_title'] = array(
+//      '#type' => 'textfield',
+//      '#title' => t('mail title'),
+//      '#default_value' => variable_get("asset_request_assessment_moderator_mail_title", "title.."),
+//      '#description' => t('mail title for the asset release request assessment.')
+//  );
+//  $form['asset_release']['asset_request_assessment']['to_moderators']['asset_request_assessment_moderator_mail_body'] = array(
+//      '#type' => 'textarea',
+//      '#title' => t('mail body'),
+//      '#default_value' => variable_get("asset_request_assessment_moderator_mail_body", "body..."),
+//      '#description' => t('mail body for the asset release request assessment to moderators.')
+//  );
+  // TO CLEARING PROCESS MANAGERS
+  $form['asset_release']['asset_request_assessment']['to_cm'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Mail to clearing process managers'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['asset_release']['asset_request_assessment']['to_cm']['asset_request_assessment_cm_mail_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("asset_request_assessment_cm_mail_title", "title..."),
+      '#description' => t('')
+  );
+  $form['asset_release']['asset_request_assessment']['to_cm']['asset_request_assessment_cm_mail_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("asset_request_assessment_cm_mail_body", "body..."),
+      '#description' => t('')
+  );
+
+  ////////////////////////////////
+  //  asset approve assessment  //
+  ////////////////////////////////
+  $form['asset_release']['asset_approve_assessment'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Approve assessment'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+
+  // TO AUTHOR
+  $form['asset_release']['asset_approve_assessment']['asset_approve_assessment_mail_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("asset_approve_assessment_mail_title", "title..."),
+      '#description' => t('')
+  );
+  $form['asset_release']['asset_approve_assessment']['asset_approve_assessment_mail_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("asset_approve_assessment_mail_body", "body..."),
+      '#description' => t('')
+  );
+  ////////////////////////////////
+  //  asset reject assessment  //
+  ////////////////////////////////
+  $form['asset_release']['asset_reject_assessment'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Reject assessment'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+
+  // TO AUTHOR
+  $form['asset_release']['asset_reject_assessment']['asset_reject_assessment_mail_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("asset_reject_assessment_mail_title", "title..."),
+      '#description' => t('')
+  );
+  $form['asset_release']['asset_reject_assessment']['asset_reject_assessment_mail_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("asset_reject_assessment_mail_body", "body..."),
+      '#description' => t('')
+  );
+
+  ////////////////////////////////
+  //  asset release request deletion  //
+  ////////////////////////////////
+
+  create_template_mail(&$form, 'asset_release', 'request_deletion', 'request deletion', true, true);
+
+
+  ////////////////////////////////
+  //  asset release reject request deletion  //
+  ////////////////////////////////
+  create_template_mail(&$form, 'asset_release', 'reject_request_deletion', 'reject request deletion', true, true);
+
+  ////////////////////////////////
+  //  asset release deletion  //
+  ////////////////////////////////
+  create_template_mail(&$form, 'asset_release', 'deleted', 'asset release deleted', true, NULL);
+
+
+////////////////////////////////
+  //  asset release add to blacklist  //
+  ////////////////////////////////
+  create_template_mail(&$form, 'asset_release', 'blacklisted', 'asset release add to blacklist', true, NULL);
+  
+  
+  ////////////////////////////////
+  // REPOSITORY WORKFLOW        //
+  ////////////////////////////////
+  $form['repository_moderation'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Workflow: Repository moderation'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  ///////////////////////////////////
+  //  Repository request deletion  //
+  ///////////////////////////////////
+  $form['repository_moderation']['repository_request_deletion'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Requested deletion'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  //TO AUTHOR
+  $form['repository_moderation']['repository_request_deletion']['to_author'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Mail to author'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['repository_moderation']['repository_request_deletion']['to_author']['repository_request_deletion_mail_author_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("repository_request_deletion_mail_author_title", "title..."),
+      '#description' => t('')
+  );
+  $form['repository_moderation']['repository_request_deletion']['to_author']['repository_request_deletion_mail_author_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("repository_request_deletion_mail_author_body", "body..."),
+      '#description' => t('')
+  );
+  //TO MODERATORS
+  $form['repository_moderation']['repository_request_deletion']['to_moderator'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Mail to moderators'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['repository_moderation']['repository_request_deletion']['to_moderator']['repository_request_deletion_mail_moderator_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("repository_request_deletion_mail_moderator_title", "title..."),
+      '#description' => t('')
+  );
+  $form['repository_moderation']['repository_request_deletion']['to_moderator']['repository_request_deletion_mail_moderator_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("repository_request_deletion_mail_moderator_body", "body..."),
+      '#description' => t('')
+  );
+  ///////////////////////////////////
+  //  Repository rejected deletion  //
+  ///////////////////////////////////
+  //TO AUTHOR
+  $form['repository_moderation']['repository_rejected_deletion']['to_author'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Rejected deletion : Mail to author'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['repository_moderation']['repository_rejected_deletion']['to_author']['repository_rejected_deletion_mail_author_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("repository_rejected_deletion_mail_author_title", "title..."),
+      '#description' => t('')
+  );
+  $form['repository_moderation']['repository_rejected_deletion']['to_author']['repository_rejected_deletion_mail_author_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("repository_rejected_deletion_mail_author_body", "body..."),
+      '#description' => t('')
+  );
+  ///////////////////////////////////
+  //  Repository postponed deletion  //
+  ///////////////////////////////////
+  //TO AUTHOR
+  $form['repository_moderation']['repository_postponed_deletion']['to_author'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Postponed deletion : Mail to author'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['repository_moderation']['repository_postponed_deletion']['to_author']['repository_postponed_deletion_mail_author_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("repository_postponed_deletion_mail_author_title", "title..."),
+      '#description' => t('')
+  );
+  $form['repository_moderation']['repository_postponed_deletion']['to_author']['repository_postponed_deletion_mail_author_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("repository_postponed_deletion_mail_author_body", "body..."),
+      '#description' => t('')
+  );
+  ///////////////////////////////////
+  //  Repository deleted           //
+  ///////////////////////////////////
+  //TO AUTHOR
+  $form['repository_moderation']['repository_deleted']['to_author'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Deleted : Mail to author'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+  $form['repository_moderation']['repository_deleted']['to_author']['repository_deleted_mail_author_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('mail title'),
+      '#default_value' => variable_get("repository_deleted_mail_author_title", "title..."),
+      '#description' => t('')
+  );
+  $form['repository_moderation']['repository_deleted']['to_author']['repository_deleted_mail_author_body'] = array(
+      '#type' => 'textarea',
+      '#title' => t('mail body'),
+      '#default_value' => variable_get("repository_deleted_mail_author_body", "body..."),
+      '#description' => t('')
+  );
+
   return system_settings_form($form);
 }
 
@@ -981,6 +1692,7 @@ function workflow_template_message() {
  */
 function isa_workflow_mail_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   global $user;
+  
   switch ($op) {
     case 'presave':
       //the node has just been created, it is not un update
@@ -990,7 +1702,7 @@ function isa_workflow_mail_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       // the revision is pending validation and a moderator save it , the revision is published, so we send email
       if ((user_access('publish revisions') ||
               user_access("publish revisions of any $node->type content") ||
-              (user_access("publish revisions of own $node->type content") && $node->revision_uid == $user->uid))) {
+              (user_access("publish revisions of own $node->type content") && $node->uid == $user->uid))) {
         if ($node->is_pending && !$node->revision) {
           if (og_is_group_type($node->type)) {
             $params['message'] = "";
@@ -1010,11 +1722,27 @@ function isa_workflow_mail_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
             drupal_set_message('A notification has been sent to the author');
           }
         }
+        elseif (!$node->is_pending && $node->revision && isa_links_node_is_validated($node) && !user_access('access publishing options')) {
+          //Send a mail to moderators (if the node is validated, and if it is not a moderator who update it)
+          $params['subject'] = variable_get("new_revision_new_revision_mail_moderator_title", "title...");
+          $params['nid'] = $node->nid;
+          $params['uid'] = $user->uid;
+          $role_id = variable_get("moderator_rid", NULL);
+          $sql = "SELECT a.mail FROM {users} a LEFT JOIN {users_roles} b ON (a.uid = b.uid) WHERE b.rid = %d";
+          $res = db_query($sql, $role_id);
+          while ($row = db_fetch_object($res)) {
+            $addr_mail = $row->mail;
+            drupal_mail('isa_workflow_mail', 'new_revision', $addr_mail, NULL, $params, $from, TRUE);
+          }
+          drupal_set_message('A notification has been sent to moderators');
+        }
       }
       //a new revision in draft has been created.
       else {
         if ($node->revision && $node->revision_moderation) {
-          $state_validated = array(ISA_SID_NEWS_CREATED, ISA_SID_NEWS_PUBLISHED, ISA_SID_NEWS_REQUEST_PUBLICATION, ISA_SID_COMMUNITY_VALIDATED, ISA_SID_NEWS_VALIDATED, ISA_SID_FEDPROJ_PUBLISHED, ISA_SID_RELEASE_CREATED, ISA_SID_RELEASE_REQUESTED, ISA_SID_RELEASE_APPROVED);
+          $state_validated = array(ISA_SID_NEWS_CREATED, ISA_SID_NEWS_PUBLISHED,
+              ISA_SID_NEWS_REQUEST_PUBLICATION, ISA_SID_COMMUNITY_VALIDATED, ISA_SID_NEWS_VALIDATED,
+              ISA_SID_FEDPROJ_PUBLISHED, ISA_SID_RELEASE_CREATED, ISA_SID_RELEASE_REQUESTED);
           if (!isset($node->workflow) || in_array($node->workflow, $state_validated)) {
             //Send a mail to moderators
             $params['subject'] = variable_get("new_pending_revision_title", "title...");
@@ -1042,5 +1770,67 @@ function isa_workflow_mail_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         drupal_set_message('A notification has been sent to the author');
       }
       break;
+  }
+}
+
+/**
+ * add the mail template
+ * @param $form
+ * @param $workflow      name of the workflow
+ * @param $action       name of the action
+ * @param $title        title of the fieldset in administration page
+ * @param $to_author    create template for author
+ * @param $to_moderator  create template for moderator
+ */
+function create_template_mail($form, $workflow, $action, $title, $to_author =False, $to_moderator=false) {
+  $form[$workflow][$action] = array(
+      '#type' => 'fieldset',
+      '#title' => t($title),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+  );
+
+//TO AUTHOR
+  if ($to_author) {
+    $form[$workflow][$action]['to_author'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Mail to author'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+    );
+    $form[$workflow][$action]['to_author'][$workflow . '_' . $action . '_mail_author_title'] = array(
+        '#type' => 'textfield',
+        '#title' => t('mail title'),
+        '#default_value' => variable_get($workflow . '_' . $action . '_mail_author_title', "title..."),
+        '#description' => t('')
+    );
+    $form[$workflow][$action]['to_author'][$workflow . '_' . $action . '_mail_author_body'] = array(
+        '#type' => 'textarea',
+        '#title' => t('mail body'),
+        '#default_value' => variable_get($workflow . '_' . $action . '_mail_author_body', "body..."),
+        '#description' => t('')
+    );
+  }
+
+  //TO MODERATORS
+  if ($to_moderator) {
+    $form[$workflow][$action]['to_moderator'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Mail to moderators'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+    );
+    $form[$workflow][$action]['to_moderator'][$workflow . '_' . $action . '_mail_moderator_title'] = array(
+        '#type' => 'textfield',
+        '#title' => t('mail title'),
+        '#default_value' => variable_get($workflow . '_' . $action . '_mail_moderator_title', "title..."),
+        '#description' => t('')
+    );
+    $form[$workflow][$action]['to_moderator'][$workflow . '_' . $action . '_mail_moderator_body'] = array(
+        '#type' => 'textarea',
+        '#title' => t('mail body'),
+        '#default_value' => variable_get($workflow . '_' . $action . '_mail_moderator_body', "body..."),
+        '#description' => t('')
+    );
   }
 }

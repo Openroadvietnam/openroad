@@ -283,12 +283,14 @@ function isa_ml_add_ml() {
   while ($row = db_fetch_array($result)) {
     $items[] = $row['name'];
   }
+  $shortname = isa_links_get_group_short_name(node_load($nid));
 
   $form = array();
-  $form['#prefix'] = '<h4>Mailing lists existing</h4>' . theme_item_list($items, NULL, 'ul', array());
+  $form['#prefix'] = '<h4>' . t('Existing mailing lists') . '</h4>' . theme_item_list($items, NULL, 'ul', array());
 
-  $descr = "The name is used to create the mailing list : name@" . variable_get('isa_ml_domain', 'ec.europa.eu');
+  $descr = t(sprintf("The name is used to create the mailing list : %s-name@%s", $shortname,variable_get('isa_ml_domain', 'ec.europa.eu')));
 
+  $form['shortname'] = array('#type' => 'value', '#value' => $shortname);
   $form['name'] = array(
       '#type' => 'textfield',
       '#title' => t('New mailing list :'),
@@ -327,7 +329,7 @@ function isa_ml_add_ml_submit(&$form, $form_state) {
   $ml_initial_members = variable_get('isa_ml_initial_members', array());
 
   // Retrieve the name of the future mailing list
-  $ml_name = $form_state['values']['name'];
+  $ml_name = $form_state['values']['shortname'] . '-' . $form_state['values']['name'];
 
   if (!strlen(trim($ml_name))) {
     drupal_set_message(t($error_message, array(':ml_name' => $ml_name, ':reason' => t('invalid name'))), 'error');
@@ -364,6 +366,7 @@ function isa_ml_add_ml_submit(&$form, $form_state) {
 
   // eventually, we insert the task in the table
   $insert_query = 'INSERT INTO {ml_management} (ml, p1, p2, p3, action, state) VALUES (\'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')';
+  $state = 'todo';
   db_query($insert_query, $ml_name, $ml_owner_addr, serialize($ml_default_configuration), serialize($ml_initial_members), $action, $state);
   // we insert the mailing list in the mailman manager table
   $insert_query = 'INSERT INTO {mailman_lists} (name, command, admin) VALUES (\'%s\', \'%s\', \'%s\')';
@@ -382,17 +385,50 @@ function isa_ml_add_ml_submit(&$form, $form_state) {
  * @param type $form_state 
  */
 function isa_ml_add_ml_validate($form, &$form_state) {
-  $ml_name = $form_state['values']['name'];
+  $name = $form_state['values']['name'];
   $word_reserved = array('request', 'admin', 'owner');
-  if (in_array($ml_name, $word_reserved)) {
+  if (in_array($name, $word_reserved)) {
     form_set_error('name', t('This name is reserved. Set another please.'));
   }
+  if (!preg_match('/^[+-_.=a-z0-9]+$/', $name)) {
+    form_set_error('name', t('Please only use lowercase characters, digits, underscores, plusses, dash, equals or dots for the name.'));
+  }
+  $ml_name = $form_state['values']['shortname'] . '-' . $name;
   $query = "SELECT lid FROM {mailman_lists} WHERE name = '%s'";
   if (db_result(db_query($query, $ml_name))) {
     form_set_error('name', t('This mailing list is already existing'));
   }
-  if (!preg_match('/^[+-_.=a-z0-9]+$/', $ml_name)) {
-    form_set_error('name', t('Please only use lowercase characters, digits, underscores, plusses, dash, equals or dots for the name.'));
-  }
 }
 
+/**
+ *
+ * @return array Mailing Lists in a Project
+ */
+// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-600
+function _isa_ml_get_mailing_lists($nid, $only_principal=false) {      
+  //Retrieve available mailing lists for the node
+  $filters = '';
+  if ($only_principal) {
+    $filters .= 'AND principal=1';
+  }
+  $query = "SELECT lid,name FROM {mailman_lists} INNER JOIN {ml_group} USING (lid) WHERE nid = %d $filters ORDER BY principal DESC, name ASC";
+  $result = db_query($query, $nid);
+  while ($row = db_fetch_array($result)) {
+    $rows[] = $row;
+  }
+  return $rows;
+}
+
+/**
+ *
+ * @return string Name of principal Mailing List in a Project
+ */
+// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-600
+function isa_ml_get_principal_mailing_list($nid) {      
+  //Retrieve principal mailing list for the node
+  $rows = _isa_ml_get_mailing_lists($nid, true);
+  if (is_array($rows) && count($rows)) {
+    return $rows[0]['name'];
+  }
+  return false;
+}

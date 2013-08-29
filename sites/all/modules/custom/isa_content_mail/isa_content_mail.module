@@ -88,6 +88,7 @@ function isa_content_mail_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
     if (in_array($node->type, $node_type) && !empty($node->og_groups)) {
       $message = 'A notification has been sent to facilitators';
       $list_facilitators = isa_toolbox_get_users_by_og_roles(array_shift(array_keys($node->og_groups)), variable_get("facilitator_rid", NULL));
+
       //add the author to the recipients list
       if(!array_key_exists($node->uid,$list_facilitators)){
          $list_facilitators[$node->uid]->mail = isa_toolbox_get_mail_address_from_user($node->uid);
@@ -304,6 +305,7 @@ function isa_content_mail_token_list($type = 'all') {
  * Implement of hook_token_values()
  */
 function isa_content_mail_token_values($type, $object = NULL, $options = array()) {
+  $values = array();
   if ($type == 'node') {
     if ($object == NULL){
       $values ['comment_group_title_raw'] = 'posted';

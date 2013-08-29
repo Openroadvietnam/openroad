@@ -1,0 +1,18 @@
+/*@CHARSET "ISO-8859-1";*/
+#search-sort-wrapper label{
+    margin-right: 1em;
+}
+
+#searchSortForm {
+  margin-bottom: 0;  
+}
+.container-inline .form-item .form-item {
+  margin-bottom: 0;  
+}
+
+.container-inline .form-item .form-select {
+  margin-bottom: 0;  
+}
+
+/* Overwrite from sites/all/themes/joinup/styles/default/forms.css */
+input.form-button, input.form-submit { margin:2em .5em 0 0; }

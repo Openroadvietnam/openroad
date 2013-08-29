@@ -2,7 +2,7 @@
 
 // Remove from the database :
 // - nodes except page, profile, contexthelp_faq, study, contexthelp and wiki of license wizard
-// - users, except anonymous (uid = 0) and admin (uid = 1)
+// - users, except anonymous (uid = 0) and admin (uid = 1) and 
 // - newsletters
 // - activity log
 //
@@ -10,20 +10,28 @@
 
 ini_set('display_errors',0);
 //ini_set('display_errors', 1);
+//ini_set('error_reporting','E_ALL & ~E_NOTICE');
+$date = date ('dmyHi');
 ini_set('log_errors', 1);
-ini_set('error_log', dirname(__FILE__) . '/clean_database_error.log');
+ini_set('error_log', dirname(__FILE__) . '/clean_database_error_'.$date.'.log');
 error_reporting(E_ALL);
 ini_set('memory_limit', '400M');
+
+// set HTTP_HOST or drupal will refuse to bootstrap
+//$_SERVER['HTTP_HOST'] = 'example.org';
+$_SERVER['REQUEST_METHOD'] = '';
+$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 require_once './includes/bootstrap.inc';
+
 drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
 
 // load admin user for permissions
+//$form_values = array ();
+//$form_values['name'] = 'admin';
+//$form_values['pass'] = 'admin';
+//user_authenticate ($form_values);
 global $user;
 $user = user_load ('1');
-
-// replace email adress (if user has subscribe to content)
-$sql_mail = "UPDATE users SET mail = 'atostest57+script_clean_database@gmail.com' WHERE users.uid != 0 ";
-db_query($sql_mail);
 
 ////////////////////
 //  DELETE NODES  //
@@ -31,11 +39,12 @@ db_query($sql_mail);
 $sql = "
   SELECT *
   FROM node n
-  WHERE type NOT IN ('study', 'page','profile','contexthelp_faq','contexthelp')";
+  WHERE type NOT IN ('page','profile','contexthelp_faq','contexthelp')";
 
 $req = db_query($sql);
 
 $i = 0;
+$j = 0;
 while($node = db_fetch_array($req)){
   if ($node['type'] == 'wiki'){
     $row_path = NULL;
@@ -45,23 +54,25 @@ while($node = db_fetch_array($req)){
     $row_path = db_fetch_array($req_path);
 
     if (strpos($row_path['dst'],'software/license-wizard' ) === FALSE){
-      $i++;
       //print $node['nid'].'</br>';
-      node_delete($node['nid']);
-    }  
+      clean_database_node_delete($node['nid']);
+      $i++;
+    }else{
+        $j++;
+    }
   }else{
+    clean_database_node_delete($node['nid']);
     $i++;
-    node_delete($node['nid']);
-  }
-  if (($i % 100) == 0){
-    echo "-";
   }
   
 }
 
 echo "-------------------------------------- \r\n";
-echo $i." nodes deleted. \r\n";
+echo $i." nodes deleted.".$j."nodes kept \r\n";
+echo "-------------------------------------- \r\n";
 
+$sql="TRUNCATE TABLE watchdog ;";
+db_query($sql);
 
 ////////////////////
 //  DELETE USERS  //
@@ -73,20 +84,16 @@ $sql = "
   WHERE uid NOT IN ('0','1','2')";
 $i = 0;
 $req = db_query($sql);
-while($user = db_fetch_array($req)){
-  $i++;
-  user_delete (array (),$user['uid']);
-  if (($i % 100) == 0){
-    echo "-";
-  }
+while($usr = db_fetch_array($req)){
+  clean_database_user_delete (array (),$usr['uid']);
 }
 
 echo $i." users deleted. \r\n";
+echo "-------------------------------------- \r\n";
 
-
-//////////////////////////
-//  DELETE NEWSLETTERS  //
-//////////////////////////
+/////////////////////////////
+//  DELETE TAXONOMY TERMS  //
+/////////////////////////////
 $i = 0;
 foreach (taxonomy_get_tree(variable_get('simplenews_vid', '')) as $term) {
   $i++;
@@ -95,14 +102,10 @@ foreach (taxonomy_get_tree(variable_get('simplenews_vid', '')) as $term) {
   variable_del('simplenews_from_name_'. $tid);
   variable_del('simplenews_from_address_'. $tid);
   isa_multiple_digest_delete($tid);
-  if (($i % 10) == 0){
-    echo "-";
-  }
 }
 
 echo $i." newsletters deleted. \r\n";
-
-
+ 
 ////////////////////////////////
 //  DELETE ACTIVITY MESSAGES  //
 ////////////////////////////////
@@ -130,6 +133,17 @@ echo ("$count files deleted from database (table files). \r\n");
 echo "-------------------------------------- \r\n";
 */
 
+
+//$sql="TRUNCATE TABLE `subscriptions_user`";
+//db_query($sql);
+$sql="TRUNCATE TABLE `heartbeat_translations`";
+db_query($sql);
+$sql="TRUNCATE TABLE `isa_download_statistics_count`";
+db_query($sql);
+$sql = "TRUNCATE TABLE apachesolr_search_node;";
+db_query ($sql);
+$sql = "TRUNCATE TABLE apachesolr_attachments_files;";
+db_query ($sql);
 $sql = "TRUNCATE TABLE commit_management;";
 db_query ($sql);
 $sql="TRUNCATE TABLE listhandler;";
@@ -178,6 +192,8 @@ $sql="TRUNCATE TABLE search_total;";
 db_query($sql);
 $sql="TRUNCATE TABLE simplenews_subscriptions;";
 db_query($sql);
+$sql="TRUNCATE TABLE captcha_sessions;";
+db_query($sql);
 $sql="TRUNCATE TABLE cache;";
 db_query($sql);
 $sql="TRUNCATE TABLE cache_admin_menu;";
@@ -214,18 +230,84 @@ FROM vocabulary
 WHERE name = 'keywords');";
 db_query($sql);
 
+$sql="DELETE FROM term_data WHERE vid in (SELECT vid
+FROM vocabulary
+WHERE name = 'Virtual forge');";
+db_query($sql);
+
 $sql="DELETE FROM url_alias WHERE dst LIKE 'category/keywords%' AND src LIKE 'taxonomy/term%'";
 db_query($sql);
 $sql="DELETE FROM term_hierarchy WHERE tid NOT IN (select tid from term_data)";
 db_query($sql);
 
-echo ("Truncated tables listhandler, mailman_lists, mailman_users,repositories_management, qa_answer,mailhandler,
+echo ("Truncated tables captcha_sessions, apachesolr_search_node, apachesolr_attachments_files, listhandler, mailman_lists, mailman_users,repositories_management, qa_answer,mailhandler,
   ml_management, media_youtube_node_data, media_youtube_metadata, project_release_file, history, watchdog,
   userpoints,userpoints_txn, votingapi_cache, votingapi_vote, node_comment_statistics, search_dataset
   search_index, search_node_links, search_total, cache* \r\nTerms of keywords taxonomy are deleted\r\n");
 echo "-------------------------------------- \r\n";
 
+// upd password and users mail (password = '21232f297a57a5a743894a0e4a801fc3' = 'admin')
+$sql="UPDATE users SET pass='21232f297a57a5a743894a0e4a801fc3' , mail='admin@admin.com', init='admin@admin.com' WHERE uid = 1 or uid = 2 ";
+db_query($sql);
+
+variable_set ('site_mail','admin@admin.com');
+variable_set ('simplenews_from_name','admin@admin.com');
+variable_set ('simplenews_from_address','admin@admin.com');
+variable_set ('simplenews_test_address','admin@admin.com');
+variable_set ('subscriptions_site_mail','admin@admin.com');
+variable_set ('simplenews_from_name_','admin@admin.com');
+variable_set ('svn_url','admin@admin.com');
+variable_set ('project_issue_reply_to','admin@admin.com');
+
+// up password and users mail (password = '21232f297a57a5a743894a0e4a801fc3' = 'admin')
+$sql="UPDATE users SET pass='21232f297a57a5a743894a0e4a801fc3' , mail='admin@admin.com', init='admin@admin.com' WHERE uid = 1 or uid = 2 ";
+db_query($sql);
+
+
+
+
+
+
+
+
+
+
+
 // remove drupal_set_messages
 if (isset ($_SESSION) && isset ($_SESSION['messages'])){
   unset ($_SESSION['messages']);
+}
+
+
+
+/**
+ * Delete a node.
+ * 
+ * @see node_delete
+ *
+ */
+function clean_database_node_delete ($nid){
+    
+    $node = node_load($nid, NULL, TRUE);
+    db_query('DELETE FROM {node} WHERE nid = %d', $node->nid);
+    db_query('DELETE FROM {node_revisions} WHERE nid = %d', $node->nid);
+    db_query('DELETE FROM {node_access} WHERE nid = %d', $node->nid);
+
+    // Call the node-specific callback (if any):
+    node_invoke($node, 'delete');
+    node_invoke_nodeapi($node, 'delete');
+    
+    // Clear the page and block caches.
+    //cache_clear_all();
+}
+
+function clean_database_user_delete($edit, $uid) {
+  $account = user_load(array('uid' => $uid));
+  sess_destroy_uid($uid);
+
+  db_query('DELETE FROM {users} WHERE uid = %d', $uid);
+  db_query('DELETE FROM {users_roles} WHERE uid = %d', $uid);
+  db_query('DELETE FROM {authmap} WHERE uid = %d', $uid);
+
+  user_module_invoke('delete', $edit, $account);
 }

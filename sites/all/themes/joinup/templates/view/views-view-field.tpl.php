@@ -25,9 +25,10 @@
 */
   
 	$result = str_replace('_', '-', $field -> field_alias);
+    if ($field -> field_alias == 'node_vid') $result = 'node-title';
 	$search = array('-field', 'node-');
 	$class = str_replace($search, '', $result);
-	($field -> field_alias == 'node_title') ? $content = '<strong>'. $output .'</strong>' : $content = $output;
+	($result == 'field-title') ? $content = '<strong>'. $output .'</strong>' : $content = $output;
 	
 ?>
 <?php if ($view->name == 'faq_topics') : ?>

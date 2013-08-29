@@ -1,0 +1,29 @@
+<?php
+/**
+ * @defgroup isa_jquery_noconflict
+ * @brief Allows to load an aditional jquery and jquery ui library in no conflict mode
+ * @file 
+ * Module main file
+ * @ingroup isa_jquery_noconflict
+ */
+/**
+ * Adds jquery 1.9.1 and jqueryui 1.10 in no conflitc mode. To use it, use the javascript object name returned instead of jQuery. Default
+ * version of jquery and jquery can still be used to used, using the jQuery or $ object.
+ * @return string
+ *  The jQuery object name
+ **/
+function isa_jquery_noconflict_include_jquery(){
+    static $executed;
+    $jquery_object = "newjQuery";
+    if(true === $executed){
+        return $jquery_object;
+    }
+    $path = drupal_get_path('module', 'isa_jquery_noconflict');  
+    drupal_add_js($path .'/js/init_level_1.js');  
+    drupal_add_js($path .'/jquery_1_9_0/js/jquery-1.9.1.min.js');  
+    drupal_add_js($path .'/jquery_1_9_0/js/jquery-ui-1.10.0.custom.min.js');  
+    drupal_add_css($path .'/jquery_1_9_0/css/jquery-ui-1.10.0.custom.min.css'); 
+    drupal_add_js($path .'/js/init_level_2.js');
+    $executed = true;
+    return $jquery_object;
+}

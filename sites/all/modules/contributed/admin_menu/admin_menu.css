@@ -93,12 +93,12 @@ body.admin-menu {
 }
 #admin-menu li li {
   background: #202020;
-  filter: Alpha(opacity=88);
+  /*filter: Alpha(opacity=88);*/
   opacity: 0.88;
   width: 160px; /* Required for Opera */
 }
 #admin-menu li li li {
-  filter: Alpha(opacity=100);
+  /*filter: Alpha(opacity=100);*/
   opacity: 1;
 }
 
@@ -203,7 +203,7 @@ html.js fieldset.collapsible div.fieldset-wrapper {
  */
 tr.admin-menu-tweak-permissions-processed {
   cursor: pointer;
-  cursor: hand;
+  /* cursor: hand;*/
 }
 tr.admin-menu-tweak-permissions-processed td.module {
   border-top: 0;

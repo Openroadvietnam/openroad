@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @defgroup isa_node_form
  * @brief Module for alter nodes form. This module must have a weight greater than the modulus Fieldgroup of CCK
@@ -6,6 +7,18 @@
  * Modules main file
  * @ingroup isa_node_form
  */
+require_once( variable_get('adms_lib_path', $GLOBALS['adms_lib_path']) . '/bootstrap.php' );
+include_once(drupal_get_path('module', 'isa_node_form') . '/includes/asset_release.inc');
+include_once(drupal_get_path('module', 'isa_node_form') . '/includes/case.inc');
+include_once(drupal_get_path('module', 'isa_node_form') . '/includes/contact_point.inc');
+include_once(drupal_get_path('module', 'isa_node_form') . '/includes/distribution.inc');
+include_once(drupal_get_path('module', 'isa_node_form') . '/includes/documentation.inc');
+include_once(drupal_get_path('module', 'isa_node_form') . '/includes/document.inc');
+include_once(drupal_get_path('module', 'isa_node_form') . '/includes/event.inc');
+include_once(drupal_get_path('module', 'isa_node_form') . '/includes/item.inc');
+include_once(drupal_get_path('module', 'isa_node_form') . '/includes/licence.inc');
+include_once(drupal_get_path('module', 'isa_node_form') . '/includes/publisher.inc');
+include_once(drupal_get_path('module', 'isa_node_form') . '/includes/repository.inc');
 
 /**
  * Implement of hook_form_alter ()
@@ -15,7 +28,50 @@
  * @param string $form_id 
  */
 function isa_node_form_form_alter(&$form, &$form_state, $form_id) {
-    
+  // call function for specific form alter : _{content_type_name}_form_alter (if it exist)
+  // functions for form_alter,'validate and submit 
+  // must be declared in ./includes/{content_type_name}.inc
+  // The automatic inclusion of the *.inc file is done in the function isa_node_form_init()
+  $nodes_type = node_get_types();
+  foreach ($nodes_type as $key => $value) {
+    if ($value->type . '_node_form' == $form_id) {
+      // add validate function is it exist
+      $validation_name = '_' . $value->type . '_form_validate';
+      if (function_exists($validation_name)) {
+        $form['#validate'][] = $validation_name;
+      } 
+      // add submit function is it exist
+      $submit_name = '_' . $value->type . '_form_submit';
+      if (function_exists($validation_name)) {
+        $form['#submit'][] = $submit_name;
+      }
+      // call specific form alter
+      $form_alter_name = '_' . $value->type . '_form_alter';
+      if (function_exists($form_alter_name)) {
+        $form_alter_name(&$form, &$form_state, $form_id);
+      }
+    }
+  }
+
+  if ($form_id == 'advpoll_binary_node_form') {
+	unset($form['footer_message']);
+	$form['field_top_tittle']['#weight'] = 1;
+	$form['#content_extra_fields']['title']['weight'] = 2;	
+	$form['#content_extra_fields']['body_field']['weight'] = 3;		
+	$form['choices']['#weight'] = 7;
+	$form['choice']['#weight'] = 8;
+	$form['field_publication_date']['#weight'] = 9;
+	$form['settings']['#weight'] = 10;
+	
+	
+  }
+  
+  // Specific treatment for the field_id_uri 
+  if (isset($form['field_id_uri']) && $form_id != 'content_field_overview_form') {
+    $form['#validate'][] = '_isa_node_form_validate_uri';
+  }
+
+
   isa_node_form_hide_tags($form, 'View any keywords/tags');
   if (isset($form['buttons']['preview']))
     unset($form['buttons']['preview']);
@@ -41,45 +97,38 @@ function isa_node_form_form_alter(&$form, &$form_state, $form_id) {
     $form['admin']['#access'] = user_access('access authoring information');
   }
 //check permission access for fieldset 'publishing options'
-  if (isset($form['options'])) {
-    $form['options']['#access'] = user_access('access publishing options');
+  if (isset($form['options'])) {  
+	//ISAICP-403
+	//Tick box "send subscription notifications" is only available to moderators
+    $form['options']['#access'] = user_is_logged_in();
   }
   if (isset($form['#theme']) && $form['#theme'] == 'confirm_form' && isset($form['actions']['cancel'])
-          || isset($form['buttons']['cancel'])) {
+    || isset($form['buttons']['cancel'])) {
     isa_node_form_cancel_button_alter($form);
   }
 
   //remove the error validation message when submit is on delete button
   $form['#after_build'][] = 'isa_node_form_after_build';
-  
+
   // in publishing options, change the text 'Send subscriptions notifications' to 'Send an e-mail notification to subscribed users'
-  if (isset ($form['options']) && isset ($form['options']['subscriptions_notify'])){
+  if (isset($form['options']) && isset($form['options']['subscriptions_notify'])) {
     $form['options']['subscriptions_notify']['#title'] = t('Send an e-mail notification to subscribed users');
   }
-    // rename title of workflow fieldset
+  // rename title of workflow fieldset
   if (isset($form['workflow'])) {
-    $form['workflow']['#title'] = ucfirst($form['type']['#value']).t(' moderation');
+    $form['workflow']['#title'] = ucfirst($form['type']['#value']) . t(' moderation');
   }
-  
+
   if (strpos($form_id, '_node_form') !== FALSE) {
-    isa_node_form_prefix($form,$form_id);
+    isa_node_form_prefix($form, $form_id);
   }
-   
+
   switch ($form_id) {
     case 'user_confirm_delete' :
       $form['#redirect'] = '<front>';
       break;
     case ISA_FACTSHEET_TYPE . '_node_form':
       isa_node_form_factsheet($form);
-      break;
-    case 'case_node_form':
-      $form = isa_node_form_case_node($form);
-      //isa_node_form_manage_workflow_news_moderation ($form);
-      break;
-    case 'document_node_form':
-      $form ['body_field']['body']['#required'] = TRUE;
-      $form = isa_node_form_document_node($form);
-      isa_node_form_alter_og_audience_form($form, $form_state, $form_id);
       break;
     case 'federated_project_node_form':
       $form = isa_node_form_federated_project($form);
@@ -95,15 +144,14 @@ function isa_node_form_form_alter(&$form, &$form_state, $form_id) {
       if (isset($form['#node']->path)) {
         $form['#redirect'] = 'people/' . $form['#node']->uid;
       }
+      $form['taxonomy'][variable_get('country_vid', 26)]['#title'] = 'Nationality';
       $form['#submit'][] = 'isa_node_form_clear_profile_cache';
     case 'user_register':
       isa_node_form_profile($form, $form_state);
-
       break;
     case 'user_profile_form':
       // no use #redirect,else if the user click on delete button, he will be redirect to his profile
       //  see isa_toolbox_user
-      //$form['#redirect'] = 'people/' . $form['#uid'];
       // hidden field language
       if (isset($form['locale']['language'])) {
         $form['locale']['#access'] = FALSE;
@@ -124,7 +172,6 @@ function isa_node_form_form_alter(&$form, &$form_state, $form_id) {
       $form = isa_node_form_community($form);
       break;
     case 'project_project_node_form':
-
       $form = isa_node_form_project($form, $form_state);
       // for workflow fields see isa_workflow
       isa_node_form_prefill_translation($form);
@@ -132,14 +179,9 @@ function isa_node_form_form_alter(&$form, &$form_state, $form_id) {
     case 'wiki_node_form':
       $form = isa_node_form_wiki($form);
       isa_node_form_alter_og_audience_form($form, $form_state, $form_id);
-      //check permission access for fieldset 'revision information'
       break;
     case ISA_TOPIC_TYPE . '_node_form':
       $form = isa_node_form_topic($form);
-      isa_node_form_alter_og_audience_form($form, $form_state, $form_id);
-      break;
-    case ISA_EVENT_TYPE . '_node_form':
-      $form = isa_node_form_event($form);
       isa_node_form_alter_og_audience_form($form, $form_state, $form_id);
       break;
     case ISA_NEWSLETTER_TYPE . '_node_form':
@@ -160,34 +202,7 @@ function isa_node_form_form_alter(&$form, &$form_state, $form_id) {
       isa_node_form_alter_project_issue_project_edit_form($form, $form_state);
       break;
     case 'comment_form':
-      $node = node_load($form['nid']['#value']);
-      if ($node->type == ISA_ISSUE_TYPE) {
-        isa_node_form_alter_issues_comment($form);
-      }
-      if ($node->type == 'legaldocument') {
-        $form['comment_filter']['comment']['#type'] = 'textfield';
-        $form['comment_filter']['comment']['#description'] = 'type "I agree" to sign the legal document';
-        $form['comment_filter']['comment']['#maxlength'] = 10;
-        $form['comment_filter']['comment']['#size'] = 20;
-        $form['submit']['#value'] = 'Sign';
-        $form['#validate'][] = 'isa_node_form_signature_validate';
-        $form['#submit'] = array('isa_node_form_signature_submit');
-        unset($form['_author']);
-        unset($form['comment_filter']['format']);
-        unset($form['preview']);
-        unset($form['#after_build']);
-        unset($form['admin']);
-        unset($form['#action']);
-        
-//        $form['submit']['#attributes'] = array('class' =>'popups-form',
-//          'on-popups-options' => '{
-//          doneTest: "comment/validate_signature",
-//hijackDestination:false,
-//updateMethod:"reload",
-//updateSource:"final",
-//          }',
-//            );        
-      }
+      isa_node_form_comment_form($form);
       break;
     case 'user_admin_account':
       break;
@@ -197,21 +212,20 @@ function isa_node_form_form_alter(&$form, &$form_state, $form_id) {
       $form ['project_release_files']['#weight'] = 10;
       $form['field_release_component']['#weight'] = 5;
       // for workflow fields see isa_workflow
-	  if (user_access ('edit release project')){
-	    unset ($form['project_release']['version_major']['#attributes']['disabled']);
-        unset ($form['project_release']['version_minor']['#attributes']['disabled']);
-        unset ($form['project_release']['version_patch']['#attributes']['disabled']);
-        unset ($form['project_release']['version_extra']['#attributes']['disabled']);
-        if (isset ($form['rel_id'])){
-		  unset ($form['rel_id']['title']['#attributes']['disabled']);
-          unset ($form['rel_id']['version']['#attributes']['disabled']);
+      if (user_access('edit release project')) {
+        unset($form['project_release']['version_major']['#attributes']['disabled']);
+        unset($form['project_release']['version_minor']['#attributes']['disabled']);
+        unset($form['project_release']['version_patch']['#attributes']['disabled']);
+        unset($form['project_release']['version_extra']['#attributes']['disabled']);
+        if (isset($form['rel_id'])) {
+          unset($form['rel_id']['title']['#attributes']['disabled']);
+          unset($form['rel_id']['version']['#attributes']['disabled']);
         }
-	  }
+      }
       break;
     case 'node_delete_confirm':
       isa_node_form_redirect_node_deletion($form, $form_state);
       break;
-    //case 'contact_mail_page':
     case 'video_node_form':
       $form = isa_node_form_videos($form);
       break;
@@ -224,7 +238,77 @@ function isa_node_form_form_alter(&$form, &$form_state, $form_id) {
     case ISA_LEGALDOCUMENT_TYPE . '_node_form':
       isa_node_form_alter_og_audience_form($form, $form_state, $form_id);
       break;
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-644
+    //Change label
+    case 'publisher_node_form':
+        if ($_SESSION['page_override'] == TRUE) {
+            $form['field_id_uri']['#title']= 'Publisher ID (URI)';
+            $form['field_id_uri'][0]['#title']= 'Publisher ID (URI)';
+        }
+        break;
   }//switch
+  
+  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-653
+  //The field Geographic Coverage changed to multiple selected
+  if (isset($form['taxonomy'][variable_get('geographic_coverage_vid', 26)])) {
+    $form['taxonomy'][variable_get('geographic_coverage_vid', 26)]['#multiple'] = 1;
+  }
+  
+  //HELP TEXT
+  if($form_id == 'advertisement_node_form'){
+  	$form['body_field']['body']['#description'] = '<p>' . t('Please, enter a maximum of 150 characters in the tittle and body fields together. For example, if your title contains 100 characters we advise you to have a body not bigger that 50 characters.') . '</p>';
+  	$form['title']['#description'] ='<p>' . t('Please, enter a maximum of 150 characters in the tittle and body fields together. For example, if your title contains 100 characters we advise you to have a body not bigger that 50 characters.') . '</p>';
+  }
+  if($form_id == 'home_carousel_node_form'){
+  	$form['body_field']['body']['#description'] = '<p>' . t('Please, enter a maximum of 195 characters in the tittle and body fields together. For example, if your title contains 145 characters we advise you to have a body not bigger that 50 characters.') . '</p>';
+  	$form['title']['#description'] ='<p>' . t('Please, enter a maximum of 195 characters in the tittle and body fields together. For example, if your title contains 145 characters we advise you to have a body not bigger that 50 characters.') . '</p>';
+  }
+}
+/**
+ * Alter comment form
+ * @param type $form Nested array of comment form elements that comprise the form.
+ */
+function isa_node_form_comment_form(&$form) {
+  $node = node_load($form['nid']['#value']);
+  if ($node->type == ISA_ISSUE_TYPE) {
+    isa_node_form_alter_issues_comment($form);
+  }
+  if ($node->type == 'legaldocument') {
+    $form['comment_filter']['comment']['#type'] = 'textfield';
+    $form['comment_filter']['comment']['#description'] = 'type "I agree" to sign the legal document';
+    $form['comment_filter']['comment']['#maxlength'] = 10;
+    $form['comment_filter']['comment']['#size'] = 20;
+    $form['submit']['#value'] = 'Sign';
+    $form['#validate'][] = 'isa_node_form_signature_validate';
+    $form['#submit'] = array('isa_node_form_signature_submit');
+    unset($form['_author']);
+    unset($form['comment_filter']['format']);
+    unset($form['preview']);
+    unset($form['#after_build']);
+    unset($form['admin']);
+    unset($form['#action']);
+    //        $form['submit']['#attributes'] = array('class' =>'popups-form',
+//          'on-popups-options' => '{
+//          doneTest: "comment/validate_signature",
+//hijackDestination:false,
+//updateMethod:"reload",
+//updateSource:"final",
+//          }',
+//            );  
+  }
+}
+
+/**
+ * implementation of hook_init ()
+ * Used to include files 
+ */
+function isa_node_form_init() {
+  $nodes_type = node_get_types();
+  // include files (if it exist) for al content type 
+  // files name must be : {content_type_name}.inc
+  foreach ($nodes_type as $key => $type) {
+    module_load_include('inc', 'isa_node_form', 'includes/' . $type->type);
+  }
 }
 
 /**
@@ -248,26 +332,27 @@ function isa_node_form_signature_submit(&$form, &$form_state) {
  * @return form 
  */
 function isa_node_form_signature_confirm_form(&$form_state) {
-
   if (isset($_SESSION['comment_validate_form_state'])) {
     $form['form_state_comment'] = array(
-        '#type' => 'value',
-        '#value' => $_SESSION['comment_validate_form_state'],
+      '#type' => 'value',
+      '#value' => $_SESSION['comment_validate_form_state'],
     );
     $node = node_load($_SESSION['comment_validate_form_state']['values']['nid']);
-    $form = confirm_form($form, t('Are you sure you want to sign the legal document %node ?', array('%node' => $node->title)), //message title
-            $node->path, //redirect if cancelled
-            t('Enter your password to validate the signature of the legal document %node ?', array('%node' => $node->title)), //message description
-            t('Sign'), //confirm button text
-            t('Cancel') //cancel button text
+    $form = confirm_form($form,
+      t('Are you sure you want to sign the legal document %node ?', array('%node' => $node->title)), //message title
+      $node->path, //redirect if cancelled
+      t('Enter your password to validate the signature of the legal document %node ?',
+        array('%node' => $node->title)), //message description t('Sign'), //confirm button text
+      t('Cancel') //cancel button text
     );
     $form['password'] = array(
-        '#type' => 'password',
-        '#title' => t('Password'),
-        '#size' => 15,
-        '#required' => TRUE,
-        '#weight' => 5,
+      '#type' => 'password',
+      '#title' => t('Password'),
+      '#size' => 15,
+      '#required' => TRUE,
+      '#weight' => 5,
     );
+    $form['actions']['submit']['#value'] = 'Sign this document';
     $form['#validate'][] = 'isa_node_form_signature_confirm_form_validate';
     $form['actions']['#weight'] = 10;
     $form['description']['#weight'] = 0;
@@ -341,20 +426,18 @@ function isa_node_form_og_confirm_subscribe(&$form) {
     if ($group) {
       if ($group->type == ISA_COMMUNITY_TYPE) {
         $body = variable_get('membership_benefits_text_community', '');
-      }
-      elseif ($group->type == ISA_PROJECT_TYPE) {
+      } elseif ($group->type == ISA_PROJECT_TYPE) {
         $body = variable_get('membership_benefits_text_project', '');
       }
       $body = token_replace($body, 'node', $group);
       $form['membership_benefits'] = array(
-          '#type' => 'item',
-          '#value' => $body,
-          '#weight' => 0,
+        '#type' => 'item',
+        '#value' => $body,
+        '#weight' => 0,
       );
     }
   }
 }
-
 
 /**
  *
@@ -374,8 +457,7 @@ function isa_node_form_cancel_button_submit(&$form, &$form_state) {
   if ($form_state['clicked_button']['#value'] == 'Cancel') {
     if (isset($form['actions']['cancel']['#href'])) {
       drupal_goto($form['actions']['cancel']['#href']);
-    }
-    elseif ($form['buttons']['cancel']['#href'] == 'content_lock_release_own_item') {
+    } elseif ($form['buttons']['cancel']['#href'] == 'content_lock_release_own_item') {
       content_lock_release_own_item($form['nid']['#value']);
     }
   }
@@ -391,16 +473,14 @@ function isa_node_form_cancel_button_alter(&$form) {
     if (isset($form_state['values']['gid'])) {
       $gid = $form_state['values']['gid'];
       $group = node_load($gid);
-    }
-    elseif (og_get_group_context ()) {
+    } elseif (og_get_group_context()) {
       $group = og_get_group_context();
       $gid = $group->nid;
     }
     $shortname = isa_links_get_group_short_name($group);
     $form['actions']['cancel']['#href'] = "$group->type/$shortname/home";
-  }
-  elseif (isset($form['buttons']['cancel'])
-          && strpos($form ['buttons']['cancel']['#value'], 'canceledit')) {
+  } elseif (isset($form['buttons']['cancel'])
+    && strpos($form ['buttons']['cancel']['#value'], 'canceledit')) {
     $form['buttons']['cancel']['#type'] = 'button';
     $form['buttons']['cancel']['#executes_submit_callback'] = TRUE;
     $form['buttons']['cancel']['#value'] = t('Cancel');
@@ -427,11 +507,11 @@ function isa_node_form_cancel_button_alter(&$form) {
  * After build handler
  */
 function isa_node_form_after_build($form, &$form_state) {
-  if (isset ($form_state['clicked_button'])){
+  if (isset($form_state['clicked_button'])) {
     if ($form_state['clicked_button']['#value'] == 'Delete all revisions' ||
-            $form_state['clicked_button']['#value'] == 'Cancel' ||
-            $form_state['clicked_button']['#value'] == 'Delete') {
-        _isa_node_form_disable_validation($form);
+      $form_state['clicked_button']['#value'] == 'Cancel' ||
+      $form_state['clicked_button']['#value'] == 'Delete') {
+      _isa_node_form_disable_validation($form);
     }
   }
   return $form;
@@ -443,7 +523,7 @@ function isa_node_form_after_build($form, &$form_state) {
  */
 function _isa_node_form_disable_validation(&$element) {
   unset($element['#needs_validation']);
-  unset ($element['#validate']);
+  unset($element['#validate']);
   foreach (element_children($element) as $key) {
     _isa_node_form_disable_validation($element[$key]);
   }
@@ -476,53 +556,122 @@ function isa_node_form_views_exposed_search(&$form) {
         $form['sid']['#type'] = 'value';
       }
       break;
-    default:
-      $facet_display = 0;
-      $current_view = views_get_current_view();
-      $current_display_id = $current_view->current_display;
-      $current_display = $current_view->display[$current_display_id];
-      $project_type = NULL;
-
-      if ($current_display->display_options['defaults']['filters']) {
-        $current_display = $current_view->display['default'];
+    case 'views-exposed-form-Catalogue-page-1':
+      //Update the list list of state workflow
+      if (!user_access('administer nodes')) {
+        unset($form['#info']['filter-sid']);
+        $form['sid']['#value'] = ISA_SID_RELEASE_VALIDATED;
+        $form['sid']['#type'] = 'value';
       }
-      if (isset($current_display->display_options['filters']['type'])) {
+      else {
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-808
+        //Add search by any status by default
+        $form['sid']['#options'] = $form['sid']['#options']['asset_release'];
+        $form['sid']['#options']['All'] =  t('Any Status');
+        ksort($form['sid']['#options']);
+        $form['sid']['#default_value'] = 'All';
+        if (!isset($_GET['sid'])) {
+          $form['sid']['#value'] = 'All';
+        }
+      }
+      //Replace the language textfield by a select list
+      unset($form['field_language_textfield_lang_value']['#size']);
+      $form['field_language_textfield_lang_value']['#type'] = 'select';
+      $form['field_language_textfield_lang_value']['#default_value'] = '';
+      $form['field_language_textfield_lang_value']['#options'] = array('' => t('All'));
+      $languages = locale_language_list();
+      
+      //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-808
+      //Add search by any language by default
+      $form['field_language_textfield_lang_value']['#options'][''] = t('Any Language');
+      foreach ($languages as $code => $lang) {
+        $form['field_language_textfield_lang_value']['#options'][$code] = $lang;
+      }
+     
+      //add the checkbox 'only current version' fort the asset release search
+      $form['current_checkbox']['#type'] = 'checkbox';
+      $form['current_checkbox']['#default_value'] = 1;
+      $form['current_checkbox']['#title'] = 'Show the current version only';
+      $form['current_checkbox']['#weight'] = 100;
+        if (isset($_GET['current_checkbox'])) {
+        $form['current_checkbox']['#value'] = $_GET['current_checkbox'];
+      }
+
+      break;
+  }
+
+    $facet_display = 0;
+    $current_view = views_get_current_view();
+    $current_display_id = $current_view->current_display;
+    $current_display = $current_view->display[$current_display_id];
+    $project_type = NULL;
+
+    if ($current_display->display_options['defaults']['filters']) {
+        $current_display = $current_view->display['default'];
+    }
+    if (isset($current_display->display_options['filters']['type'])) {
         if (count($current_display->display_options['filters']['type']['value']) == 1) {
-          $type = array_shift($current_display->display_options['filters']['type']['value']);
+            $type = array_shift($current_display->display_options['filters']['type']['value']);
         }
         if (isset($current_display->display_options['filters']['field_project_common_type_value']['value']['value'])) {
-          $project_type = $current_display->display_options['filters']['field_project_common_type_value']['value']['value'];
+            $project_type = $current_display->display_options['filters']['field_project_common_type_value']['value']['value'];
         }
-      }
-
-
-      $all_type = node_get_types();
-      if (!isset($all_type[$type])) {
+    }
+    $all_type = node_get_types();
+    if (!isset($all_type[$type])) {
         $type = NULL;
-      }
-      $view = views_get_view('facet_node_type');
-      foreach ($view->display as $display_name => $display) {
+    }
+    $view = views_get_view('facet_node_type');
+    foreach ($view->display as $display_name => $display) {
         if (isset($display->display_options['filters']['type']['value'])) {
-          if ($project_type === NULL) {
-            if (array_key_exists($type, $display->display_options['filters']['type']['value'])) {
-              $facet_display = $display_name;
+            if ($project_type === NULL) {
+                if (array_key_exists($type, $display->display_options['filters']['type']['value'])) {
+                    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-818
+                    //Add all the text for node type filter
+                    //Add current version filter for asset_release search
+                    $facet_display = 'sm_facetbuilder_facet_node_type%3A"facet_node_type%3A' . $display_name . '"'; //Add selected current version in semantic assets search
+                    if ('facet_24' == $display->id) {
+                        $facet_display .= ' bs_current_version:true';
+                    }
+                }
+            } else {
+                if (isset($display->display_options['filters']['field_project_common_type_value']['value']['value'])
+                        && $project_type == $display->display_options['filters']['field_project_common_type_value']['value']['value']) {
+                    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-818
+                    //Add all the text for node type filter
+                    //Add current version filter for asset_release search
+                    $facet_display = 'sm_facetbuilder_facet_node_type%3A"facet_node_type%3A' . $display_name . '"'; //Add selected current version in semantic assets search
+                    if ('facet_24' == $display->id) {
+                        $facet_display .= ' bs_current_version:true';
+                    }
+                }
             }
-          }
-          else {
-            if (isset($display->display_options['filters']['field_project_common_type_value']['value']['value'])
-                    && $project_type == $display->display_options['filters']['field_project_common_type_value']['value']['value']) {
-              $facet_display = $display_name;
-            }
-          }
         }
-      }
-      $form['submit']['#value'] = 'Search';
+    }
+    if($facet_display != '') {
       $form['advanced_search']['#type'] = 'item';
       // javascript:advanced_search() => see theme/joinup/scripts/init.js
       $form['advanced_search']['#value'] =
-              l('Advanced Search', 'search/apachesolr_search', array('attributes' => array('id' => 'adsearch',
-                      'onclick' => "javascript:advanced_search('$facet_display')")));
-  }
+          l('Advanced Search', 'search/apachesolr_search',
+              array('attributes' => array('id' => 'adsearch',
+                  'onclick' => "javascript:advanced_search('$facet_display')")));
+  
+    }
+    // Put the sort select and submit button at the last place
+    if(isset($form['submit'])) {
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-792
+        //Remove the search box: As all repositories are listed on one page, no search box is needed here
+        if( $form['#id'] == 'views-exposed-form-Catalogue-page-2') {        
+            $form['submit']['#value'] = t('Apply');
+        }else{
+            $form['submit']['#value'] = t('Search');
+        }
+        $submit_button = $form['submit'];
+        $submit_button['#prefix']  = '<div class="form-item">';
+        $submit_button['#suffix']  = '</div>';
+        unset($form['submit']);
+        $form['submit'] = $submit_button;
+    }
 }
 
 /**
@@ -562,39 +711,6 @@ function isa_node_form_factsheet(&$form) {
 /**
  *
  * @param type $form
- * @return int 
- */
-function isa_node_form_case_node($form) {
-  $form['group_case_info']['title'] = $form['title'];
-  $form['group_case_info']['body_field'] = $form['body_field'];
-  //field name of the date
-  $form['group_case_info']['field_start_end_date']['#pre_render'] = array('isa_node_form_date_label');
-  unset($form['title']);
-  unset($form['body_field']);
-
-  // taxonomy country isn't mandatory
-  $form['taxonomy'][variable_get('country_vid', NULL)]['#required'] = 0;
-
-  return $form;
-}
-
-/**
- *
- * @param type $form
- * @return type 
- */
-function isa_node_form_document_node($form) {
-  $form['group_document_information']['title'] = $form['title'];
-  $form['group_document_information']['body_field'] = $form['body_field'];
-  unset($form['title']);
-  unset($form['body_field']);
-  return $form;
-}
-
-
-/**
- *
- * @param type $form
  * @return type 
  */
 function isa_node_form_presentation_node($form) {
@@ -605,7 +721,6 @@ function isa_node_form_presentation_node($form) {
   unset($form['body_field']);
   return $form;
 }
-
 
 /**
  *
@@ -667,13 +782,13 @@ function isa_node_form_alter_issues_comment(&$form) {
 
       //if user haven't permission to modify issue,
       // and he's group member => only access to assigned field
-    }
-    elseif (og_is_group_member($gid, FALSE)) {
+    } elseif (og_is_group_member($gid, FALSE)) {
       $default_select = $form['original_issue']['project_info']['assigned']['#default_value'];
       // if the issue is not assigned
       if ($default_select == 0) {
         $form['original_issue']['project_info']['assigned']['#options'][0] = 'Unassign';
-        $form['original_issue']['project_info']['assigned']['#options'][$user->uid] = strip_tags(theme('username', $user->uid));
+        $form['original_issue']['project_info']['assigned']['#options'][$user->uid] = strip_tags(theme('username',
+            $user->uid));
 
         //remove other field
         $form['original_issue']['project_info']['project_title']['#access'] = FALSE;
@@ -685,18 +800,15 @@ function isa_node_form_alter_issues_comment(&$form) {
         if (isset($form['original_issue']['project_info']['rid'])) {
           if ($form['original_issue']['project_info']['rid']['#default_value'] != 0) {
             $form['original_issue']['project_info']['rid']['#access'] = FALSE;
-          }
-          else {
+          } else {
             unset($form['original_issue']['project_info']['rid']);
           }
         }
         unset($form['original_issue']['#description']);
-      }
-      else {
+      } else {
         $form['original_issue']['#access'] = FALSE;
       }
-    }
-    else {
+    } else {
       $form['original_issue']['#access'] = FALSE;
     }
   }
@@ -709,7 +821,8 @@ function isa_node_form_alter_project_issue_node_form(&$form, &$form_state) {
   $form['issue_details']['#weight'] = 0;
   $form['issue_details']['#title'] = 'Main Information';
   $form['attachments']['#title'] = 'Files';
-  $form['attachments']['#description'] = substr($form['issue_info']['attachments']['#description'], 0, strpos($form['issue_info']['attachments']['#description'], '.') + 1);
+  $form['attachments']['#description'] = substr($form['issue_info']['attachments']['#description'],
+    0, strpos($form['issue_info']['attachments']['#description'], '.') + 1);
 
   $pid = $form['project_info']['pid']['#value'];
   $form['issue_info']['assigned']['#options'] = isa_toolbox_get_assignable_members($pid);
@@ -784,15 +897,14 @@ function isa_node_form_project($form, &$form_state) {
       $form['project_node']['project']['uri_item']['#title'] = t('Shortname');
       $form['project_node']['project']['uri_item']['#type'] = 'item';
       $form['project_node']['project']['uri_item']['#value'] = $form['project_node']['project']['uri']['#default_value'];
-    }
-    else {
+    } else {
       $form['#validate'][] = 'isa_node_form_shortname_validate'; //Validate the short name
       $form['group_project_com_tool']['field_project_display_svn']['#default_value'][0]['value'] = ($_GET['type'] == 'OSS');
       $form['group_project_com_tool']['field_project_display_maven']['#default_value'][0]['value'] = ($_GET['type'] == 'OSS');
     }
 
-    //rename the field title ("Project name" to "name"
-    $form['project_node']['title']['#title'] = t('Name');
+    //rename the field title ("name" to "Project name")
+    $form['project_node']['title']['#title'] = t('Project Name');
     // rename the fild uri ("short project name" to "Short name")
     $form['project_node']['project']['uri']['#title'] = t('Short name');
 
@@ -815,46 +927,43 @@ function isa_node_form_project($form, &$form_state) {
       isa_node_form_software($form);
 
       // ----- ASSET ----- //
-    }
-    elseif ($_GET['type'] == 'asset' || $edit == ISA_ASSET_TYPE) {
+    } elseif ($_GET['type'] == 'asset' || $edit == ISA_ASSET_TYPE) {
       isa_node_form_asset($form);
     }
   }
   // MODIF BY RVN
   if (!empty($form['nid']['#value'])) {
     unset($form['field_ten_rules']);
-  }
-  else {
+  } else {
     $form['#validate'][] = 'isa_node_form_project_ten_rules_validate';
   }
   // END OF MODIF BY RVN
-  
   // add field for web directories (webdav)
   $default_value = 0;
-  if ($edit){
-    $web_directory = isa_toolbox_get_web_directory (array ('nid' => $form['nid']['#value']));
-    if ($web_directory[0] && $web_directory[0]->public_access == WEB_DIR_PUBLIC_ACCESS_ENABLED){
-        $default_value = 1;
+  if ($edit) {
+    $web_directory = isa_toolbox_get_web_directory(array('nid' => $form['nid']['#value']));
+    if ($web_directory[0] && $web_directory[0]->public_access == WEB_DIR_PUBLIC_ACCESS_ENABLED) {
+      $default_value = 1;
     }
     $form['#submit'][] = 'isa_node_form_project_submit';
-  }else{
-    foreach ($form['buttons'] as $id => $button){
-      if ($button['#type'] = 'submit' && $id != 'preview'){
-        $form['buttons'][$id]['#submit'][]  = 'isa_node_form_project_submit';
+  } else {
+    foreach ($form['buttons'] as $id => $button) {
+      if ($button['#type'] = 'submit' && $id != 'preview') {
+        $form['buttons'][$id]['#submit'][] = 'isa_node_form_project_submit';
       }
     }
   }
-    
-  $form['group_project_com_tool']['field_webdir'] = array (
-      '#type' => 'checkbox',
-      '#default_value' => $default_value,
-      '#title' => 'Enable file system repository',
-      '#description' => t('If you check this box, a system repository (accessible by webDAV) will be created and a link displayed on the project homepage.'),
-      '#weight' => 35,
-      '#access' => TRUE,
-      '#required' => FALSE, 
+
+  $form['group_project_com_tool']['field_webdir'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => $default_value,
+    '#title' => 'Enable file system repository',
+    '#description' => t('If you check this box, a system repository (accessible by webDAV) will be created and a link displayed on the project homepage.'),
+    '#weight' => 35,
+    '#access' => TRUE,
+    '#required' => FALSE,
   );
-  
+
   return $form;
 }
 
@@ -869,8 +978,8 @@ function isa_node_form_project_submit($form, $form_state) {
   if (isset($form_state['values']['field_webdir']) && !empty($form_state['values']['nid'])) {
     $node = node_load($form_state['values']['nid']);
 
-    if ((isset ($form_state['values']['workflow']) && $form_state['values']['workflow'] == ISA_SID_COMMUNITY_VALIDATED) 
-            || $node->_workflow == ISA_SID_COMMUNITY_VALIDATED) {
+    if ((isset($form_state['values']['workflow']) && $form_state['values']['workflow'] == ISA_SID_COMMUNITY_VALIDATED)
+      || $node->_workflow == ISA_SID_COMMUNITY_VALIDATED) {
       $web_directory = isa_toolbox_get_web_directory(array('nid' => $node->nid));
 
       // if status is changed, or node is created run the dbquery
@@ -882,10 +991,12 @@ function isa_node_form_project_submit($form, $form_state) {
         }
         if (!$web_directory) {
           $sql = "INSERT INTO web_directories (request_time,name, nid, public_access, state) VALUES (CURRENT_TIMESTAMP,'%s', %d, '%s', 'todo')";
-          $result = db_query($sql, $form_state['values']['project']['uri'], $form_state['values']['nid'], $webdir_new_status);
+          $result = db_query($sql, $form_state['values']['project']['uri'],
+            $form_state['values']['nid'], $webdir_new_status);
         } else {
           $sql = "UPDATE web_directories SET request_time=%s , name='%s' , nid=%d, public_access='%s', state='todo' WHERE web_id=%d";
-          $result = db_query($sql, 'CURRENT_TIMESTAMP', $form_state['values']['project']['uri'], $form_state['values']['nid'], $webdir_new_status, $web_directory[0]->web_id);
+          $result = db_query($sql, 'CURRENT_TIMESTAMP', $form_state['values']['project']['uri'],
+            $form_state['values']['nid'], $webdir_new_status, $web_directory[0]->web_id);
         }
       }
 
@@ -894,6 +1005,7 @@ function isa_node_form_project_submit($form, $form_state) {
     }
   }
 }
+
 /**
  * Modify the project form for a software
  *
@@ -912,6 +1024,10 @@ function isa_node_form_software(&$form) {
   }
   //remove fieldset of asset
   unset($form['group_project_asset_info']);
+  
+  // information box
+  // https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-681
+  $form['#prefix'] .= '<br/><div class="message warning"><strong>'.t('Please note: ').'</strong>'.t('Your text might be edited to improve the description and correct spelling mistakes').'</div>';
 
   //rename "project informations" to "software informations"
   $form['project_node']['#title'] = t('Software informations');
@@ -923,12 +1039,10 @@ function isa_node_form_software(&$form) {
   // open the fieldset project
   $form ['project']['#collapsed'] = FALSE;
 
-  //move more link to fieldset "project"
-  //$form ['project']['field_project_soft_more_lin'] = $form['field_project_soft_more_lin'];
-  //unset($form['field_project_soft_more_lin']);
   //remove useless fields from project
   unset(
-          $form ['project']['license'], $form ['project']['screenshots'], $form ['project']['changelog'], $form ['project']['demo']
+    $form ['project']['license'], $form ['project']['screenshots'], $form ['project']['changelog'],
+    $form ['project']['demo']
   );
 
   // field project type
@@ -944,22 +1058,17 @@ function isa_node_form_software(&$form) {
   unset($form['taxonomy'][variable_get('asset_status_vid', -1)]);
   unset($form['taxonomy'][variable_get('country_vid', -1)]);
 
-   //set taxonomy 'licence' at mandatory
-  $form['taxonomy'][variable_get('license_vid')]['#required'] = TRUE;
-  
   //Update the description for 'public administration reference' field
   $link = '<a href="' . check_url(url('page/ten_principles')) . '" title="Legal notice" class="popups-form">Ten Principles</a>';
-  $description = str_replace('Ten Principles', $link, $form["project_node"]["field_project_soft_public_admin"][0]["#description"]);
+  $description = str_replace('Ten Principles', $link,
+    $form["project_node"]["field_project_soft_public_admin"][0]["#description"]);
   $form["project_node"]["field_project_soft_public_admin"][0]["#description"] = $description;
 
   if (arg(1) == 'add') {
     drupal_set_title(t('Create Open Source Software'));
-
-  }
-  else {
+  } else {
     drupal_set_title('');
   }
-
   $form['#validate'][] = 'isa_node_form_validate_url';
 }
 
@@ -971,23 +1080,29 @@ function isa_node_form_software(&$form) {
 function isa_node_form_validate_url(&$form, $form_state) {
   if (!empty($form_state['values']['project']['homepage'])) {
     if (!valid_url($form_state['values']['project']['homepage'], TRUE)) {
-      form_set_error("project][homepage", t('The %field field is not a valid URL..', array('%field' => $form['project']['homepage']['#title'])));
+      form_set_error("project][homepage",
+        t('The %field field is not a valid URL..',
+          array('%field' => $form['project']['homepage']['#title'])));
     }
   }
   if (!empty($form_state['values']['project']['documentation'])) {
     if (!valid_url($form_state['values']['project']['documentation'], TRUE)) {
-      form_set_error("project][documentation", t('The %field field is not a valid URL..', array('%field' => $form['project']['documentation']['#title'])));
+      form_set_error("project][documentation",
+        t('The %field field is not a valid URL..',
+          array('%field' => $form['project']['documentation']['#title'])));
     }
   }
   if (!empty($form_state['values']['project']['cvs'])) {
     if (!valid_url($form_state['values']['project']['cvs'], TRUE)) {
-      form_set_error("project][cvs", t('The %field field is not a valid URL..', array('%field' => $form['project']['cvs']['#title'])));
+      form_set_error("project][cvs",
+        t('The %field field is not a valid URL..',
+          array('%field' => $form['project']['cvs']['#title'])));
     }
   }
 }
 
 /**
- * Modify the project form for a software
+ * Modify the project form for an asset
  *
  * @param array $form the form updated
  */
@@ -1004,8 +1119,8 @@ function isa_node_form_asset(&$form) {
   }
   //remove fieldset of software
   unset($form['group_project_soft_info']);
-  //rename "project informations" to "Asset informations"
-  $form['project_node']['#title'] = t('Asset informations');
+  //rename "Asset informations" to "Project information"
+  $form['project_node']['#title'] = t('Project information');
 
   unset($form ['project']);
   //only moderated adhesion
@@ -1015,7 +1130,10 @@ function isa_node_form_asset(&$form) {
   unset($form['og_register']);
   unset($form['og_directory']);
 
-  // rename title of workflow fieldset
+  $form['project_node']['field_project_asset_owner']['#title'] = t('Project Owner');
+  $form['project_node']['field_project_asset_owner'][0]['#title'] = t('Project Owner');
+
+    // rename title of workflow fieldset
   if (isset($form['workflow'])) {
     $form['workflow']['#title'] = t('Asset moderation');
   }
@@ -1043,10 +1161,8 @@ function isa_node_form_asset(&$form) {
   unset($form['field_project_soft_more_lin']);
 
   if (arg(1) == 'add') {
-    drupal_set_title(t('Create a Semantic Asset'));
-    
-  }
-  else {
+    drupal_set_title(t('Create a Semantic Asset Project'));
+  } else {
     drupal_set_title('');
   }
 }
@@ -1072,8 +1188,7 @@ function isa_node_form_shortname_validate($form, &$form_state) {
     $form_state['values']['field_community_short_name']['0']['value'] = strtolower($form_state['values']['field_community_short_name']['0']['value']);
     $short_name = $form_state['values']['field_community_short_name']['0']['value'];
     $type = 'community';
-  }
-  else {
+  } else {
     $form_state['values']['project']['uri'] = strtolower($form_state['values']['project']['uri']);
     $short_name = $form_state['values']['project']['uri'];
     $type = 'project';
@@ -1107,13 +1222,13 @@ function isa_node_form_shortname_validate($form, &$form_state) {
   // Validate short name.
   if (empty($short_name)) {
     form_set_error('field_community_short_name', t('A short name is required.'));
-  }
-  else {
+  } else {
     // Make sure short name only includes valid characters. Note: the following
     // regexp is based on the ACCEPTABLE_LISTNAME_CHARACTERS parameter that can
     // be found in Mailman's Defaults.py file.
     if (!preg_match('/^[-+_.=a-z0-9]+$/', $short_name)) {
-      form_set_error('field_community_short_name', t('Please only use lowercase characters, digits, dashes, underscores, plusses, equals or dots for the short name.'));
+      form_set_error('field_community_short_name',
+        t('Please only use lowercase characters, digits, dashes, underscores, plusses, equals or dots for the short name.'));
     }
   }
 }
@@ -1141,7 +1256,8 @@ function isa_node_form_alter_title($form) {
       break;
   }
 
-  $title = ereg_replace('(Are you sure you want to (join|leave)) (the group)(.*)', "\\1 the $type\\4", $title);
+  $title = ereg_replace('(Are you sure you want to (join|leave)) (the group)(.*)',
+    "\\1 the $type\\4", $title);
   drupal_set_title($title);
 
   return $form;
@@ -1195,14 +1311,11 @@ function isa_node_form_community($form) {
   $form['group_community_information']['language'] = $form['language'];
   $form['group_community_information']['og_description'] = $form['og_description'];
   $form['group_community_member_settings']['og_selective'] = $form['og_selective'];
-//  $form['group_community_member_settings']['og_register'] = $form['og_register'];
-//  $form['group_community_member_settings']['og_private'] = $form['og_private'];
-//  $form['group_community_member_settings']['og_directory'] = $form['og_directory'];
-
-
 
   unset(
-          $form['body_field'], $form['title'], $form['language'], $form['og_description'], $form['og_selective'], $form['og_register'], $form['og_private'], $form['og_directory'], $form['notifications']
+    $form['body_field'], $form['title'], $form['language'], $form['og_description'],
+    $form['og_selective'], $form['og_register'], $form['og_private'], $form['og_directory'],
+    $form['notifications']
   );
 
   $form['group_community_member_settings']['#access'] = TRUE;
@@ -1218,11 +1331,9 @@ function isa_node_form_community($form) {
     $form['group_community_information']['field_community_short_name'][1]['#title'] = t('Shortname');
     $form['group_community_information']['field_community_short_name'][1]['#type'] = 'item';
     $form['group_community_information']['field_community_short_name'][1]['#value'] = $form['group_community_information']['field_community_short_name'][0]['#default_value']['value'];
-  }
-  else {
+  } else {
     $form['#validate'][] = 'isa_node_form_shortname_validate'; //Validate the short name
   }
-  //isa_node_form_manage_workflow_community ($form);
   return $form;
 }
 
@@ -1242,7 +1353,6 @@ function isa_node_form_wiki($form) {
   if (isset($form['revision_information'])) {
     $form['revision_information']['#access'] = true;
   }
-
   return $form;
 }
 
@@ -1256,7 +1366,6 @@ function isa_node_form_wiki($form) {
  * @return boolean 
  */
 function isa_node_form_topic($form) {
-
   //Push title and body in the cck group 'group_wiki_information'
   $form['group_topic_information']['title'] = $form['title'];
   $form['group_topic_information']['body_field'] = $form['body_field'];
@@ -1276,71 +1385,14 @@ function isa_node_form_topic($form) {
       }
     }
   }
-
   //disable the fieldset comment for moderator and facilitator
   global $user;
-  if ((in_array(ISA_MODERATOR_ROLE_RID, $user->roles) || in_array(ISA_FACILITOR_ROLE_RID, $user->roles)) && !isa_toolbox_is_omnipotent()) {
+  if ((in_array(ISA_MODERATOR_ROLE_RID, $user->roles) || in_array(ISA_FACILITOR_ROLE_RID,
+      $user->roles)) && !isa_toolbox_is_omnipotent()) {
 //if ((array_key_exists(variable_get ("moderator_rid",NULL), $user->roles)
     // || in_array(ISA_FACILITOR_ROLE_RID,$user->roles))&& !isa_toolbox_is_omnipotent())  {
     unset($form['comment_settings']);
   }
-
-  return $form;
-}
-
-/**
- * This function alters the event form
- *
- * @param type $form
- * @return string 
- */
-function isa_node_form_event($form) {
-  $form['group_event_information']['title'] = $form['title'];
-  $form['group_event_information']['body_field'] = $form['body_field'];
-  $form['group_event_information']['body_field']['body']['#title'] = t('Description');
-  $form['group_event_information']['body_field']['body']['#required'] = TRUE;
-  $form['group_event_information']['#access'] = TRUE;
-  unset($form['body_field'], $form['title']);
-
-  //field name of the date
-  $form['group_event_information']['field_event_dates']['#pre_render'] = array('isa_node_form_date_label');
-
-  $form['taxonomy'][variable_get('country_vid', 26)]['#weight'] = -7;
-  $form['taxonomy'][variable_get('scope_vid', 45)]['#weight'] = -6;
-  $form['taxonomy'][variable_get('languages_vid', 29)]['#weight'] = -5;
-  $form['taxonomy'][variable_get('domains_vid', 27)]['#weight'] = -4;
-  $form['taxonomy'][variable_get('free_event_vid', 59)]['#weight'] = -3;
-  $form['taxonomy'][variable_get('open_event_vid', 60)]['#weight'] = -2;
-  $form['taxonomy'][variable_get('organisation_type_vid', 63)]['#weight'] = -1;
-  $form['taxonomy'][variable_get('keywords_vid', 28)]['#weight'] = 0;
-
-  $form['taxonomy'][variable_get('free_event_vid', 59)]['#ahah'] = array(
-      'path' => 'node_form/dynamic_form',
-      'wrapper' => 'fees-description',
-      'event' => 'change',
-      'effect' => 'fade');
-  //Move the field in the taxonomy fieldset
-  $form['taxonomy']['field_event_fees_description'] = $form['field_event_fees_description'];
-  unset($form['field_event_fees_description']);
-  $form['taxonomy']['field_event_fees_description']['#weight'] = -2.5;
-  $form['taxonomy']['field_event_fees_description']['#prefix'] = '<div id="fees-description">&nbsp;';
-  $form['taxonomy']['field_event_fees_description']['#suffix'] = '</div>';
-  //Display the field
-  if ($form['taxonomy'][variable_get('free_event_vid', 59)]['#default_value'][0] == 1575) {
-    $form['taxonomy']['field_event_fees_description'][0]['#access'] = TRUE;
-    $form['taxonomy']['field_event_fees_description'][0]['#required'] = TRUE;
-  }
-  //Don't display the field
-  else {
-    $form['taxonomy'][variable_get('free_event_vid', 59)]['#suffix'] = '<div id="fees-description">&nbsp;</div>';
-    $form['taxonomy']['field_event_fees_description'][0]['#access'] = FALSE;
-    $form['taxonomy']['field_event_fees_description'][0]['#required'] = FALSE;
-  }
-
-  $form['field_event_rating']['#access'] = FALSE;
-
-  $form['#validate'][] = 'isa_node_form_event_validate';
-  
   return $form;
 }
 
@@ -1351,23 +1403,32 @@ function isa_node_form_event($form) {
 function isa_node_form_menu() {
   //new page for ahah callback
   $items['node_form/dynamic_form'] = array(
-      'page callback' => 'isa_node_form_dynamic_form',
-      'type' => MENU_CALLBACK,
-      'access callback' => TRUE,
-      'access arguments' => array('view', 1)
+    'page callback' => 'isa_node_form_dynamic_form',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+    'access arguments' => array('view', 1)
   );
-    $items['software/%/legaldocument/%/validate_signature'] = array(
+  $items['software/%/legaldocument/%/validate_signature'] = array(
     'type' => MENU_CALLBACK,
     'access arguments' => array('access content'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('isa_node_form_signature_confirm_form'),
   );
-    $items['asset/%/legaldocument/%/validate_signature'] = array(
+  $items['asset/%/legaldocument/%/validate_signature'] = array(
     'type' => MENU_CALLBACK,
     'access arguments' => array('access content'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('isa_node_form_signature_confirm_form'),
   );
+  //page to import a description metadata (in repository)
+  $items['repository/upload-metadata/%'] = array(
+    'type' => MENU_CALLBACK,
+    'title' => 'Import description metadata',
+    'access arguments' => array('administer nodes'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('isa_node_form_repository_upload_metadata_form'),
+  );
+
   return $items;
 }
 
@@ -1382,43 +1443,33 @@ function isa_node_form_dynamic_form() {
   $form_id = $_POST['form_id'];
   $form_state['post'] = $form['#post'] = $_POST;
   $form['#programmed'] = FALSE;
+
+  $function = "_{$form_id}_ahah";
+  $output = function_exists($function) ? $function($form, $form_state, $form_id) : '';
+
+
   //Modify the form
-  if ($_POST['taxonomy'][variable_get('free_event_vid', 59)] == 1575) {
-    $form['taxonomy']['field_event_fees_description'][0]['#required'] = TRUE;
-    $form['taxonomy']['field_event_fees_description'][0]['#access'] = TRUE;
-  }
-  else {
-    $form['taxonomy']['field_event_fees_description'][0]['#default_value']['value'] = '';
-    $form['taxonomy']['field_event_fees_description'][0]['#access'] = FALSE;
-    $form['taxonomy']['field_event_fees_description'][0]['#required'] = FALSE;
-  }
-
-  form_set_cache($form_build_id, $form, $form_state);
-  $form += array(
-      '#post' => $_POST,
-      '#programmed' => FALSE,
-  );
-
-  $form = form_builder($form_id, $form, $form_state);
-
-  $output = '&nbsp;';
-  if ($_POST['taxonomy'][variable_get('free_event_vid', 59)] == 1575) {
-    $output .= drupal_render($form['taxonomy']['field_event_fees_description']);
-  }
-
+//  if ($_POST['taxonomy'][variable_get('free_event_vid', 59)] == 1575) {
+//    $form['taxonomy']['field_event_fees_description'][0]['#required'] = TRUE;
+//    $form['taxonomy']['field_event_fees_description'][0]['#access'] = TRUE;
+//  } else {
+//    $form['taxonomy']['field_event_fees_description'][0]['#default_value']['value'] = '';
+//    $form['taxonomy']['field_event_fees_description'][0]['#access'] = FALSE;
+//    $form['taxonomy']['field_event_fees_description'][0]['#required'] = FALSE;
+//  }
+//  form_set_cache($form_build_id, $form, $form_state);
+//  $form += array(
+//    '#post' => $_POST,
+//    '#programmed' => FALSE,
+//  );
+//  $form = form_builder($form_id, $form, $form_state);
+//
+//  $output = '&nbsp;';
+//  if ($_POST['taxonomy'][variable_get('free_event_vid', 59)] == 1575) {
+//    $output .= drupal_render($form['taxonomy']['field_event_fees_description']);
+//  }
   // Final rendering callback.
   drupal_json(array('status' => TRUE, 'data' => $output));
-}
-
-/**
- *
- * @param type $form
- * @param array $form_state 
- */
-function isa_node_form_event_validate(&$form, &$form_state) {
-  //Update form_state for the submission of moved field in taxonomy fieldset
-  $form_state['values']['field_event_fees_description'] = $form_state['values']['taxonomy']['field_event_fees_description'];
-  unset($form_state['values']['taxonomy']['field_event_fees_description']);
 }
 
 /**
@@ -1472,17 +1523,17 @@ function isa_node_form_profile(&$form, &$form_state) {
   //isa_node_form_alter_language_field($form);
   if ($form['form_id']['#value'] == 'user_register')
     $form['mail']['#description'] = t("A valid e-mail address. All e-mails from "
-                    . "the system will be sent to this address. The e-mail address will be "
-                    . "used if you wish to receive a new password or wish to receive "
-                    . "certain news or notifications by e-mail. The e-mail address can also "
-                    . "be made public if you decide to.");
+      . "the system will be sent to this address. The e-mail address will be "
+      . "used if you wish to receive a new password or wish to receive "
+      . "certain news or notifications by e-mail. The e-mail address can also "
+      . "be made public if you decide to.");
   $form['title']['#access'] = FALSE;
   if (isset($form['mail'])) {
     $form["#validate"][] = 'isa_node_form_profile_contact_validate';
   }
   $form['language']['#type'] = 'value';
-  $language_default = variable_get ('language_default','en');
-  if (is_object($language_default)){
+  $language_default = variable_get('language_default', 'en');
+  if (is_object($language_default)) {
     $language_default = $language_default->language;
   }
   $form['language']['#value'] = $language_default;
@@ -1510,28 +1561,23 @@ function isa_node_form_alter_og_audience_form(&$form, &$form_state, $form_id) {
     $form['og_nodeapi']['visible']['og_public']['#default_value'] = 1;
     $form['og_nodeapi']['visible']['og_groups']['#required'] = FALSE;
     $form['og_nodeapi']['#access'] = FALSE;
-  }
-  else {
+  } else {
     //audiance is required
     $form['og_nodeapi']['visible']['og_groups']['#required'] = TRUE;
   }
 
-  // $form['og_nodeapi']['visible']['og_groups']['#multiple'] = FALSE;
-
   $path = explode('/', drupal_get_normal_path($_GET['q']));
 
   // if a node is posted in a community, set the default community and hidden field audience
-
   if ((!empty($_GET['gids']) && $path[1] == "add")
-          || ((!empty($form['og_nodeapi']['visible']['og_groups']['#default_value'])) && $path[2] == "edit")) {
+    || ((!empty($form['og_nodeapi']['visible']['og_groups']['#default_value'])) && $path[2] == "edit")) {
 
     //set the checkbox "public" according if the community is open or private
-    
-      if ($community->og_selective == 0 || $community->type == ISA_PROJECT_TYPE) { // public community
+
+    if ($community->og_selective == 0 || $community->type == ISA_PROJECT_TYPE) { // public community
       $form['og_nodeapi']['visible']['og_public']['#default_value'] = 1;
       $og_public = 1;
-    }
-    else { //private community
+    } else { //private community
       $og_public = 0;
       $form['og_nodeapi']['visible']['og_public']['#default_value'] = 0;
     }
@@ -1541,20 +1587,21 @@ function isa_node_form_alter_og_audience_form(&$form, &$form_state, $form_id) {
     if (isset($form['og_nodeapi']['visible']['og_groups']['#options']['My groups'])) {
       if (isset($form['og_nodeapi']['visible']['og_groups']['#options']['My groups'][$group_nid])) {
         $group_title = $form['og_nodeapi']['visible']['og_groups']['#options']['My groups'][$group_nid];
-      }
-      elseif (isset($form['og_nodeapi']['visible']['og_groups']['#options']['Other groups'][$group_nid])) {
+      } elseif (isset($form['og_nodeapi']['visible']['og_groups']['#options']['Other groups'][$group_nid])) {
         $group_title = $form['og_nodeapi']['visible']['og_groups']['#options']['Other groups'][$group_nid];
       }
-    }
-    else {
+    } else {
       $group_title = $form['og_nodeapi']['visible']['og_groups']['#options'][$group_nid];
+    }
+    if ($community->type == ISA_REPOSITORY_TYPE) {
+      $group_title = $community->title;
     }
 
     // visible part: the title of the parent community
     $form['og_nodeapi']['visible']['og_groups_visible'] = array(
-        '#type' => 'item',
-        '#title' => t('Parent ') . $community->group_type,
-        '#value' => $group_title,
+      '#type' => 'item',
+      '#title' => t('Parent ') . $community->group_type,
+      '#value' => $group_title,
     );
     $form['og_nodeapi']['#title'] = ucfirst($community->group_type);
     //By default open the fieldset
@@ -1567,18 +1614,13 @@ function isa_node_form_alter_og_audience_form(&$form, &$form_state, $form_id) {
     $form['og_nodeapi']['visible']['og_public']['#type'] = 'hidden';
 
     $form['#suffix'] = '<div class="message warning">Please note, that the facilitator of this ' . $community->group_type . ' may edit your content after publication for quality assurance reasons</div>';
-    
-    
-  }
-  else {  // if a node isn't posted in a community
-    if ($form['type']['#value'] == 'news' || $form['type']['#value'] == 'document' || $form['type']['#value'] == 'event') {
+  } else {  // if a node isn't posted in a community
+    if ($form['type']['#value'] == 'news' || $form['type']['#value'] == 'document' || $form['type']['#value'] == 'event' || $form['type']['#value'] == 'asset_release') {
       // remove the field andience if the news is not posted in a community
       unset($form['og_nodeapi']);
       unset($form['og_initial_groups']);
-     
     }
   }
-
 }
 
 /**
@@ -1598,9 +1640,11 @@ function isa_node_form_menu_alter(&$items) {
   // Defines the access callback for add event form
   $items['node/add/event']['access callback'] = 'isa_node_form_access_og_audience_form';
   // Defines the access callback for add project
-  $items['node/add/'.ISA_LEGALDOCUMENT_TYPE]['access callback'] = 'isa_node_form_access_og_audience_form';
+  $items['node/add/' . ISA_LEGALDOCUMENT_TYPE]['access callback'] = 'isa_node_form_access_og_audience_form';
   // Defines the access callback for add project
   $items['node/add/project-project']['access callback'] = 'isa_node_form_access_project_form';
+  // Defines the access callback for the tab issues in a software (edit)
+  $items['node/add/asset-release']['access callback'] = 'isa_node_form_access_og_audience_form';
   // Defines the access callback for the tab issues in a software (edit)
   $items['node/%node/edit/issues']['access callback'] = 'isa_node_form_access_project_issues_edit_form';
   //hide the menu item My Projects
@@ -1625,7 +1669,7 @@ function isa_node_form_access_project_form($op, $node, $account = NULL) {
   $node_type = str_replace('_', '-', $node);
   $path = explode('/', drupal_get_normal_path($_GET['q']));
   if ($path[1] == 'add' && strstr($path[2], $node_type)) {
-    if (isa_toolbox_is_omnipotent ()) {
+    if (isa_toolbox_is_omnipotent()) {
       return node_access($op, $node);
     }
     if (isset($_GET['type'])) {
@@ -1633,11 +1677,9 @@ function isa_node_form_access_project_form($op, $node, $account = NULL) {
         return node_access($op, $node);
       }
     }
-
     drupal_set_message('Missing the project type.', "error");
     return FALSE;
-  }
-  else {
+  } else {
     return node_access($op, $node);
   }
 }
@@ -1655,30 +1697,31 @@ function isa_node_form_access_project_form($op, $node, $account = NULL) {
  */
 function isa_node_form_access_og_audience_form($op, $node, $account = NULL) {
   global $user;
-  $node_type = str_replace('_', '-', $node);
+  $node_type = $node;
   $path = explode('/', drupal_get_normal_path($_GET['q']));
-  if ($path[1] == 'add' && strstr($path[2], $node_type)) {
+  if ($path[1] == 'add' && strstr($path[2], str_replace('_', '-', $node)) !== FALSE) {
 
-    if (isa_toolbox_is_omnipotent($user) || user_access('administer nodes')) {
-      return TRUE;
-    }
 // Start by collecting all groups that the user is a member of
     $user_community = og_get_subscriptions($user->uid);
 
     if (!empty($_GET['gids'])) {
       $provided_gids = $_GET['gids']['0'];
-// is it one of the user's community ?
-      if (in_array($provided_gids, array_keys($user_community))) {
+      if ($node_type == ISA_ASSET_RELEASE_TYPE) {
+        $group = node_load($provided_gids);
+        if ($group->group_type == ISA_ASSET_TYPE || $group->group_type == ISA_REPOSITORY_TYPE) {
+          return node_access($op, $node);
+        }
+      }
+      // is it one of the user's community ?
+      if (in_array($provided_gids, array_keys($user_community)) || isa_toolbox_is_omnipotent($user) || user_access('administer nodes')) {
         return node_access($op, $node);
       }
-    }
-    elseif ($node == 'news' || $node == 'document' || $node == 'event') {
+    } elseif ($node == 'news' || $node == 'document' || $node == 'event' || $node == 'asset_release') {
       return node_access($op, $node);
     }
     drupal_set_message('The provided gids were rejected.', "error");
     return FALSE;
-  }
-  else {
+  } else {
     return node_access($op, $node);
   }
 }
@@ -1702,12 +1745,10 @@ function isa_node_form_alter_language_field(&$form) {
         $form['language']['#default_value'] = 'en';
       }
       $form['language']['#access'] = FALSE;
-    }
-    elseif ($form['type']['#value'] == 'federated_project') {
+    } elseif ($form['type']['#value'] == 'federated_project') {
       if ($form['language']['#default_value'] == '') {
         $form['language']['#required'] = TRUE;
-      }
-      else {
+      } else {
         $form['language']['#access'] = FALSE;
       }
     }
@@ -1723,16 +1764,6 @@ function isa_node_form_alter_language_field(&$form) {
  */
 function isa_node_form_redirect_node_deletion(&$form, &$form_state) {
   $node = node_load($form['nid']['#value']);
-// redirect user to homepage after deleting community or project
-//  if (!isset($form['#redirect'])){
-//    if (isset ($form['nid'])){
-//      $node = node_load ($form['nid']['#value']);
-//        if (og_is_group_type ($node->type)){
-//          $form['#redirect'] = '<front>';
-//        }
-//    }
-//  }
-
   switch ($node->type) {
     case ISA_PROJECT_RELEASE_TYPE:
       $redirect_url = $form['#parameters']['2']->path;
@@ -1751,15 +1782,15 @@ function isa_node_form_redirect_node_deletion(&$form, &$form_state) {
 function isa_node_form_prefill_translation_basic_project_information(&$form, &$node) {
   // << Modify "Name" >>
   $form['project_node']['title']['#default_value'] =
-          $node->title . " "
-          . isa_language_get_language_native_from_language_code($form['language']['#default_value']);
+    $node->title . " "
+    . isa_language_get_language_native_from_language_code($form['language']['#default_value']);
   // << Prefill "Short name" >>
   $form['project_node']['project']['uri']['#default_value'] =
-          $node->project['uri'] . "_"
-          . $form['language']['#default_value'];
+    $node->project['uri'] . "_"
+    . $form['language']['#default_value'];
   // << Prefill "Abstract" >>
   $form['project_node']['og_description']['#default_value'] =
-          $node->og_description;
+    $node->og_description;
 }
 
 /**
@@ -1832,8 +1863,8 @@ function isa_node_form_prefill_translation_resources(&$form, &$node) {
 function isa_node_form_prefill_translation_federated_project_name(&$form, &$node) {
   // << Modify "Name" >>
   $form['group_forge_project_info']['title']['#default_value'] =
-          $node->title . " "
-          . isa_language_get_language_native_from_language_code($form['language']['#default_value']);
+    $node->title . " "
+    . isa_language_get_language_native_from_language_code($form['language']['#default_value']);
 }
 
 /**
@@ -1904,14 +1935,14 @@ function isa_node_form_videos($form) {
  */
 function isa_node_form_perm() {
   return (
-  array(
+    array(
       'edit field asset status', //permission granted to the administrator role
       'access revision information',
       'access comment settings',
       'access authoring information',
       'access publishing options',
-  )
-  );
+    )
+    );
 }
 
 /**
@@ -1921,31 +1952,28 @@ function isa_node_form_perm() {
  */
 function isa_node_form_profile_contact_validate($form, &$form_state) {
   if (isset($form_state['values']['mail']) && !isa_toolbox_valid_email_adress($form_state['values']['mail'])) {
-    return form_set_error('mail', t('The e-mail address %mail is not valid.', array('%mail' => $form_state['values']['mail'])));
+    return form_set_error('mail',
+        t('The e-mail address %mail is not valid.', array('%mail' => $form_state['values']['mail'])));
   }
 }
 
 /**
-* Implementation of hook_content_extra_fields().
-* 
-* @return type 
-*/
+ * Implementation of hook_content_extra_fields().
+ * 
+ * @return type 
+ */
 function isa_node_form_content_extra_fields($type_name) {
-  if ($type_name == ISA_PROJECT_TYPE){
+  if ($type_name == ISA_PROJECT_TYPE) {
     $extras['webdir'] = array(
-    'label' => t('Enable file system repository'),
-    'description' => t('isa_node_form'),
-    'weight' => 10,
-  );
+      'label' => t('Enable file system repository'),
+      'description' => t('isa_node_form'),
+      'weight' => 10,
+    );
   }
-    
-
   return $extras;
-  
 }
 
 function isa_node_form_prefix(&$form, $form_id) {
-  //dsk($form);
   $path = explode('/', drupal_get_normal_path($_GET['q']));
   if ($path[1] == "add") {
     $node->type = $form["type"]["#value"];
@@ -1962,17 +1990,262 @@ function isa_node_form_prefix(&$form, $form_id) {
       if ($gid) {
         $group = node_load($gid);
         $group_type = isa_toolbox_get_node_type_name($group);
-        $form['#prefix'] = '<div class="message warning">This ' . $type . ' will be create in the ' . $group_type . ' ' . $group->title . '</div>';
+        $form['#prefix'] = '<div class="message warning">This ' . $type . ' will be created in the ' . $group_type . ' ' . $group->title . '</div>';
       } else {
-        $form['#prefix'] = '<div class="message warning">This ' . $type . ' will be added to Joinup</div>';
+        $form['#prefix'] = '<div class="message warning">This ' . $type . ' will be created on Joinup</div>';
       }
     }
   }
 }
 
-
 function isa_node_form_signature_validate(&$form, $form_state) {
   if ($form_state['values']['comment'] != 'I agree') {
     return form_set_error('comment', t('You must write "I agree" to sign the document'));
+  }
+}
+
+function isa_node_form_validate_distribution(&$form_state, $field, $fieldname) {
+
+
+  $names = $form_state['values'][$field];
+  foreach ($names as $key => $name) {
+
+    if (is_array($name)) { //it's a distribution and not the add more
+      if (isset($name['nid'])) { //the field is not empty
+        //check if the distribution is already use by another asset release
+        //check if node is created or updated
+        if (!is_null($form_state['values']['nid'])) {
+          $query = "SELECT count(distinct(nid)) as nbr FROM content_field_asset_distribution WHERE field_asset_distribution_nid=%d AND nid <>%d";
+          $results = db_query($query, $name['nid'], $form_state['values']['nid']);
+        } else {
+          $query = "SELECT count(distinct(nid)) as nbr FROM content_field_asset_distribution WHERE field_asset_distribution_nid=%d";
+          $results = db_query($query, $name['nid']);
+        }
+        $result = db_fetch_array($results);
+        //verify if distribution already be affected
+        if ($result['nbr'] > 0) {
+          form_set_error($field,
+            'The distribution with nid:' . $name['nid'] . ' already belong to another asset release');
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Set an error if a flexifield language contains several translations for a specific language
+ * @param <type> $form_state
+ * @param <type> $field : the field (machine name) to validate
+ * @param <type> $field_name : the name of the field (for error message)
+ * @param <type> $isset_default : if there is an existing field for the default language (like title or body)
+ */
+function isa_node_form_validate_translations(&$form_state, $field, $field_name,
+  $isset_default = FALSE) {
+  $default_language = variable_get('language_default', NULL);
+  $names = $form_state['values'][$field];
+
+  foreach ($names as $key => $name) {
+    if (is_array($name)) {
+      if (isset($name['value']['field_language_textarea_name'])) {
+        $name_prop = $name['value']['field_language_textarea_name'];
+      } elseif (isset($name['value']['field_language_textfield_name'])) {
+        $name_prop = $name['value']['field_language_textfield_name'];
+      }
+      if (!empty($name_prop[0]['value'])) {
+
+        if (!empty($name['value']['field_language_textfield_lang'][0]['value'])) {  //there is a language
+          if ($isset_default && $name['value']['field_language_textfield_lang'][0]['value'] == $default_language->language) {
+            form_set_error($field,
+              t('The %field_name is already saved with the default language value.',
+                array('%field_name' => $field_name)));
+          }
+          $languages[] = $name['value']['field_language_textfield_lang'][0]['value'];
+        } else {
+          form_set_error($field,
+            t('The %field_name cannot have value without language.',
+              array('%field_name' => $field_name)));
+        }
+      } else {
+        //no description, unset from form_state
+        unset($form_state['values'][$field][$key]);
+      }
+    }
+  }
+  if (count($languages) > count(array_unique($languages))) {
+    form_set_error($field,
+      t('The %field_name cannot have several translations for a specific language.',
+        array('%field_name' => $field_name)));
+  }
+}
+
+/**
+ * Function callback for repository/upload-metada/%
+ * @return form
+ */
+function isa_node_form_repository_upload_metadata_form() {
+
+  $form['#attributes'] = array('enctype' => "multipart/form-data");
+  $form['file_upload'] = array(
+    '#type' => 'file',
+    '#title' => t('Description metadata file'),
+    '#description' => t('Use this form to upload a file containinf description metadata for a repository
+                         from your computer. You will receive a confirmation that the file has been successfully uploaded,
+                         but the results might not be immediatly visible on Joinup.'),
+  );
+
+  $form['file_filemime'] = array(
+    '#type' => 'select',
+    '#title' => t('File type'),
+    '#options' => array(
+      'title' => t('RDF-XML File'),
+    ),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Upload the metadata file'),
+  );
+  $form['#submit'][] = "isa_node_form_repository_upload_metadata_submit";
+
+  return $form;
+}
+
+/**
+ * Sumbit handler of upload metadata description
+ *
+ * @see _repository_upload_metadata_form
+ */
+function isa_node_form_repository_upload_metadata_submit($form, &$form_state) {
+  //save the file uploaded
+  $repository = node_load(arg(2));
+  $validators = array(
+    'file_validate_extensions' => array('rdf', 'xml'),
+  );
+  $mimetype = 'application/rdf+xml';
+  $file = file_save_upload('file_upload', $validators, file_directory_path() . '/import_metadata');
+
+  if ($file) {
+
+    // Check that the content is an XML file
+    @$doc = simplexml_load_file($file->destination);
+    if ($doc === FALSE) {
+      drupal_set_message(t('The input file is not a valid XML file.'), 'error', FALSE);
+      return;
+    }
+
+    // Check that it is conformed to XML/RDF
+    // TODO: find how to validate the syntax of the input file
+
+    file_set_status($file, FILE_STATUS_PERMANENT);
+    $update_query = "UPDATE {files} SET filemime = '%s' WHERE fid = %d";
+    db_query($update_query, $mimetype, $file->fid);
+
+    //check if there is already a file uploaded in 'todo' state
+    $query = "SELECT task_id, p2, filepath FROM {repositories_management}
+              INNER JOIN {files} ON p2 = fid
+              WHERE p1 = '%s' AND state = '%s'";
+    $result = db_query($query, $repository->nid, 'todo');
+    //Delete the previous file and task
+    if ($datas = db_fetch_array($result)) {
+      if (is_file($datas['filepath'])) {
+        $success = file_delete($datas['filepath']);
+        if ($success) {
+          db_query('DELETE FROM {files} WHERE fid = "%d"', $datas['p2']);
+          db_query('DELETE FROM {repositories_management} WHERE task_id = "%d"', $datas['task_id']);
+        }
+      }
+    }
+
+    //insert the task to do
+    $insert_query = 'INSERT INTO {repositories_management} (repository, action, p1, p2) 
+      VALUES (\'%s\', \'%s\', \'%s\', \'%s\')';
+    db_query($insert_query, $repository->title, 'adms_import', $repository->nid, $file->fid);
+    $report_path = file_directory_path() . "/import_metadata/report_{$repository->nid}.log";
+    $file_path = DRUPAL_DIR . $file->filepath;
+    isa_node_form_check_rdf_file($file_path, DRUPAL_DIR . $report_path, $mimetype, $repository);
+    $here = l('here', $report_path);
+    drupal_set_message("Your description metadata was uploaded. It will be treated soon.
+                        You can check the validity of the rdf format {$here}");
+  } else {
+    drupal_set_message("Cannot upload the file");
+  }
+}
+
+/**
+ * Parse the rdf file and save errors in a file
+ * @param <type> $import_file
+ * @param <type> $path
+ * @param <type> $mimetype
+ */
+function isa_node_form_check_rdf_file($import_file, $path, $mimetype, $repository) {
+  Logger::configure(array(
+    'rootLogger' => array(
+      'appenders' => array('file'),
+      'level' => 'INFO',
+    ),
+    'appenders' => array(
+      'file' => array(
+        'class' => 'LoggerAppenderFile',
+        'layout' => array(
+          'class' => 'LoggerLayoutPattern',
+          'params' => array(
+            'conversionPattern' => '%p - %m%n',
+          ),
+        ),
+        'params' => array(
+          'file' => $path,
+          'append' => false,
+        ),
+      ),
+    ),
+    )
+  );
+
+  try {
+    $logger = Logger::getLogger('isa_node_form');
+    $logger->info("Treatment of the repository '{$repository->title}'");
+    $adapter = \Adapters\AdapterFactory::getAdapter($mimetype);
+    $adapter->load($import_file);
+    $logger->info("End of the treatment for the repository '{$repository->title}'");
+  } catch (\Exception $e) {
+    $logger = Logger::getLogger('isa_node_form');
+    $logger->fatal($e->getMessage());
+  }
+}
+
+/**
+ * Implement hook_nodeapi().
+ * Set the last modification value to the current time
+ * for repositories, distributions and asset releases
+ */
+function isa_node_form_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  if ($op == 'presave' && ($node->type == ISA_ASSET_RELEASE_TYPE
+    || $node->type == ISA_REPOSITORY_TYPE
+    || $node->type == ISA_DISTRIBUTION_TYPE)) {
+    if (!$node->modif_date) {
+      $node->field_asset_last_modification[0]['value'] = date('c');
+    }
+  }
+  if ($node->type == ISA_REPOSITORY_TYPE) {
+    switch ($op) {
+      case 'delete':
+        _repository_harvest_remove($node);
+        break;
+      case 'insert':
+      case 'update':
+        _repository_harvest($node);
+        break;
+      default:
+        //nothing
+        break;
+    }
+  }
+}
+
+function _isa_node_form_validate_uri(&$form, &$form_state) {
+  // Validate the URI
+  if (!_isa_toolbox_valid_uri($form_state['values']['field_id_uri'][0]['value'], true)) {
+    form_set_error('field_id_uri',
+      t('The URI (%uri) is not valid (not formatted according to RFC 3986).',
+        array('%uri' => $form_state['values']['field_id_uri'][0]['value'])));
   }
 }

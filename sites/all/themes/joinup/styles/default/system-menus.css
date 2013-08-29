@@ -1,0 +1,115 @@
+
+ul.menu {
+  list-style: none;
+  border: none;
+  text-align:left; 
+}
+ul.menu li {
+  margin: 0; 
+  display:inline;
+  color:#000;
+  font-size:100%;
+}
+ul.menu li  a {
+	color:#396EA2;
+	font-size:100%;
+	font-weight:normal;
+	text-decoration:none;
+}
+/*
+
+li.expanded {
+  list-style-type: circle;
+  list-style-image: url(../../misc/menu-expanded.png);
+  padding: 0.2em 0.5em 0 0; 
+  margin: 0;
+}
+li.collapsed {
+  list-style-type: disc;
+  list-style-image: url(../../misc/menu-collapsed.png); 
+  padding: 0.2em 0.5em 0 0; 
+  margin: 0;
+}
+li.leaf {
+  list-style-type: square;
+  list-style-image: url(../../misc/menu-leaf.png);
+  padding: 0.2em 0.5em 0 0; 
+  margin: 0;
+}
+
+li a.active {
+  color: #000;
+}
+td.menu-disabled {
+  background: #ccc;
+}
+ul.links {
+  margin: 0;
+  padding: 0;
+}
+ul.links.inline {
+  display: inline;
+}
+ul.links li {
+  display: inline;
+  list-style-type: none;
+  padding: 0 0.5em;
+}
+.block ul {
+  margin: 0;
+  padding: 0 0 0.25em 1em;
+}
+*/
+/* Menu - Primary links */
+#menu-wrapper { clear:both; float:left; height: 42px; width: 100%;
+	background-color: #DCDCDC;
+    overflow: hidden;
+    position: relative;
+}
+#menu-wrapper ul{
+	margin: 0;
+	padding:0;
+	height:42px;
+	clear: left;
+    float: left;
+    left: 0%;
+    position: relative;
+    text-align: center;
+
+}
+#menu-wrapper ul li{
+	float:left;
+	height: 42px;
+	list-style-type:none;
+	display: block;
+    float: left;
+    position: relative;
+    right: 0%;
+}
+
+#menu-wrapper ul li  a{	
+	display:block;
+	float:left;
+	height:30px;
+	color:#343426;
+	text-align:center;
+	text-decoration:none;
+	background:url(../../images/links/menu/primary/menu_separator.gif) 0 50% no-repeat;
+	padding:12px 26px 0;
+}
+#menu-wrapper ul li.first a{
+	width:47px; 
+	padding:12px 2px 0;
+	text-indent: -9999px;  
+	white-space: nowrap; 
+	background:url(../../images/links/menu/primary/icon_menu_home.gif) 50% 50% no-repeat !important;
+}
+#menu-wrapper ul li.last a { }
+
+#menu-wrapper ul li a:link { }
+#menu-wrapper ul li a:hover {background:#ccc !important; }
+#menu-wrapper ul li  a.active { background:#fff; position:relative; left:2px}
+#menu-wrapper ul li  a.active { font-weight:bold; position:relative; left:2px}
+#menu-wrapper ul li.first a:hover, #menu-wrapper ul li.first a:active, #menu-wrapper ul li.first a.active { background:#fff url(../../images/links/menu/primary/icon_menu_home.gif) 50% 50% no-repeat !important;}
+#menu-wrapper ul li.first a.active { margin-left:-2px;}
+#menu-wrapper ul li.first a:hover { background:#ccc url(../../images/links/menu/primary/icon_menu_home.gif) 50% 50% no-repeat !important;}

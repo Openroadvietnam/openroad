@@ -33,7 +33,8 @@
   function drawCharts() {
     var graphs = Drupal.settings.graphs;
     for (j=0; j<graphs.length; j++) {
-      drawChart(graphs[j]);
+      if (graphs[j]['data'] != null)
+        drawChart(graphs[j]);
     }
   }
 
@@ -89,6 +90,7 @@
   // Draw a column chart
   else if (options['type'] == 'ColumnChart') {
     column_data = [];
+    datas = datas[0]
     for (var l=0; l<datas.length; l++) {
       data_table = createDataTable(graph['columns'][l]);
       data_table.addRows(datas[l]);

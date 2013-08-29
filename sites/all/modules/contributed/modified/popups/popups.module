@@ -350,11 +350,13 @@ function popups_add_popups($rules=NULL) {
 
     $default_target_selector = variable_get('popups_'. $theme .'_content_selector', _popups_default_content_selector());
 
-    $settings['popups']['originalPath'] = $_GET['q'];
-    $settings['popups']['defaultTargetSelector'] = $default_target_selector;
-    $settings['popups']['modulePath'] = drupal_get_path('module', 'popups');
-    $settings['popups']['autoCloseFinalMessage'] = variable_get('popups_autoclose_final_message', 1);
-    drupal_add_js( $settings, 'setting' );
+	if(!strstr($_GET['q'], 'content/js_add_more')) {
+        $settings['popups']['originalPath'] = $_GET['q'];
+		$settings['popups']['defaultTargetSelector'] = $default_target_selector;
+		$settings['popups']['modulePath'] = drupal_get_path('module', 'popups');
+		$settings['popups']['autoCloseFinalMessage'] = variable_get('popups_autoclose_final_message', 1);
+		drupal_add_js( $settings, 'setting' );
+	}
     $added = TRUE;
   }
 }

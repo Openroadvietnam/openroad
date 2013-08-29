@@ -201,7 +201,7 @@ discoverBaseUrl:function(){
   },
 enableStats:function(){
   a.script_handler=a.base_url_stats+"share.php?action=log"
-  },
+  }, 
 createElement:function(b,c){
   var d=document.createElement(b);
   if(!c){
@@ -613,13 +613,20 @@ handleLink:function(b){
     b.preventDefault()
     }
     var d=c.params?c.params:a.parseQuery(c.getAttribute("rel"));
+	//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-745
+	//If link is empty get actual url
+	if(!d.link){
+		d.link=window.location.href;	
+	}
   if(a.hasClass(c,"share_button_active")){
     iBeginShare.hide(c)
     }else{
     iBeginShare.show(c,d)
     }
   },
-drawLink:function(b,c){
+  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-745
+  //If link not is empty its passed to function
+drawLink:function(b,c,link){
   if(c===undefined){
     c={}
   }
@@ -647,6 +654,11 @@ drawLink:function(b,c){
   if(c.share_text==""){
   c.share_text=" ";
   c.share_style_link=" share_style_link"
+  }  
+  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-745
+  //If link is empty, it is completed with the value
+  if(c.link===undefined){
+  c.link=link;
   }
   var d=a.createElement("a",{
   href:"javascript:void(0)",
@@ -683,11 +695,20 @@ attachLink:function(b,c){
   if(c.share_stats===undefined||c.share_stats==true){
   a.enableStats()
   }
+  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-745
+  //If share_url value is not empty, this value is passed to variable link
+  if(c.share_url===undefined||c.share_url==""){
+  link = "";
+  }else{ 
+  link = c.share_url;
+  }
   if(typeof b=="string"){
   b=document.getElementById(b)
   }
   a.addEvent(window,"load",a.bind(function(a,b,c){
-  iBeginShare.drawLink(b,c)
+  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-745
+  //The value passed in the variable "link" is painted on links in "Share this on..." 
+  iBeginShare.drawLink(b,c,link)
   },b,c))
 },
 attachButton:function(b,c){
@@ -965,7 +986,7 @@ return{
     },
   render:function(q,r){
     e=null;
-    f=encodeURIComponent(r.link);
+    f=encodeURIComponent(r.link);	
     g=encodeURIComponent(r.title);
     var s=Math.ceil(h.length/(d*c));
     k=a.createElement("div",{
@@ -1151,25 +1172,25 @@ iBeginShare.plugins.builtin.bookmarks.addService("MySpace","http://www.myspace.c
 iBeginShare.plugins.builtin.bookmarks.addService("Facebook","http://www.facebook.com/share.php?u=__URL__&t=__TITLE__");
 iBeginShare.plugins.builtin.bookmarks.addService("Twitter","http://twitter.com/home?status=__TITLE__%20-%20__URL__");
 iBeginShare.plugins.builtin.bookmarks.addService("Delicious","http://delicious.com/post?url=__URL__&title=__TITLE__&notes=");
-iBeginShare.plugins.builtin.bookmarks.addService("Digg","http://digg.com/submit?phase=2&url=__URL__&title=__TITLE__&bodytext=");
+iBeginShare.plugins.builtin.bookmarks.addService("LinkedIn","http://www.linkedin.com/shareArticle?mini=true&url=__URL__&title=__TITLE__&ro=false&summary=&source=");
 iBeginShare.plugins.builtin.bookmarks.addService("Technorati","http://technorati.com/faves?sub=favthis&add=__URL__");
-iBeginShare.plugins.builtin.bookmarks.addService("Reddit","http://reddit.com/submit?url=__URL__&title=__TITLE__");
-iBeginShare.plugins.builtin.bookmarks.addService("Bebo","http://bebo.com/c/share?Url=__URL__&Title=__TITLE__");
+iBeginShare.plugins.builtin.bookmarks.addService("Gmail","https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=&su=__TITLE__&body=__URL__&zx=RANDOMCRAP&shva=1&disablechatbrowsercheck=1&ui=1");
+iBeginShare.plugins.builtin.bookmarks.addService("Netvibes","http://www.netvibes.com/share?title=__TITLE__&url=__URL__");
 iBeginShare.plugins.builtin.bookmarks.addService("Blogger","http://www.blogger.com/blog_this.pyra?t=__TITLE__&u=__URL__&n=__TITLE__");
 iBeginShare.plugins.builtin.bookmarks.addService("Google","http://www.google.com/bookmarks/mark?op=edit&bkmk=__URL__&title=__TITLE__&annotation=");
 iBeginShare.plugins.builtin.bookmarks.addService("Live","https://favorites.live.com/quickadd.aspx?marklet=1&url=__URL__&title=__TITLE__");
-iBeginShare.plugins.builtin.bookmarks.addService("StumbleUpon","http://www.stumbleupon.com/submit?url=__URL__&title=__TITLE__");
+iBeginShare.plugins.builtin.bookmarks.addService("WordPress","http://__ID__.wordpress.com/wp-admin/press-this.php?u=__URL__&t=__TITLE__&s=&v=2");
 iBeginShare.plugins.builtin.bookmarks.addService("Netlog","http://www.netlog.com/go/manage/links/?view=save&origin=external&url=__URL__&title=__TITLE__&description=");
 iBeginShare.plugins.builtin.bookmarks.addService("Typepad","http://www.typepad.com/services/quickpost/post?v=2&qp_show=ac&qp_title=__TITLE__&qp_href=__URL__&qp_text=");
-iBeginShare.plugins.builtin.bookmarks.addService("LinkedIn","http://www.linkedin.com/shareArticle?mini=true&url=__URL__&title=__TITLE__&ro=false&summary=&source=");
-iBeginShare.plugins.builtin.bookmarks.addService("Netvibes","http://www.netvibes.com/share?title=__TITLE__&url=__URL__");
+iBeginShare.plugins.builtin.bookmarks.addService("Digg","http://digg.com/submit?phase=2&url=__URL__&title=__TITLE__&bodytext=");
+iBeginShare.plugins.builtin.bookmarks.addService("Bebo","http://bebo.com/c/share?Url=__URL__&Title=__TITLE__");
 iBeginShare.plugins.builtin.bookmarks.addService("YahooBuzz","http://buzz.yahoo.com/buzz?src=ec.europa.eu&targetUrl=__URL__&headline=__TITLE__");
 iBeginShare.plugins.builtin.bookmarks.addService("Yahoo","http://bookmarks.yahoo.com/toolbar/savebm?u=__URL__&t=__TITLE__&opener=bm&ei=UTF-8&d=");
 iBeginShare.plugins.builtin.bookmarks.addService("AIMShare","http://connect.aim.com/share/?url=__URL__&title=__TITLE__&description=");
 iBeginShare.plugins.builtin.bookmarks.addService("Viadeo","http://www.viadeo.com/shareit/share/?url=__URL__&title=__TITLE__&encoding=UTF-8");
 iBeginShare.plugins.builtin.bookmarks.addService("Ask","http://myjeeves.ask.com/mysearch/BookmarkIt?v=1.2&t=webpages&url=__URL__&title=__TITLE__&abstext=");
-iBeginShare.plugins.builtin.bookmarks.addService("WordPress","http://__ID__.wordpress.com/wp-admin/press-this.php?u=__URL__&t=__TITLE__&s=&v=2");
-iBeginShare.plugins.builtin.bookmarks.addService("Gmail","https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=&su=__TITLE__&body=__URL__&zx=RANDOMCRAP&shva=1&disablechatbrowsercheck=1&ui=1");
+iBeginShare.plugins.builtin.bookmarks.addService("StumbleUpon","http://www.stumbleupon.com/submit?url=__URL__&title=__TITLE__");
+iBeginShare.plugins.builtin.bookmarks.addService("Reddit","http://reddit.com/submit?url=__URL__&title=__TITLE__");
 iBeginShare.plugins.builtin.bookmarks.addService("Mixx","http://www.mixx.com/submit?page_url=__URL__&title=__TITLE__");
 iBeginShare.plugins.builtin.bookmarks.addService("Arto","http://www.arto.com/section/linkshare/?lu=__URL__&ln=__TITLE__");
 iBeginShare.plugins.builtin.bookmarks.addService("Bitly","http://bit.ly/?url=__URL__");

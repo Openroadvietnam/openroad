@@ -362,7 +362,7 @@ function content_taxonomy_form_alter(&$form, $form_state, $form_id) {
       $form['taxonomy'] = array('#tree' => TRUE);
       $form['taxonomy']['key'] = array('#type' => 'value', '#value' => '');
     }
-  }
+  }  
 }
 
 /**

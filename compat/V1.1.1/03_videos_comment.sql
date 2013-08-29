@@ -1,0 +1,1 @@
+UPDATE `node` SET `comment` = '2' WHERE `node`.`type` ='video';

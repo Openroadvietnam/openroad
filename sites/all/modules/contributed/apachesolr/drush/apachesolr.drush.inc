@@ -15,7 +15,7 @@
  * Notice how this structure closely resembles how
  * you define menu hooks.
  *
- * @See drush_parse_command() for a list of recognized keys.
+ * @see drush_parse_command() for a list of recognized keys.
  *
  * @return
  *   An associative array describing your command(s).
@@ -46,7 +46,14 @@ function apachesolr_drush_command() {
     // the name of the function implementing your command.
     'callback' => 'apachesolr_drush_solr_index',
     // a short description of your command
-    'description' => dt('Send to Solr content marked for (re)indexing. Same as running cron once but without the other overhead.'),
+    'description' => dt('Reindexes content marked for (re)indexing.'),
+  );
+  $items['solr-phpclient'] = array(
+    'callback' => 'apachesolr_drush_solr_phpclient',
+    'description' => dt('Downloads the required SolrPhpClient from googlecode.com.'),
+    'arguments' => array(
+      'path' => dt('Optional. A path to the apachesolr module. If omitted Drush will use the default location.'),
+    ),
   );
   $items['solr-search'] = array(
     'callback' => 'apachesolr_drush_solr_search',
@@ -77,7 +84,9 @@ function apachesolr_drush_help($section) {
     case 'drush:solr-reindex':
       return dt("Used without parameters, this command marks all of the content in the Solr index for reindexing. Used with paramters for content type, it marks just the content types that are specified. Reindexing is different than deleting as the content is still searchable while it is in queue to be reindexed. Reindexing is done on future cron runs.");
     case 'drush:solr-index':
-      return dt("Sends to Solr content marked for (re)indexing, as if cron ran once. If you want to reindex all content or content of a specific type, use solr-reindex first to mark that content.");
+      return dt("Reindexes content marked for (re)indexing. If you want to reindex all content or content of a specific type, use solr-reindex first to mark that content.");
+    case 'drush:solr-phpclient':
+      return dt("Downloads the SolrPhpClient libraray from googlecode.com. Include the optional path to an apachesolr module installation if you have more than one, or if the module is not yet enabled.");
     case 'drush:solr-search':
       return dt('Executes a search against the site\'s Apache Solr search index and returns the restults.');
   }
@@ -120,11 +129,26 @@ function apachesolr_drush_solr_reindex() {
 }
 
 function apachesolr_drush_solr_index() {
-  $cron_limit = variable_get('apachesolr_cron_limit', 50);
-  $rows = apachesolr_get_nodes_to_index('apachesolr_search', $cron_limit);
-  apachesolr_index_nodes($rows, 'apachesolr_search');
-  $count = count($rows);
-  drush_print("{$count} nodes were sent to Solr.");
+  module_load_include('inc', 'apachesolr', 'apachesolr.admin');
+  apachesolr_batch_index_remaining();
+  drush_backend_batch_process();
+}
+
+function apachesolr_drush_solr_phpclient() {
+  $args = func_get_args();
+  if (isset($args[0])) {
+    $path = $args[0];
+  }
+  else {
+    $path = drupal_get_path('module', 'apachesolr');
+  }
+  drush_op('chdir', $path);
+  if (drush_shell_exec('svn checkout -r22 http://solr-php-client.googlecode.com/svn/trunk/ SolrPhpClient')) {
+    drush_log(dt('SolrPhpClient has been downloaded to @path', array('@path' => $path)), 'success');
+  }
+  else {
+    drush_log(dt('Drush was unable to download the SolrPhpClient to @path', array('@path' => $path)), 'error');
+  }
 }
 
 function apachesolr_drush_solr_search() {

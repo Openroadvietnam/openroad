@@ -21,6 +21,7 @@ if (!$db_selection) {
 
 $default_quota = constant('WEB_DEFAULT_QUOTA');
 $suspicious_web_directories = array();
+$prob = 0;
 
 // select all known web directories
 $web_directories_query = sprintf('SELECT name FROM %s', constant('WEB_DIRECTORIES_TABLE'));
@@ -38,7 +39,14 @@ while ($web_directory = mysql_fetch_assoc($web_directories_res)) {
 	$quota = isset($WEB_DIRECTORIES_QUOTA[$web_directory]) ? $WEB_DIRECTORIES_QUOTA[$web_directory] : $default_quota;
 	$size = web_directory_size($web_directory);
 	if ($size < 0) {
-		printf("A problem occured while attempting to check the size of the \"%s\" web directory\n", $web_directory);
+		if ($prob == 0)
+		if ($prob == 0)  {
+			printf("The following problems occured on %s:%s while attempting to check the size of web directories:\n", get_host_name(), constant('WEB_ROOT_DIR'));
+			$prob++;
+		}
+		if ($size == -1) printf("  * The \"%s\" web directory does not exist on the filesystem\n", $web_directory);
+		if ($size == -2) printf("  * The 'du' command failed for the \"%s\" web directory\n", $web_directory);
+		if ($size == -3) printf("  * The output of the 'du' command is not recognized for the \"%s\" web directory\n", $web_directory);
 		continue;
 	}
 	if ($size > $quota) {

@@ -1,7 +1,8 @@
 <?php
+
 /**
  * @defgroup isa_workflow
- * @file 
+ * @file
  * Modules main file
  * @ingroup isa_workflow
  */
@@ -10,7 +11,7 @@
  *
  * @param type $form
  * @param type $form_state
- * @param type $form_id 
+ * @param type $form_id
  */
 function isa_workflow_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
@@ -29,6 +30,8 @@ function isa_workflow_form_alter(&$form, &$form_state, $form_id) {
       break;
     case 'project_project_node_form':
     case 'community_node_form':
+    case ISA_LICENCE_TYPE . '_node_form':
+    case ISA_PUBLISHER_TYPE . '_node_form':
       isa_workflow_manage_workflow_community($form);
       break;
     case 'node_delete_confirm':
@@ -37,6 +40,97 @@ function isa_workflow_form_alter(&$form, &$form_state, $form_id) {
     case 'workflow_tab_form':
       isa_workflow_manage_workflow_tab($form);
       break;
+    case ISA_ASSET_RELEASE_TYPE . '_node_form':
+      isa_workflow_manage_workflow_asset_release($form);
+      break;
+  }
+}
+
+/**
+ * This function manages workflow fields for the workflow of asset release
+ *
+ * @param array $form the form
+ */
+function isa_workflow_manage_workflow_asset_release(&$form) {
+  if (isset($form['workflow']['asset_release'])) {
+    if (count($form['workflow']['asset_release']['#options']) < 2) {
+      $form['workflow']['#access'] = FALSE;
+    }
+    // isa_workflow_add_workflow_button ($form);
+    if ($form['#node']->_workflow == ISA_SID_ASSET_PROPOSED) {
+      $form['buttons']['delete']['#value'] = t('Reject');
+      $form['buttons']['delete']['#submit'][] = 'isa_workflow_submit_reject';
+    }
+    if ($form['#node']->_workflow == ISA_SID_ASSET_ASSESSMENT
+            && isset($form['workflow']['asset_release']['#options'][ISA_SID_ASSET_VALIDATED])) {
+      $button_submit = $form['buttons']['submit']['#submit'];
+      $form['buttons']['reject_assessment'] = array(
+          '#type' => 'submit',
+          '#value' => t('Reject assessment'),
+          '#access' => TRUE,
+          '#submit' => $button_submit,
+          '#name' => ISA_SID_ASSET_VALIDATED,
+      );
+
+      unset($form['workflow']['asset_release']['#options'][ISA_SID_ASSET_VALIDATED]);
+    }
+  }
+
+  //Unset the delete button if the asset release cannot be deleted
+  if (!isa_toolbox_menu_access_node_delete($form['#node'])) {
+    unset($form['buttons']['delete']);
+  }
+
+  if ($form['#node']->_workflow == ISA_SID_ASSET_REQUEST_DELETED) {
+    //add 'reject request deletion ' if in state 'request deletion and admin
+    if (user_access('access publishing options')) {
+      $form['buttons']['reject_deletion'] = array(
+          '#type' => 'submit',
+          '#value' => t('Reject deletion'),
+          '#access' => TRUE,
+      );
+      $form['buttons']['reject_deletion']['#submit'][] = 'isa_workflow_reject_deletion';
+    }
+  }
+
+  //if asset release in an asset and
+  //user is owner, delete "propose button"
+  //and add "validated" workflow
+  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-674
+  global $user;  
+  $roles_admin 	= Array('moderator', 'administrator');
+  $roles 		= $user->roles;
+  if (count(array_intersect($roles_admin, $roles)) == 0) {
+    if (!empty($form['og_initial_groups']['#value'][0])) {
+      $node_group = node_load($form['og_initial_groups']['#value'][0]);	  
+    }	
+    if(isset($node_group) && ($node_group->uid == $user->uid)){      
+      $form['workflow'][ISA_ASSET_RELEASE_TYPE]['#options'][ISA_SID_RELEASE_VALIDATED] = 'Validated';
+      $form['buttons']['submit']['#submit'][] = '_isa_workflow_set_asset_release_validated';
+      unset($form['workflow'][ISA_ASSET_RELEASE_TYPE]['#options'][ISA_SID_RELEASE_PROPOSED]);
+    }else{
+      if (isset($node_group) && $node_group->type == "project_project" && $form['uid']['#value'] == $node_group->uid) {
+        unset($form['workflow'][ISA_ASSET_RELEASE_TYPE]['#options'][ISA_SID_RELEASE_PROPOSED]);
+      }
+      else {
+        unset($form['workflow'][ISA_ASSET_RELEASE_TYPE]['#options'][ISA_SID_RELEASE_VALIDATED]);
+      }
+    }
+  } 
+}
+
+/**
+ * Override the submit on "asset release" into project to change automatically state of asset release
+ * into workflow from proposed to validated. Issue ISAICP-674
+ *
+ * @param array $form
+ * @param array $form_state
+ */
+function _isa_workflow_set_asset_release_validated(&$form, $form_state){
+  $node = node_load($form_state['nid']);
+  $id_workflow_state = workflow_execute_transition($node, ISA_SID_RELEASE_VALIDATED, 'Validated automatically', true);
+  if($id_workflow_state!=ISA_SID_RELEASE_VALIDATED){
+    drupal_set_message(t('Error upgrading workflow state. Some facilitator of this asset may edit your content after publication for quality assurance reasons.'));
   }
 }
 
@@ -65,14 +159,13 @@ function isa_workflow_manage_workflow_tab(&$form) {
 function isa_workflow_manage_workflow_news_moderation(&$form) {
   //$path = explode('/', drupal_get_normal_path($_GET['q']));
   //if ((!empty($_GET['gids']) && $path[1] == "add")) {
-
-   // revisioning : Create/update news in group = new published revision
-  if (variable_get('current_group', NULL)){
-        $form['revision_information']['revision_moderation']['#default_value'] = FALSE;
-        if (isset($form['revision_moderation'])) {
-          $form['revision_moderation']['#value'] = FALSE;
-        }
-        $form['revision_information']['#access'] = true;
+  // revisioning : Create/update news in group = new published revision
+  if (variable_get('current_group', NULL)) {
+    $form['revision_information']['revision_moderation']['#default_value'] = FALSE;
+    if (isset($form['revision_moderation'])) {
+      $form['revision_moderation']['#value'] = FALSE;
+    }
+    $form['revision_information']['#access'] = true;
   }
 
   if (isset($form['workflow']['News_moderation'])) {
@@ -147,10 +240,8 @@ function isa_workflow_manage_workflow_release_moderation(&$form) {
     $project = node_load($pid);
     // if release is created in software
     if ($project->group_type == ISA_SOFTWARE_TYPE) {
-
-      // in software, a release is crerated in state "created"
-      $form['workflow']['Release_moderation']['#default_value'] = ISA_SID_RELEASE_CREATED;
-      // remove useless states
+      //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-362
+      //Remove default value to delete current state button
       unset($form ['workflow']['Release_moderation']['#options'][ISA_SID_RELEASE_REQUESTED]);
       unset($form ['workflow']['Release_moderation']['#options'][ISA_SID_RELEASE_APPROVED]);
       $form['workflow']['#access'] = FALSE;
@@ -185,7 +276,6 @@ function isa_workflow_manage_workflow_release_moderation(&$form) {
  */
 function isa_workflow_manage_workflow_community(&$form) {
   global $user;
-
   if (isset($form ['workflow']['Community_moderation'])) {
     // Project translation is directly created in state validate
     if (isset($_GET['translation']) && isset($_GET['language'])) {
@@ -257,11 +347,56 @@ function isa_workflow_redirect_node_deletion(&$form, &$form_state) {
     case ISA_COMMUNITY_TYPE:
     case ISA_PROJECT_TYPE:
     case ISA_PRESENTATION_TYPE:
-	case ISA_CASE_TYPE:
+    case ISA_CASE_TYPE:
+    case ISA_LICENCE_TYPE:
+    case ISA_PUBLISHER_TYPE:
       if (arg(3) == 'reject' && arg(4) == '1') {
         $form_state['nid'] = $node->nid;
         array_unshift($form['#submit'], 'isa_workflow_news_community_submit_delete');
       }
+      break;
+    case ISA_REPOSITORY_TYPE:
+      if (arg(2) == 'delete') {
+        $form_state['nid'] = $node->nid;
+        //array_unshift($form['#submit'], 'isa_workflow_news_community_submit_delete');
+        //TODO SDD
+        $form['description'] = '';
+
+        $form['comment'] = array(
+            '#type' => 'textarea',
+            '#title' => t('Comment'),
+            '#description' => t("moderation comment"),
+            '#rows' => 5,
+            '#required' => FALSE,
+            '#weight' => 0);
+      }
+      $form['#submit'][] = 'isa_workflow_repository_delete';
+      break;
+
+    case ISA_ASSET_RELEASE_TYPE:
+
+      $form['description'] = '';
+
+      $form['info'] = array(
+          '#type' => 'fieldset',
+          '#weight' => 0,
+          '#collapsible' => FALSE,
+          '#collapsed' => FALSE,
+          '#attributes' => array('class' => 'message warning'),
+      );
+      $form['info']['message_delete_asset_release'] = array(
+          '#value' => t('Warning ! all the distribution associated to this asset release will be removed for the system and a notification will be sent to asset owner'),
+          '#weight' => -1
+      );
+
+      $form['comment'] = array(
+          '#type' => 'textarea',
+          '#title' => t('Comment'),
+          '#description' => t("moderation comment"),
+          '#rows' => 5,
+          '#required' => FALSE,
+          '#weight' => 0);
+      $form['#submit'][] = 'isa_workflow_asset_release_delete';
       break;
   }
 }
@@ -289,6 +424,13 @@ function isa_workflow_news_community_submit_delete(&$form, &$form_state) {
   $profile_node = content_profile_load('profile', $params['uid']);
 
   $addr_mail = isa_toolbox_get_mail_address_from_user($uid);
+
+  if ($node->type == ISA_REPOSITORY_TYPE && $node->workflow != ISA_SID_REPOSITORY_DRAFT) {
+    $params['subject'] = variable_get('repository_deleted_mail_author_title', "Title...");
+    $body_token_converted = token_replace(variable_get('repository_deleted_mail_author_body', "message..."), 'node', $node);
+    $params['message'] = token_replace($body_token_converted, 'node', $profile_node);
+    drupal_mail('isa_workflow_mail', 'repository_deleted', $addr_mail, NULL, $params, $from, TRUE);
+  }
 
   if ($node->type == ISA_COMMUNITY_TYPE || $node->type == ISA_PROJECT_TYPE) {
     $params['subject'] = variable_get($conf['community']['rejected_mail_title'], "Title...");
@@ -326,7 +468,7 @@ function isa_workflow_news_community_submit_delete(&$form, &$form_state) {
     }
     // END if community/project is created in VF
   }
-  elseif ($node->type == ISA_NEWS_TYPE || $node->type == ISA_DOCUMENT_TYPE || $node->type == ISA_EVENT_TYPE || $node->type == ISA_PRESENTATION_TYPE || $node->type == ISA_CASE_TYPE) {
+  else {
     $params['subject'] = variable_get($conf['news']['rejected_mail_title'], "Title...");
     $body_token_converted = token_replace(variable_get($conf['news']['rejected_mail_body'], "message..."), 'node', $node);
     $params['message'] = token_replace($body_token_converted, 'node', $profile_node);
@@ -359,4 +501,91 @@ function isa_workflow_enable() {
     $weight--;
     db_query("UPDATE {system} SET weight = %d WHERE name = '%s'", $weight, "isa_workflow");
   }
+}
+
+/**
+ * when reject the request deletion node
+ * set workflow to the last state
+ * send mail to the author
+ * redirect to the view page of the asset release
+ */
+function isa_workflow_reject_deletion(&$form, &$form_state) {
+//change workflow to the older state
+  $query = db_query("SELECT old_sid FROM {workflow_node_history} WHERE nid = %d ORDER BY hid DESC", $form['#node']->nid);
+  $result = db_fetch_array($query);
+  if (isset($result['old_sid'])) {
+    workflow_execute_transition($form['#node'], $result['old_sid'], '', true);
+  }
+
+  //send a mail to the author
+  $params['nid'] = $nid;
+  $params['uid'] = $uid;
+  $mail_author = isa_toolbox_get_mail_address_from_user($form['#node']->uid);
+  $profile_node = content_profile_load('profile', $params['uid']);
+  $params['subject'] = variable_get('asset_release_reject_request_deletion_mail_author_title', "Title...");
+  $body_token_converted = token_replace(variable_get('asset_release_reject_request_deletion_mail_author_body', "message..."), 'node', $form['#node']);
+  $params['message'] = token_replace($body_token_converted, 'node', $profile_node);
+  drupal_mail('isa_workflow_mail', 'asset_release_deletion', $mail_author, NULL, $params, $from, TRUE);
+  drupal_set_message('A notification has been sent to the author');
+
+//redirect to view page of the asset release
+  $form_state['redirect'][0] .= "/node/" . $form['#node']->nid; //add information to path
+  $_SESSION['comment'] = "";
+  $_SESSION['comment'] = $form_state['values']['workflow_comment'];
+}
+
+/**
+ * when delete a repository
+ *
+ * send an email to author with comment
+ */
+function isa_workflow_repository_delete(&$form, &$form_state) {
+  //send a mail to author
+  $node = node_load($form_state['values']['nid']);
+  //save the asset release author
+  $mail_author = isa_toolbox_get_mail_address_from_user($node->uid);
+  $params['message'] = "";
+  $params['nid'] = $node->nid;
+  $params['uid'] = $node->uid;
+  $profile_node = content_profile_load('profile', $params['uid']);
+  $profile_node->comment_deletion = $form_state['values']['comment'];
+  $params['subject'] = variable_get('repository_deleted_mail_author_title', "Title...");
+  //$body_token_converted = token_replace(variable_get('repository_deleted_mail_author_body', "message..."), 'node', $profile_node);
+  $body_token_converted = variable_get('repository_deleted_mail_author_body', "message...");
+  $body_token_converted = str_replace('[workflow-current-state-log-entry]', $form_state['values']['comment'], $body_token_converted);
+  $body_token_converted = token_replace($body_token_converted, 'node', $node);
+  $params['message'] = token_replace($body_token_converted, 'node', $profile_node);
+  drupal_mail('isa_workflow_mail', 'repository_deleted', $mail_author, NULL, $params, $from, TRUE);
+  drupal_set_message('A notification has been sent to the author');
+}
+
+/**
+ * when delete an asset release
+ * delete all this distribution
+ * and send an email to author
+ */
+function isa_workflow_asset_release_delete(&$form, &$form_state) {
+  $list_author = array();
+  $node = node_load($form_state['values']['nid']);
+  //to delete all the distribution affected to an asset release when it be deleted
+  foreach ($node->field_asset_distribution as $distribution) {
+    if (isset($distribution['nid'])) {
+      node_delete($distribution['nid']);
+    }
+  }
+
+  //send a mail to author
+  $params['message'] = "";
+  $params['nid'] = $node->nid;
+  $params['uid'] = $node->uid;
+  $mail_author = isa_toolbox_get_mail_address_from_user($node->uid);
+  $profile_node = content_profile_load('profile', $params['uid']);
+  $profile_node->comment_deletion = $form_state['values']['comment'];
+  $params['subject'] = token_replace(variable_get('asset_release_deleted_mail_author_title', "Title..."), 'node', $node);
+  $body_token_converted = variable_get('asset_release_deleted_mail_author_body', "message...");
+  $body_token_converted = str_replace('[comment_deletion]', $form_state['values']['comment'], $body_token_converted);
+  $params['message'] = token_replace($body_token_converted, 'node', $node);
+  //$params['message'] = str_replace('[comment_deletion]', $form_state['values']['comment'], $params['message']);
+  drupal_mail('isa_workflow_mail', 'asset_release_deletion', $mail_author, NULL, $params, $from, TRUE);
+  drupal_set_message('A notification has been sent to the author');
 }

@@ -1020,6 +1020,9 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 									xmlDeclaration = fullPage && editor.xmlDeclaration,
 									doc = iframe.getFrameDocument();
 
+								if ( !doc )
+									return null;
+
 								var data = fullPage
 									? doc.getDocumentElement().getOuterHtml()
 									: doc.getBody().getHtml();

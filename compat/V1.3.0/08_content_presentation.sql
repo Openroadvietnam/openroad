@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `content_field_publisher` (
   `vid` int(10) unsigned NOT NULL DEFAULT '0',
   `nid` int(10) unsigned NOT NULL DEFAULT '0',
   `field_publisher_value` longtext,
-  PRIMARY KEY (`vid`),
+  PRIMARY KEY (`vid`,`nid`),
   KEY `nid` (`nid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS `content_field_publication_date` (
   `vid` int(10) unsigned NOT NULL DEFAULT '0',
   `nid` int(10) unsigned NOT NULL DEFAULT '0',
   `field_publication_date_value` varchar(20) DEFAULT NULL,
-  PRIMARY KEY (`vid`),
+  PRIMARY KEY (`vid`,`nid`),
   KEY `nid` (`nid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

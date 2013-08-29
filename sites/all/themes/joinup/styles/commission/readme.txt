@@ -1,0 +1,1 @@
+This folder includes the EU Commission template css files, don't change, delete or add any file.

@@ -126,7 +126,6 @@ function subscriptions_ui_link($type, $node = NULL, $teaser = NULL) {
  */
 function subscriptions_ui_node_form(&$form_state, $node, $account = NULL) {
   global $user;
-
   //GKN get the node from the nid if the nid is passed to function params instead of the node
   if (is_numeric($node)) {
     $node = node_load($node);
@@ -145,6 +144,7 @@ function subscriptions_ui_node_form(&$form_state, $node, $account = NULL) {
   $is_group = in_array($node->type,$group_types);
 
   $blocked_types = variable_get('subscriptions_blocked_content_types', array());
+  
   if (in_array($node->type, $blocked_types)) {
     if (!is_group) {
       if (!user_access('subscribe to all content types', $account)) {
@@ -175,6 +175,7 @@ function subscriptions_ui_node_form(&$form_state, $node, $account = NULL) {
   $index = 1; // If we start with zero, get some value sent as 0 => 0
   foreach ($node_options as $field => $field_options) {
     foreach ($field_options as $option) {
+	
       if (!is_array($option)) {
         continue;
       }
@@ -188,9 +189,13 @@ function subscriptions_ui_node_form(&$form_state, $node, $account = NULL) {
       $options[$index] = $option['name'];
       $nonlabeled_options[$index] = '';
       $params[$index] = $param = $option['params'] + array('author_uid' => -1);
-      if (isset($subscriptions[$param['field']][$param['value']][$param['author_uid']])) {
+	  if (isset($subscriptions[$param['field']][$param['value']][$param['author_uid']])) {
         $default_subscriptions[] = $index;
         $default_send_intervals[$index] = $subscriptions[$param['field']][$param['value']][$param['author_uid']]['send_interval'];
+		// ISAICP-103
+		// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-103
+		// information about "send_interval" is save here in a array "default_send_intervals", later read to complete default value to form
+				
         if ($subscriptions[$param['field']][$param['value']][$param['author_uid']]['send_comments']) {
           $default_comments[] = $index;
         }
@@ -219,12 +224,37 @@ function subscriptions_ui_node_form(&$form_state, $node, $account = NULL) {
     '#theme' => 'subscriptions_ui_table',
     '#attributes' => array('id' => 'subscribe'),
   );
+  
   $form['wrapper']['subscriptions'] = array(
     '#type' => 'checkboxes',
     '#default_value' => $default_subscriptions,
     '#options' => $options,
     '#access' => TRUE,
   );
+  //ISAICP-103
+  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-103
+  $form['wrapper']['send_interval'] = array(
+  		'#type' => 'fieldset',
+  		'#access' => _subscriptions_get_setting('send_interval_visible', $user),
+  );
+  
+	// ISAICP-103
+	// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-103
+	// read information about "send_interval" from array $subscriptions
+
+  
+  foreach($nonlabeled_options as $index=>$value){
+  	$form['wrapper']['send_interval'][$index] = array(
+  			'#type' => 'select',
+  			'#options' => variable_get('subscriptions_send_intervals'),
+//  			'#default_value' => _subscriptions_get_setting('send_interval', $user),
+			'#default_value'	=> $default_send_intervals[$index],
+  			'#access' => _subscriptions_get_setting('send_interval_visible', $user),
+  	);
+  }
+  
+	// ISAICP-103
+	// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-103
   $form['wrapper']['updates'] = array(
     '#type' => 'checkboxes',
     '#default_value' => $default_updates,
@@ -264,63 +294,69 @@ function subscriptions_ui_theme() {
     )
   );
 }
-
+//ISAICP-103
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-103
 /**
  * Theme subscriptions node subform table.
  *
  * @ingroup themeable
  */
 function theme_subscriptions_ui_table($element) {
-  $rows = array();
-  $headers = array();
-  $header_strings = array(
-    array('class' => 'subscriptions-table', 'width' => '30%'),
-    array('data'  => t('On&nbsp;updates'), 'width' => '1*', 'style' => 'writing-mode: lr-tb'),
-    array('data'  => t('On&nbsp;comments'))
-  );
-  foreach (element_children($element['subscriptions']) as $key) {
-    $row = array();
-    foreach (array('subscriptions', 'updates', 'comments') as $eli => $elv) {
-      if (isset($element[$elv]) && $element[$elv]['#access']) {
-        $row[] = drupal_render($element[$elv][$key]);
-        $headers[$eli] = $header_strings[$eli];
-      }
-    }
-    $rows[] = $row;
-  }
-  unset($headers[end(array_keys($headers))]['width']);
-  $output = theme('table', $headers, $rows);
-  $output .= drupal_render($element);
-  drupal_add_js(drupal_get_path('module', 'subscriptions') .'/subscriptions_tableselect.js', 'module');
-  return $output;
+	 
+	$rows = array();
+	$headers = array();
+	$header_strings = array(
+			array('class' => 'subscriptions-table', ),//'width' => '30%'),
+			array('data'  => t('Send&nbsp;interval'), ),//'width' => '20%'),
+			array('data'  => t('On updates'), /*'width' => '1*', */'style' => 'writing-mode: lr-tb'),
+			array('data'  => t('On comments'))
+	);
+
+	foreach (element_children($element['subscriptions']) as $key) {
+		$row = array();
+		foreach (array('subscriptions','send_interval', 'updates', 'comments') as $eli => $elv) {
+			if (isset($element[$elv]) && $element[$elv]['#access']) {
+				$row[] = drupal_render($element[$elv][$key]);
+				$headers[$eli] = $header_strings[$eli];
+			}
+		}
+		$rows[] = $row;
+	}
+
+	unset($headers[end(array_keys($headers))]['width']);
+	$output = theme('table', $headers, $rows);
+	$output .= drupal_render($element);
+	drupal_add_js(drupal_get_path('module', 'subscriptions') .'/subscriptions_tableselect.js', 'module');
+
+	return $output;
 }
 
+//ISAICP-103
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-103
 /**
  * Node subscriptions node subform submit handler.
  *
  * @ingroup form
  */
 function subscriptions_ui_node_form_submit($form, &$form_state) {
+	$recipient_uid = $form_state['values']['account']->uid;
+	$default_send_intervals = $form_state['values']['send_intervals'];
 
-  $recipient_uid = $form_state['values']['account']->uid;
-  $default_send_intervals = $form_state['values']['send_intervals'];
-
-  foreach ($form_state['values']['subscriptions'] as $index => $value) {
-    $params = $form_state['values']['params'][$index];
-    $args = array($params['module'], $params['field'], $params['value'], $params['author_uid'], $recipient_uid);
-    if ($value) {
-      $args[] = $default_send_intervals[$index];
-      $args[] = !empty($form_state['values']['updates'][$index]);
-      $args[] = !empty($form_state['values']['comments'][$index]);
-      call_user_func_array('subscriptions_write_subscription', $args);
-    }
-    else {
-      db_query("DELETE FROM {subscriptions} WHERE module = '%s' AND field = '%s' AND value = '%s' AND author_uid = %d AND recipient_uid = %d", $args);
-    }
-  }
-  $form_state['redirect'] = str_replace('/subscribe', '', $_GET['q']);
+	foreach ($form_state['values']['subscriptions'] as $index => $value) {
+		$params = $form_state['values']['params'][$index];
+		$args = array($params['module'], $params['field'], $params['value'], $params['author_uid'], $recipient_uid);
+		if ($value) {
+			$args[] = $form_state['values'][$index];
+			$args[] = !empty($form_state['values']['updates'][$index]);
+			$args[] = !empty($form_state['values']['comments'][$index]);
+			call_user_func_array('subscriptions_write_subscription', $args);
+		}
+		else {
+			db_query("DELETE FROM {subscriptions} WHERE module = '%s' AND field = '%s' AND value = '%s' AND author_uid = %d AND recipient_uid = %d", $args);
+		}
+	}
+	$form_state['redirect'] = str_replace('/subscribe', '', $_GET['q']);
 }
-
 /**
  * Implementation of hook form_alter().
  *

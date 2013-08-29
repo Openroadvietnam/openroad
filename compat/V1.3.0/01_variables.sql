@@ -181,7 +181,7 @@ REPLACE INTO `variable` (`name`, `value`) VALUES
 ('node_options_legaldocument', 'a:2:{i:0;s:6:"status";i:1;s:7:"promote";}'),
 ('og_content_type_usage_legaldocument', 's:19:"group_post_standard";'),
 ('og_max_groups_legaldocument', 's:0:"";'),
-('packages_vid', 's:2:"66";'),
+('package_vid', 's:2:"66";'),
 ('revisioning_auto_publish_legaldocument', 'i:0;'),
 ('show_diff_inline_legaldocument', 'i:0;'),
 ('show_preview_changes_legaldocument', 'i:1;'),
@@ -192,8 +192,10 @@ REPLACE INTO `variable` (`name`, `value`) VALUES
 ('use_workflow_buttons_8', 'i:1;'),
 ('nat_config', 'a:5:{s:5:"types";a:25:{s:13:"project_issue";a:0:{}s:15:"project_release";a:0:{}s:15:"project_project";a:2:{i:10;s:2:"10";i:66;s:2:"66";}s:13:"advertisement";a:0:{}s:4:"blog";a:0:{}s:4:"case";a:0:{}s:9:"community";a:1:{i:10;s:2:"10";}s:11:"contexthelp";a:0:{}s:15:"contexthelp_faq";a:0:{}s:8:"document";a:0:{}s:5:"event";a:0:{}s:9:"factsheet";a:0:{}s:15:"federated_forge";a:0:{}s:17:"federated_project";a:0:{}s:13:"legaldocument";a:0:{}s:4:"news";a:0:{}s:10:"newsletter";a:0:{}s:4:"page";a:0:{}s:12:"presentation";a:0:{}s:7:"profile";a:0:{}s:5:"story";a:0:{}s:5:"study";a:0:{}s:5:"topic";a:0:{}s:5:"video";a:0:{}s:4:"wiki";a:0:{}}s:4:"body";a:0:{}s:6:"delete";a:2:{s:15:"project_project";i:1;s:9:"community";i:1;}s:7:"related";a:0:{}s:10:"node_links";a:2:{s:15:"project_project";i:1;s:9:"community";i:1;}}'),
 ('message_status', 's:1:"0";'),
+
 ('htmlpurifier_clear_cache', 's:60:"Clear cache (Warning: Can result in performance degradation)";'),
 ('htmlpurifier_config_2', 'a:12:{s:13:"Attr.EnableID";s:1:"0";s:24:"AutoFormat.AutoParagraph";s:1:"1";s:18:"AutoFormat.Linkify";s:1:"1";s:22:"AutoFormat.RemoveEmpty";s:1:"0";s:17:"Null_HTML.Allowed";s:1:"1";s:24:"HTML.ForbiddenAttributes";s:0:"";s:22:"HTML.ForbiddenElements";s:0:"";s:15:"HTML.SafeObject";s:1:"0";s:18:"Output.FlashCompat";s:1:"0";s:28:"URI.DisableExternalResources";s:1:"0";s:20:"URI.DisableResources";s:1:"0";s:14:"Null_URI.Munge";s:1:"1";}'),
 ('htmlpurifier_help_2', 'i:1;'),
 ('htmlpurifier_version_ours', 's:5:"4.4.0";'),
 ('subscriptions_omitted_taxa', 'a:38:{i:0;s:1:"0";i:43;s:2:"43";i:46;s:2:"46";i:67;s:2:"67";i:36;s:2:"36";i:9;s:1:"9";i:26;s:2:"26";i:30;s:2:"30";i:27;s:2:"27";i:57;s:2:"57";i:13;s:2:"13";i:59;s:2:"59";i:51;s:2:"51";i:65;s:2:"65";i:52;s:2:"52";i:38;s:2:"38";i:28;s:2:"28";i:33;s:2:"33";i:56;s:2:"56";i:29;s:2:"29";i:34;s:2:"34";i:55;s:2:"55";i:64;s:2:"64";i:60;s:2:"60";i:31;s:2:"31";i:63;s:2:"63";i:48;s:2:"48";i:66;s:2:"66";i:32;s:2:"32";i:14;s:2:"14";i:54;s:2:"54";i:45;s:2:"45";i:50;s:2:"50";i:44;s:2:"44";i:47;s:2:"47";i:6;s:1:"6";i:53;s:2:"53";i:40;s:2:"40";}');
+

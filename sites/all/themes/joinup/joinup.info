@@ -22,20 +22,31 @@ engine	= phptemplate
 	; "handheld". See http://www.w3.org/TR/CSS21/media.html#media-types for a full
 	; list of stylesheet media types in CSS 2.1. The iPhone's preferred media type
 	; is based on the CSS3 Media queries. http://www.w3.org/TR/css3-mediaqueries/
+	
+stylesheets[all][] 		= styles/commission/ec-2012.css
+stylesheets[all][] 		= styles/commission/system-menus.css
+stylesheets[all][] 		= styles/default/system-menus.css
 stylesheets[all][]		= styles/default/reset.css
 stylesheets[all][]		= styles/default/grid.css
 stylesheets[all][]		= styles/default/common.css
 stylesheets[all][]		= styles/default/style.css
+stylesheets[all][]		= styles/default/home.css
 stylesheets[all][]		= styles/default/forms.css
 stylesheets[all][]		= styles/default/dashboard.css
+stylesheets[all][]		= styles/default/footer.css
+stylesheets[all][]		= styles/default/fixes.css
+stylesheets[all][] 		= styles/default/jcarousel-default.css
+stylesheets[all][] 		= styles/default/font-awesome.css
+
 stylesheets[print][]	= styles/default/print.css
 
-; Set the conditional stylesheets that are processed by IE.
-conditional-stylesheets[if IE][all][] = styles/default/ie.css
+stylesheets[all][]	= styles/default/z_overrides.css
 
-	; Optionally add some JavaScripts to your theme.
+
+; Optionally add some JavaScripts to your theme.
 scripts[]				= scripts/plugins/jquery.cycle.js
 scripts[]				= scripts/init.js
+scripts[]				= scripts/commission/ec-2012.js
 
 	; The regions defined in the page.tpl.php file. The name in brackets
 	; is the name of the variable in the page.tpl.php file, (e.g. "[content_top]"
@@ -49,6 +60,7 @@ regions[before_content] = Before content region
 regions[after_content]  = After content region
 regions[right]          = Right sidebar region
 regions[footer]         = Footer region
+
 
 	; Various page elements output by the theme can be toggled on and off. The
 	; "features" control which of these check boxes display on the

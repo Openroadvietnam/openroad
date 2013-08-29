@@ -1,0 +1,2537 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+	xmlns:adms="http://www.w3.org/ns/adms#"
+	xmlns:schema="http://schema.org/"
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:wdrs="http://www.w3.org/2007/05/powder-s#"
+	xmlns:foaf="http://xmlns.com/foaf/0.1/"
+	xmlns:admsv="http://purl.org/adms/"
+	xmlns:xhv="http://www.w3.org/1999/xhtml/vocab#"
+	xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+	xmlns:rad="http://www.w3.org/ns/radion#"
+	xmlns:vcard="http://www.w3.org/2006/vcard/ns#"
+	xmlns:dcterms="http://purl.org/dc/terms/"
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+	<adms:accessURL rdf:resource="http://dox.gs1.eu/documents"/>
+	<rdfs:label xml:lang="en">GS1 Dox</rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2009-01-01T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-23T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">Dox is the GS1 in Europe solution repository that publishes a wide range of freely available GS1 assets in over 20 sectors.</dcterms:description>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://sws.geonames.org/6295630">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Location"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<dcterms:spatial rdf:resource="http://sws.geonames.org/6295630"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/assettype/100">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#ConceptScheme"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<dcterms:subject rdf:resource="http://purl.org/adms/assettype/100"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100147">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100147"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.gs1.eu/">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<dcterms:publisher rdf:resource="http://www.gs1.eu/"/>
+	<adms:supportedSchema>ADMS v1.00</adms:supportedSchema>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100148">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100148"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100149">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100149"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100159">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100159"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100156">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100156"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100162">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100162"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+	<adms:accessURL rdf:resource="http://joinup.ec.europa.eu/asset/all"/>
+	<rdfs:label xml:lang="en">Joinup Semantic Asset Repository</rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-12-09T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-05-14T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">Joinup is a collaborative platform created by the European Commission and funded by the European Union via the Interoperability Solutions for Public Administrations (ISA) Programme. It offers a set of services to help e-Government professionals share their experience with interoperability solutions and support them to find, choose, re-use, develop, and implement open source software and semantic interoperability assets.</dcterms:description>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://sws.geonames.org/6695072">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Location"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:spatial rdf:resource="http://sws.geonames.org/6695072"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/100">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#ConceptScheme"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://purl.org/adms/interoperabilitylevel/100"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/4488">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/4488"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://ec.europa.eu">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:publisher rdf:resource="http://ec.europa.eu"/>
+	<adms:supportedSchema>ADMS v1.00</adms:supportedSchema>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/licencetype/100">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#ConceptScheme"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://purl.org/adms/licencetype/100"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100143">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100143"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/publishertype/100">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#ConceptScheme"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://purl.org/adms/publishertype/100"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100144">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100144"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/representationtechnique/100">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#ConceptScheme"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://purl.org/adms/representationtechnique/100"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100145">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100145"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/status/100">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#ConceptScheme"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://purl.org/adms/status/100"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100146">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100146"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100147"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100148"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100149"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100150">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100150"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100151">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100151"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100152">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100152"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100153">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100153"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100154">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100154"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100155">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100155"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100156"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100157">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100157"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100158">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100158"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100159"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100160">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100160"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100161">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/all">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100161"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100162"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://listpoint.co.uk">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+	<adms:accessURL rdf:resource="http://listpoint.co.uk"/>
+	<rdfs:label xml:lang="en">Listpoint - The Code List management service</rdfs:label>
+	<dcterms:description xml:lang="en">Listpoint is the open platform for all Developers, Data Publishers and System Integrators who use code lists.
+
+This platform helps you collaborate, coordinate and drive common data standards using award winning tools to organise all your data lists in one useful, trusted and secure environment.
+
+Listpoint is the only global platform to create, share, manage and publish all of your reference data.</dcterms:description>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://sws.geonames.org/2635167">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Location"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://listpoint.co.uk">
+	<dcterms:spatial rdf:resource="http://sws.geonames.org/2635167"/>
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+	<dcterms:publisher rdf:resource="http://listpoint.co.uk"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.xrepository.de">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+	<adms:accessURL rdf:resource="http://www.xrepository.de"/>
+	<rdfs:label xml:lang="en">Xrepository</rdfs:label>
+	<dcterms:description xml:lang="en">XRepository is a library for data exchange standards and codelists that were modelled in order to ease up interoperability between eGovernment applications of German Public administration and industry.</dcterms:description>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://sws.geonames.org/2921044">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Location"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.xrepository.de">
+	<dcterms:spatial rdf:resource="http://sws.geonames.org/2921044"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.xrepository.de/ns/adms/Publisher/Bundesverwaltungsamt">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.xrepository.de">
+	<dcterms:publisher rdf:resource="http://www.xrepository.de/ns/adms/Publisher/Bundesverwaltungsamt"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+	<adms:accessURL rdf:resource="http://digitaliser.dk"/>
+	<rdfs:label xml:lang="en">Digitaliser.dk</rdfs:label>
+	<dcterms:description xml:lang="en">Digitalisér.dk is a single repository that supports  digitisation  in Denmark. It brings together key resources, recommendations and guidelines on IT, communication and IT development. The main goal of the repository is  to strengthen cooperation between public and private parties.
+Digitaliser.dk is also a social networking platform that supports the development of relationships, network and knowledge sharing. Users have the possibility to produce, store and share content (resources, projects, news, discussions, etc.). Digitalisér.dk aims to be cross-domain and multidisciplinary networking of digitisation in Denmark
+</dcterms:description>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://sws.geonames.org/2623032">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Location"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk">
+	<dcterms:spatial rdf:resource="http://sws.geonames.org/2623032"/>
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+	<dcterms:publisher rdf:resource="http://digitaliser.dk"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.ciec1.org">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+	<adms:accessURL rdf:resource="http://www.ciec1.org"/>
+	<rdfs:label xml:lang="en">International Commission on Civil Status</rdfs:label>
+	<dcterms:description xml:lang="en">The ICCS Civil Status XML Schemas digitise the standardised ICCS non-digital forms (e.g. birth certificates, marriage).</dcterms:description>
+	<dcterms:spatial rdf:resource="http://sws.geonames.org/6295630"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://riha.eesti.ee/riha/main">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+	<adms:accessURL rdf:resource="https://riha.eesti.ee/riha/main"/>
+	<rdfs:label xml:lang="en">RIHA</rdfs:label>
+	<dcterms:description xml:lang="en">RIHA, short for Riigi Infosüsteemi Halduse Infosüsteem, is the Estonian management system of governmental/ state information. The objective of RIHA is to guarantee the transparency of administration  of the state information system, planning for information management and supporting the  interoperability of databases of the state, local governments and persons in private law performing public duties. The registration of public databases and information systems on RIHA is mandatory and enforced by law.</dcterms:description>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://sws.geonames.org/453733">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Location"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://riha.eesti.ee/riha/main">
+	<dcterms:spatial rdf:resource="http://sws.geonames.org/453733"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/mdr">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+	<adms:accessURL rdf:resource="http://publications.europa.eu/mdr"/>
+	<rdfs:label xml:lang="en">Metadata Registry</rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-01-01T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-03-01T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">The Metadata Registry of the Publications Office of the EU is the central reference location where all metadata definitions and related authority data used in Publications Office and in the exchange between the institutions involved in the decision making process are registered and maintained in a controlled manner.</dcterms:description>
+	<dcterms:spatial rdf:resource="http://sws.geonames.org/6695072"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/resource/authority/corporate-body/PUBL">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/mdr">
+	<dcterms:publisher rdf:resource="http://publications.europa.eu/resource/authority/corporate-body/PUBL"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/TR/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+	<adms:accessURL rdf:resource="http://www.w3.org/TR/"/>
+	<rdfs:label xml:lang="en">W3C Standards and Technical Reports</rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2006-03-07T00:00:00+0100</dcterms:created>
+	<dcterms:description xml:lang="en">All standards and drafts published by the World Wide Web Consotrium (W3C)</dcterms:description>
+	<dcterms:spatial rdf:resource="http://sws.geonames.org/6295630"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/data#W3C">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/TR/">
+	<dcterms:publisher rdf:resource="http://www.w3.org/data#W3C"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/documents">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+	<adms:accessURL rdf:resource="http://dox.gs1.eu/documents"/>
+	<rdfs:label xml:lang="en">GS1 Dox</rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2009-01-01T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-23T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">Dox is the GS1 in Europe solution repository that publishes a wide range of freely available GS1 assets in over 20 sectors.</dcterms:description>
+	<dcterms:spatial rdf:resource="http://sws.geonames.org/6295630"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://eurovoc.europa.eu/100147">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#ConceptScheme"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/documents">
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100147"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/4488"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/documents">
+	<dcterms:publisher rdf:resource="http://dox.gs1.eu/"/>
+	<adms:supportedSchema>ADMS v1.00</adms:supportedSchema>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/specifications/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+	<adms:accessURL rdf:resource="http://dublincore.org/specifications/"/>
+	<rdfs:label xml:lang="en">DCMI Specifications</rdfs:label>
+	<dcterms:description xml:lang="en">As part of its mission, the Dublin Core Metadata Initiative develops and maintains specifications in support of resource description. Specifications developed and reviewed in the context of DCMI'sformal approval process are assigned a status (in ascending order of maturity and stability) of "DCMI Working Draft", "DCMI Proposed Recommendation", or "DCMI Recommendation". DCMI also provides pointers to guidelines and services developed outside of this formal review context ("Recommended Resources"). 
+This selection highlights the specifications that currently attract the most attention in the Dublin Core community. Links to additional specifications (including superseded specifications) may be found athttp://dublincore.org/documents/. Some of the specifications have been translated into one of twenty-five languages.</dcterms:description>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/aboutdcmi#DCMI">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/specifications/">
+	<dcterms:publisher rdf:resource="http://purl.org/dc/aboutdcmi#DCMI"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=95">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<rdfs:label xml:lang="en">European Harmonised eCom EANCOM Guidelines </rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2009-03-01T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2009-03-01T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">With the publication of the new EANCOM® release, EANCOM® 2002, European member organisations of GS1 in Europe started to harmonise the existing national guidelines. This European guideline is covering all business requirements used in the participating countries. Several countries participated in the project to set up this guideline, but the long-term aim is to include all member countries of GS1 Europe in the eEUROPE project.</dcterms:description>
+	<rad:keyword xml:lang="en">EANCOM</rad:keyword>
+	<rad:version xml:lang="en">V2.0</rad:version>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100147"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Semantic">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=95">
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/assettype/InformationExchangePackageDescription">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=95">
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+	<dcterms:publisher rdf:resource="http://www.gs1.eu/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://id.loc.gov/vocabulary/iso639-1/en">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/LinguisticSystem"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=95">
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/status/Completed">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=95">
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://dox.gs1.eu/"/>
+	<adms:metadataPublisher rdf:resource="http://www.gs1.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<rad:keyword xml:lang="en">EDIFACT</rad:keyword>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=534">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<rdfs:label xml:lang="en">UNSPSC classificiation system - Danish</rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2004-01-01T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2004-01-01T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">The Danish UNSPSC is working towards a common classification system in Denmark. </dcterms:description>
+	<rad:keyword xml:lang="en">UNSPSC</rad:keyword>
+	<rad:version xml:lang="en">7.0401 rev 1</rad:version>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100147"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/assettype/Taxonomy">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=534">
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/Taxonomy"/>
+	<dcterms:publisher rdf:resource="http://www.gs1.eu/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://dox.gs1.eu/"/>
+	<adms:metadataPublisher rdf:resource="http://www.gs1.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<rad:keyword xml:lang="en">Classification</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100148"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100152"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100157"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=541">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<rdfs:label xml:lang="en">Catalogue Item Synchronisation BMS to EANCOM 2002 Mapping </rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-02-10T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-02-10T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">This document maps to EANCOM 2002 all messages related to the choreography that can be handled by final users while exchanging product information with the data-pools, regardless of being a Data Source or a Data Recipient.</dcterms:description>
+	<rad:keyword xml:lang="en">EANCOM</rad:keyword>
+	<rad:version xml:lang="en">V7</rad:version>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100147"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/assettype/Mapping">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=541">
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/Mapping"/>
+	<dcterms:publisher rdf:resource="http://www.gs1.eu/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://dox.gs1.eu/"/>
+	<adms:metadataPublisher rdf:resource="http://www.gs1.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<rad:keyword xml:lang="en">EDIFACT</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100158"/>
+	<rad:keyword xml:lang="en">Mapping</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100160"/>
+	<rad:keyword xml:lang="en">PRICAT</rad:keyword>
+	<rad:keyword xml:lang="en">Catalogue</rad:keyword>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=557">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<rdfs:label xml:lang="en">PIA - RFID Privacy impact assessment tool</rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-10-01T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-10-01T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">The GS1 EPC/RFID Privacy Impact Assessment Tool is for large corporations and small and medium enterprises who are implementing an EPC/RFID application.</dcterms:description>
+	<rad:keyword xml:lang="en">PIA</rad:keyword>
+	<rad:version xml:lang="en">V0.9</rad:version>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100147"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+	<dcterms:publisher rdf:resource="http://www.gs1.eu/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://dox.gs1.eu/"/>
+	<adms:metadataPublisher rdf:resource="http://www.gs1.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<rad:keyword xml:lang="en">Privacy</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100148"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Technical">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=557">
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Technical"/>
+	<rad:keyword xml:lang="en">RFID</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100149"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Political">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=557">
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Political"/>
+	<rad:keyword xml:lang="en">Tool kit</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100150"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Legal">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=557">
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Legal"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100151"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Organisational">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=557">
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Organisational"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100152"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100154"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100155"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100156"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100157"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100158"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100159"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100160"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100162"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=412">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<rdfs:label xml:lang="en">GS1 in Europe Despatch Advice Guideline</rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2007-05-01T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2007-05-01T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">The GS1 in Europe Despatch Advice Guideline is based on the framework of EANCOM® 2002, the GS1 EDI standard. The aim of this recommendation is to offer documentation describing the (crossborder) exchange of goods delivery data between business partners in Europe.</dcterms:description>
+	<rad:keyword xml:lang="en">Despatch advice</rad:keyword>
+	<rad:version xml:lang="en">V1.1</rad:version>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100147"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+	<dcterms:publisher rdf:resource="http://www.gs1.eu/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://dox.gs1.eu/"/>
+	<adms:metadataPublisher rdf:resource="http://www.gs1.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<rad:keyword xml:lang="en">DESADV</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100148"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Technical"/>
+	<rad:keyword xml:lang="en">EANCOM</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100149"/>
+	<rad:keyword xml:lang="en">EDIFACT</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100150"/>
+	<rad:keyword xml:lang="en">Guideline</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100151"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100152"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100154"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100155"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100156"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100157"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100158"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100159"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100160"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100162"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=558">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<rdfs:label xml:lang="en">GS1 Business message standard for GS1 XML INVOICE 3.0</rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-01-02T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-01-02T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">An XML message specification and guideline for the invoice ina GS1 context</dcterms:description>
+	<rad:keyword xml:lang="en">EDI</rad:keyword>
+	<rad:version xml:lang="en">V3.0</rad:version>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100147"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/assettype/Schema">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=558">
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/Schema"/>
+	<dcterms:publisher rdf:resource="http://www.gs1.eu/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://dox.gs1.eu/"/>
+	<adms:metadataPublisher rdf:resource="http://www.gs1.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<rad:keyword xml:lang="en">XML</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100148"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Technical"/>
+	<rad:keyword xml:lang="en">Guideline</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100149"/>
+	<rad:keyword xml:lang="en">Schema</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100154"/>
+	<rad:keyword xml:lang="en">Invoice</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100156"/>
+	<rad:keyword xml:lang="en">Payment</rad:keyword>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100158"/>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/100160"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<rdfs:label xml:lang="en">Asset Description Metadata Schema</rdfs:label>
+	<dcterms:alternative xml:lang="en">ADMS</dcterms:alternative>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-18T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-18T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">The Asset Description Metadata Schema (ADMS) is a common way to describe semantic interoperability assets making it possible for everyone to search and discover them once shared through the forthcoming federation of asset repositories. </dcterms:description>
+	<rad:keyword xml:lang="en">Metadata</rad:keyword>
+	<rad:version xml:lang="en">1.00</rad:version>
+	<rad:versionNotes xml:lang="en">This version, version 1.00, will be implemented on Joinup and used to exchange metadata about semantic assets (e.g. code lists, domain models, information exchange package descriptions) with the Community of Semantic Asset Repositories (CESAR).</rad:versionNotes>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/4488"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/ns/adms#SemanticAsset">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<adms:includedItem rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://ec.europa.eu/">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.geonames.org/6695072">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Location"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<dcterms:spatial rdf:resource="http://www.geonames.org/6695072"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://joinup.ec.europa.eu/asset/all"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/098">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<xhv:prev rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/098"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/sites/default/files/ISA_Programme_ADMS_Brochure.pdf">
+	<rdf:type rdf:resource="http://xmlns.com/foaf/0.1/Document"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<adms:relatedDocumentation rdf:resource="https://joinup.ec.europa.eu/sites/default/files/ISA_Programme_ADMS_Brochure.pdf"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/contact">
+	<rdf:type rdf:resource="http://www.w3.org/2006/vcard/ns#VCard"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<adms:contactPoint rdf:resource="http://joinup.ec.europa.eu/contact"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_RDF_Schema_v1.00.zip">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<rad:distribution rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_RDF_Schema_v1.00.zip"/>
+	<adms:metadataDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">Thu May 24 00:00:00 CEST 2012</adms:metadataDate>
+	<adms:metadataPublisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/ns/adms#SemanticAssetDistribution">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<adms:includedItem rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Issues_Raised_within_Working_Group-v1.0.zip">
+	<rdf:type rdf:resource="http://xmlns.com/foaf/0.1/Document"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<adms:relatedDocumentation rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Issues_Raised_within_Working_Group-v1.0.zip"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification_v1.00_Conceptual_Model.zip">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<rad:distribution rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification_v1.00_Conceptual_Model.zip"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/ns/adms#SemanticAssetRepository">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<adms:includedItem rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification_v1.00.zip">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<rad:distribution rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification_v1.00.zip"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_XML_Schema_v1.00.zip">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/100">
+	<rad:distribution rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_XML_Schema_v1.00.zip"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/098">
+	<rdfs:label xml:lang="en">Asset Description Metadata Schema</rdfs:label>
+	<dcterms:alternative xml:lang="en">ADMS</dcterms:alternative>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-03-27T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-03-27T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">The Asset Description Metadata Schema (ADMS) is a common way to describe semantic interoperability assets making it possible for everyone to search and discover them once shared through the forthcoming federation of asset repositories. </dcterms:description>
+	<rad:keyword xml:lang="en">Metadata</rad:keyword>
+	<rad:version xml:lang="en">0.98</rad:version>
+	<rad:versionNotes xml:lang="en">This release, ADMS Specification v0.98 is considered the editorial draft  in anticipation to  v1.0. It incorporates the Working Group's processing of the comments that were raised during the public review period. It contains the specification both with and without track changes. The v1.0 release is scheduled to be released 30 March 2012.</rad:versionNotes>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/4488"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<dcterms:spatial rdf:resource="http://www.geonames.org/6695072"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/status/UnderDevelopment">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/098">
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+	<dcterms:isPartOf rdf:resource="http://joinup.ec.europa.eu/asset/all"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/09">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/098">
+	<xhv:prev rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/09"/>
+	<xhv:last rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/100"/>
+	<xhv:next rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/100"/>
+	<adms:relatedDocumentation rdf:resource="https://joinup.ec.europa.eu/sites/default/files/ISA_Programme_ADMS_Brochure.pdf"/>
+	<adms:contactPoint rdf:resource="http://joinup.ec.europa.eu/contact"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v0.98.zip">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/098">
+	<rad:distribution rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v0.98.zip"/>
+	<adms:metadataDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">Thu May 24 00:00:00 CEST 2012</adms:metadataDate>
+	<adms:metadataPublisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/09">
+	<rdfs:label xml:lang="en">Asset Description Metadata Schema</rdfs:label>
+	<dcterms:alternative xml:lang="en">ADMS</dcterms:alternative>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-03-07T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-03-07T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">The Asset Description Metadata Schema (ADMS) is a common way to describe semantic interoperability assets making it possible for everyone to search and discover them once shared through the forthcoming federation of asset repositories. </dcterms:description>
+	<rad:keyword xml:lang="en">Metadata</rad:keyword>
+	<rad:version xml:lang="en">0.9</rad:version>
+	<rad:versionNotes xml:lang="en">This release, ADMS Specification v0.9, is intended for Working Group review only. It contains the specification both with and without track changes. The specification will be discussed with the Working Group during the Virtual Meeting of March 14 2012.</rad:versionNotes>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/4488"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<dcterms:spatial rdf:resource="http://www.geonames.org/6695072"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+	<dcterms:isPartOf rdf:resource="http://joinup.ec.europa.eu/asset/all"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/08">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/09">
+	<xhv:prev rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/08"/>
+	<xhv:last rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/100"/>
+	<xhv:next rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/098"/>
+	<adms:relatedDocumentation rdf:resource="https://joinup.ec.europa.eu/sites/default/files/ISA_Programme_ADMS_Brochure.pdf"/>
+	<adms:contactPoint rdf:resource="http://joinup.ec.europa.eu/contact"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v.0.9.zip">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/09">
+	<rad:distribution rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v.0.9.zip"/>
+	<adms:metadataDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">Thu May 24 00:00:00 CEST 2012</adms:metadataDate>
+	<adms:metadataPublisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/08">
+	<rdfs:label xml:lang="en">Asset Description Metadata Schema</rdfs:label>
+	<dcterms:alternative xml:lang="en">ADMS</dcterms:alternative>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-01-06T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-01-06T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">The Asset Description Metadata Schema (ADMS) is a common way to describe semantic interoperability assets making it possible for everyone to search and discover them once shared through the forthcoming federation of asset repositories. </dcterms:description>
+	<rad:keyword xml:lang="en">Metadata</rad:keyword>
+	<rad:version xml:lang="en">0.8</rad:version>
+	<rad:versionNotes xml:lang="en">This release, ADMS Specification v0.8, is open for public comments until February 6 2012. Members of the public are invited to download the specification and share their public review by posting comments to the forum (registration required). Alternatively, comments can be sent via e-mail to the ADMS editor, Makx Dekkers (adms[at]makxdekkers[dot]com). Please indicate in your comment as precisely as possible to which part of the specification your comment applies.</rad:versionNotes>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/4488"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<dcterms:spatial rdf:resource="http://www.geonames.org/6695072"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+	<dcterms:isPartOf rdf:resource="http://joinup.ec.europa.eu/asset/all"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/07">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/08">
+	<xhv:prev rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/07"/>
+	<xhv:last rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/100"/>
+	<xhv:next rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/09"/>
+	<adms:relatedDocumentation rdf:resource="https://joinup.ec.europa.eu/sites/default/files/ISA_Programme_ADMS_Brochure.pdf"/>
+	<adms:contactPoint rdf:resource="http://joinup.ec.europa.eu/contact"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_RDF_schema-v0.8_0.zip">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/08">
+	<rad:distribution rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_RDF_schema-v0.8_0.zip"/>
+	<adms:metadataDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">Thu May 24 00:00:00 CEST 2012</adms:metadataDate>
+	<adms:metadataPublisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Issues_Raised_within_Working_Group-v0.8.zip">
+	<rdf:type rdf:resource="http://xmlns.com/foaf/0.1/Document"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/08">
+	<adms:relatedDocumentation rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Issues_Raised_within_Working_Group-v0.8.zip"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v0.8.zip">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/08">
+	<rad:distribution rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v0.8.zip"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_XML_Schema-v0.8.zip">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/08">
+	<rad:distribution rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_XML_Schema-v0.8.zip"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/07">
+	<rdfs:label xml:lang="en">Asset Description Metadata Schema</rdfs:label>
+	<dcterms:alternative xml:lang="en">ADMS</dcterms:alternative>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-11-15T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-11-15T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">The Asset Description Metadata Schema (ADMS) is a common way to describe semantic interoperability assets making it possible for everyone to search and discover them once shared through the forthcoming federation of asset repositories. </dcterms:description>
+	<rad:keyword xml:lang="en">Metadata</rad:keyword>
+	<rad:version xml:lang="en">0.7</rad:version>
+	<rad:versionNotes xml:lang="en">Proposed ADMS Conceptual Model and Controlled Vocabularies, Second WG Draft, 2011-11-15</rad:versionNotes>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/4488"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<dcterms:spatial rdf:resource="http://www.geonames.org/6695072"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+	<dcterms:isPartOf rdf:resource="http://joinup.ec.europa.eu/asset/all"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/06">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/07">
+	<xhv:prev rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/06"/>
+	<xhv:last rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/100"/>
+	<xhv:next rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/08"/>
+	<adms:relatedDocumentation rdf:resource="https://joinup.ec.europa.eu/sites/default/files/ISA_Programme_ADMS_Brochure.pdf"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/sites/default/files/adms-specification-v0.7_second%20WG%20draft_0.pdf">
+	<rdf:type rdf:resource="http://xmlns.com/foaf/0.1/Document"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/07">
+	<wdrs:describedby rdf:resource="https://joinup.ec.europa.eu/sites/default/files/adms-specification-v0.7_second%20WG%20draft_0.pdf"/>
+	<adms:contactPoint rdf:resource="http://joinup.ec.europa.eu/contact"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/adms-specification-v0.7_second%20WG%20draft.zip">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/07">
+	<rad:distribution rdf:resource="https://joinup.ec.europa.eu/system/files/project/adms-specification-v0.7_second%20WG%20draft.zip"/>
+	<adms:metadataDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">Thu May 24 00:00:00 CEST 2012</adms:metadataDate>
+	<adms:metadataPublisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/06">
+	<rdfs:label xml:lang="en">Asset Description Metadata Schema</rdfs:label>
+	<dcterms:alternative xml:lang="en">ADMS</dcterms:alternative>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-03-17T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-03-17T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">The Asset Description Metadata Schema (ADMS) tackles the issue of a federation of repositories for semantic assets to make decentralised resources available through a single point of access. ADMS can be used as a common language to describe semantic artefacts stored in separate systems. It can also provide some directions for new initiatives to create similar repositories. In this way, ADMS will facilitate the federated use of semantic resources, especially of those used for and by public administrations.</dcterms:description>
+	<rad:keyword xml:lang="en">Metadata</rad:keyword>
+	<rad:version xml:lang="en">0.6</rad:version>
+	<rad:versionNotes xml:lang="en">Draft Specification v0.6a for Community Consultation, 2011-03-17</rad:versionNotes>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/4488"/>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<dcterms:spatial rdf:resource="http://www.geonames.org/6695072"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+	<dcterms:isPartOf rdf:resource="http://joinup.ec.europa.eu/asset/all"/>
+	<xhv:last rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/100"/>
+	<xhv:next rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/07"/>
+	<adms:contactPoint rdf:resource="http://joinup.ec.europa.eu/contact"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMSv0.6.zip">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://joinup.ec.europa.eu/asset/adms/release/06">
+	<rad:distribution rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMSv0.6.zip"/>
+	<adms:metadataDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">Thu May 24 00:00:00 CEST 2012</adms:metadataDate>
+	<adms:metadataPublisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/TR/2009/REC-skos-reference-20090818">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<rdfs:label xml:lang="en">SKOS Simple Knowledge Organization System Reference</rdfs:label>
+	<dcterms:alternative xml:lang="en">SKOS Reference</dcterms:alternative>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2009-08-18T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2009-08-18T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">W3C Recommendation 18 August 2009
+SKOS—Simple Knowledge Organization System—provides a model for
+expressing the basic structure and content of concept schemes such as
+thesauri, classification schemes, subject heading lists, taxonomies,
+folksonomies, and other similar types of controlled vocabulary. As an
+application of the Resource Description
+Framework (RDF), SKOS allows concepts to be composed and published on the
+World Wide Web, linked with data on the Web and integrated into other concept
+schemes.</dcterms:description>
+	<dcterms:subject rdf:resource="http://eurovoc.europa.eu/4488"/>
+	<dcterms:publisher rdf:resource="http://www.w3.org/data#W3C"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.geonames.org/6295630">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Location"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/TR/2009/REC-skos-reference-20090818">
+	<dcterms:spatial rdf:resource="http://www.geonames.org/6295630"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://www.w3.org/TR/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/TR/2009/WD-skos-primer-20090615/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/TR/2009/REC-skos-reference-20090818">
+	<xhv:prev rdf:resource="http://www.w3.org/TR/2009/WD-skos-primer-20090615/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/TR/skos-primer">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/TR/2009/REC-skos-reference-20090818">
+	<xhv:last rdf:resource="http://www.w3.org/TR/skos-primer"/>
+	<xhv:next rdf:resource="http://www.w3.org/TR/2009/WD-skos-primer-20090615/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/2009/08/skos-reference/skos.rdf">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/TR/2009/REC-skos-reference-20090818">
+	<rad:distribution rdf:resource="http://www.w3.org/2009/08/skos-reference/skos.rdf"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/authority/countries">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<dcterms:identifier>COU</dcterms:identifier>
+	<rdfs:label xml:lang="en">Countries Authority Table</rdfs:label>
+	<dcterms:alternative xml:lang="en">CAT Countries</dcterms:alternative>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-02-25T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">The Countries authority table is a controlled vocabulary listing countries with their authority code and their label in the 23 official languages of the EU when available. This table is maintained in the Metadata Registry of the Publications Office of the EU</dcterms:description>
+	<rad:keyword xml:lang="en">Authority data, Controlled vocabulary</rad:keyword>
+	<rad:version xml:lang="en">v25/02/2012</rad:version>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/assettype/CodeList">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/authority/countries">
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/CodeList"/>
+	<dcterms:publisher rdf:resource="http://publications.europa.eu/resource/authority/corporate-body/PUBL"/>
+	<dcterms:spatial rdf:resource="http://www.geonames.org/6695072"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<dcterms:isPartOf rdf:resource="http://publications.europa.eu/mdr"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/ns/adms#40864.0">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/authority/countries">
+	<xhv:prev rdf:resource="http://www.w3.org/ns/adms#40864.0"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/ns/adms#40964.0">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/authority/countries">
+	<xhv:last rdf:resource="http://www.w3.org/ns/adms#40964.0"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/ns/adms#40969.0">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/authority/countries">
+	<xhv:next rdf:resource="http://www.w3.org/ns/adms#40969.0"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/mdr/authority/countries/documentation.htm">
+	<rdf:type rdf:resource="http://xmlns.com/foaf/0.1/Document"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/authority/countries">
+	<wdrs:describedby rdf:resource="http://publications.europa.eu/mdr/authority/countries/documentation.htm"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/authority/countries/xsd">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://publications.europa.eu/authority/countries">
+	<rad:distribution rdf:resource="http://publications.europa.eu/authority/countries/xsd"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<rdfs:label xml:lang="en">Interoperability level</rdfs:label>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-18T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-18T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">Level according to the European Interoperability Framework (EIF 2.0) for which an Asset is relevant </dcterms:description>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/Taxonomy"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Political">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/">
+	<adms:includedItem rdf:resource="http://purl.org/adms/interoperabilitylevel/Political"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://joinup.ec.europa.eu/asset/all"/>
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<rad:distribution rdf:resource="http://purl.org/adms/interoperabilitylevel/"/>
+	<adms:metadataDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">Thu May 24 00:00:00 CEST 2012</adms:metadataDate>
+	<adms:metadataPublisher rdf:resource="http://ec.europa.eu"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Legal">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/">
+	<adms:includedItem rdf:resource="http://purl.org/adms/interoperabilitylevel/Legal"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Organisational">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/">
+	<adms:includedItem rdf:resource="http://purl.org/adms/interoperabilitylevel/Organisational"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Semantic">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/">
+	<adms:includedItem rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Technical">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/">
+	<adms:includedItem rdf:resource="http://purl.org/adms/interoperabilitylevel/Technical"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2010/10/11/dcmi-terms/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<rdfs:label xml:lang="en">DCMI Metadata Terms </rdfs:label>
+	<dcterms:alternative xml:lang="en">Dublin Core</dcterms:alternative>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2010-10-11T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2010-10-11T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">This document is an up-to-date specification of all metadata terms maintained by the Dublin Core Metadata Initiative, including properties, vocabulary encoding schemes, syntax encoding schemes, and classes. </dcterms:description>
+	<rad:keyword xml:lang="en">Metadata</rad:keyword>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+	<dcterms:publisher rdf:resource="http://purl.org/dc/aboutdcmi#DCMI"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://dublincore.org/specifications/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2008/01/14/dcmi-terms/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2010/10/11/dcmi-terms/">
+	<xhv:prev rdf:resource="http://dublincore.org/documents/2008/01/14/dcmi-terms/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dcmi-terms/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2010/10/11/dcmi-terms/">
+	<xhv:last rdf:resource="http://dublincore.org/documents/dcmi-terms/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.nb.no/content/download/9394/62384/version/1/file/DC-terms2010-10-11.pdf">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2010/10/11/dcmi-terms/">
+	<dcterms:relation rdf:resource="http://www.nb.no/content/download/9394/62384/version/1/file/DC-terms2010-10-11.pdf"/>
+	<adms:translation rdf:resource="http://www.nb.no/content/download/9394/62384/version/1/file/DC-terms2010-10-11.pdf"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/about/contact/">
+	<rdf:type rdf:resource="http://www.w3.org/2006/vcard/ns#VCard"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2010/10/11/dcmi-terms/">
+	<adms:contactPoint rdf:resource="http://dublincore.org/about/contact/"/>
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<rad:distribution rdf:resource="http://dublincore.org/documents/2010/10/11/dcmi-terms/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/2010/10/11/dcterms.rdf">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2010/10/11/dcmi-terms/">
+	<rad:distribution rdf:resource="http://dublincore.org/2010/10/11/dcterms.rdf"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<rdfs:label xml:lang="en">Dublin Core Metadata Element Set</rdfs:label>
+	<dcterms:alternative xml:lang="en">Dublin Core</dcterms:alternative>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2010-10-11T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2010-10-11T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">This document provides ready reference for the Dublin Core Metadata Element Set, Version 1.1. For more detailed documentation and links to historical versioning information, see the document "DCMI Metadata Terms".</dcterms:description>
+	<rad:keyword xml:lang="en">Metadata</rad:keyword>
+	<rad:version xml:lang="en">Version 1.1</rad:version>
+	<adms:interoperabilityLevel rdf:resource="http://purl.org/adms/interoperabilitylevel/Semantic"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/contributor">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/contributor"/>
+	<dcterms:publisher rdf:resource="http://purl.org/dc/aboutdcmi#DCMI"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://dublincore.org/specifications/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2008/01/14/dces/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<xhv:prev rdf:resource="http://dublincore.org/documents/2008/01/14/dces/"/>
+	<xhv:last rdf:resource="http://dublincore.org/documents/dces/"/>
+	<adms:contactPoint rdf:resource="http://dublincore.org/about/contact/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2010/10/11/dces/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<rad:distribution rdf:resource="http://dublincore.org/documents/2010/10/11/dces/"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/en"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/coverage">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/coverage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/creator">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/creator"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/date">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/date"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/description">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/description"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/format">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/format"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/identifier">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/identifier"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/language">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/language"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/publisher">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/publisher"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/relation">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/relation"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/rights">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/rights"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/source">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/source"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/subject">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/subject"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/title">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/title"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/type">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/dces/">
+	<adms:includedItem rdf:resource="http://purl.org/dc/elements/1.1/type"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<dcterms:identifier>736123.0</dcterms:identifier>
+	<rdfs:label xml:lang="en">Dokumentationsguide for Person</rdfs:label>
+	<dcterms:alternative xml:lang="en">Physical person</dcterms:alternative>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-01-03T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">Beskrivelse af OIOXML-kernekomponenterne for fysiske personer.</dcterms:description>
+	<rad:keyword xml:lang="en">kerne</rad:keyword>
+	<rad:version xml:lang="en">ukendt</rad:version>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/assettype/CoreComponent">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/CoreComponent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<dcterms:publisher rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://id.loc.gov/vocabulary/iso639-1/da">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/LinguisticSystem"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetRepository"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<dcterms:isPartOf rdf:resource="http://digitaliser.dk/resource/"/>
+	<xhv:last rdf:resource="http://digitaliser.dk/resource/736123"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/">
+	<rdf:type rdf:resource="http://www.w3.org/2006/vcard/ns#VCard"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<adms:contactPoint rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123?orderBy799860431=VERSION&amp;sortOrder799860431=ASC">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<rad:distribution rdf:resource="http://digitaliser.dk/resource/736123?orderBy799860431=VERSION&amp;sortOrder799860431=ASC"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<rad:keyword xml:lang="en">Core Component (DK)</rad:keyword>
+	<rad:keyword xml:lang="en">person</rad:keyword>
+	<rad:keyword xml:lang="en">OIOXML</rad:keyword>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/4121">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<adms:includedItem rdf:resource="http://digitaliser.dk/resource/4121"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/4121/artefact/CPR_RegularCPRPerson.xsd">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<xhv:last rdf:resource="http://digitaliser.dk/resource/4121/artefact/CPR_RegularCPRPerson.xsd"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1439">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#Item"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<adms:includedItem rdf:resource="http://digitaliser.dk/resource/1439"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1439/artefact/CPR_SimpleCPRPerson.xsd">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<xhv:last rdf:resource="http://digitaliser.dk/resource/1439/artefact/CPR_SimpleCPRPerson.xsd"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736245">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<dcterms:identifier>736245.0</dcterms:identifier>
+	<rdfs:label xml:lang="en">Dokumentationsguide for Adresse</rdfs:label>
+	<dcterms:alternative xml:lang="en">Address</dcterms:alternative>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-01-03T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">Beskrivelse af OIOXML-kernekomponenterne for danske adresser.
+
+</dcterms:description>
+	<rad:keyword xml:lang="en">Core Component (DK)</rad:keyword>
+	<rad:version xml:lang="en">ukendt</rad:version>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/CoreComponent"/>
+	<dcterms:publisher rdf:resource="http://digitaliser.dk/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://digitaliser.dk/resource/"/>
+	<adms:contactPoint rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736245?orderBy799860431=VERSION&amp;sortOrder799860431=DESC">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736245">
+	<rad:distribution rdf:resource="http://digitaliser.dk/resource/736245?orderBy799860431=VERSION&amp;sortOrder799860431=DESC"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<rad:keyword xml:lang="en">kerne</rad:keyword>
+	<rad:keyword xml:lang="en">address</rad:keyword>
+	<rad:keyword xml:lang="en">adresse</rad:keyword>
+	<rad:keyword xml:lang="en">OIOXML</rad:keyword>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/7043">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<dcterms:identifier>7043.0</dcterms:identifier>
+	<rdfs:label xml:lang="en">OIOXML dokumentationsguide for AdressePunkt</rdfs:label>
+	<dcterms:alternative xml:lang="en">Address point (geolocation of addresses)</dcterms:alternative>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2007-02-22T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">Ressourcen har ingen beskrivelse</dcterms:description>
+	<rad:version xml:lang="en">ukendt</rad:version>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/InformationExchangePackageDescription"/>
+	<dcterms:publisher rdf:resource="http://digitaliser.dk/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://digitaliser.dk/resource/"/>
+	<adms:contactPoint rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736200">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<dcterms:identifier>736200.0</dcterms:identifier>
+	<rdfs:label xml:lang="en">Dokumentationsguide for Dansk Bankkonto</rdfs:label>
+	<dcterms:alternative xml:lang="en">Danish Bank Account</dcterms:alternative>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-01-03T00:00:00+0100</dcterms:modified>
+	<dcterms:description xml:lang="en">Beskrivelse af OIOXML-kernekomponenterne for dansk bankkonto.</dcterms:description>
+	<rad:keyword xml:lang="en">Core Component (DK)</rad:keyword>
+	<rad:version xml:lang="en">ukendt</rad:version>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/CoreComponent"/>
+	<dcterms:publisher rdf:resource="http://digitaliser.dk/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://digitaliser.dk/resource/"/>
+	<adms:contactPoint rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/7043?orderBy799860431=VERSION&amp;sortOrder799860431=DESC">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736200">
+	<rad:distribution rdf:resource="http://digitaliser.dk/resource/7043?orderBy799860431=VERSION&amp;sortOrder799860431=DESC"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<rad:keyword xml:lang="en">OIOXML</rad:keyword>
+	<rad:keyword xml:lang="en">bankkonto</rad:keyword>
+	<rad:keyword xml:lang="en">kerne</rad:keyword>
+	<rad:keyword xml:lang="en">bank</rad:keyword>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1569113">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<dcterms:identifier>1569113.0</dcterms:identifier>
+	<rdfs:label xml:lang="en">Specifikation for Organisation (Sag og dokument standard)</rdfs:label>
+	<dcterms:alternative xml:lang="en">Organization</dcterms:alternative>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-30T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">Standarden specificerer et interface til registrering og udveksling af organisations- og personaleda…</dcterms:description>
+	<rad:keyword xml:lang="en">ESDH</rad:keyword>
+	<rad:version xml:lang="en">ukendt</rad:version>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/assettype/DomainModel">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1569113">
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/DomainModel"/>
+	<dcterms:publisher rdf:resource="http://digitaliser.dk/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://digitaliser.dk/resource/"/>
+	<adms:contactPoint rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/991439?orderBy799860431=VERSION&amp;sortOrder799860431=DESC">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1569113">
+	<rad:distribution rdf:resource="http://digitaliser.dk/resource/991439?orderBy799860431=VERSION&amp;sortOrder799860431=DESC"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<rad:keyword xml:lang="en">standarder</rad:keyword>
+	<rad:keyword xml:lang="en">Organisation</rad:keyword>
+	<rad:keyword xml:lang="en">sag og dokument</rad:keyword>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567856">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<dcterms:identifier>1567856.0</dcterms:identifier>
+	<rdfs:label xml:lang="en">Specifikation for Klassifikation (Sag og dokument standard)</rdfs:label>
+	<dcterms:alternative xml:lang="en">Classification</dcterms:alternative>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-29T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">Standarden specificerer et interface til registrering af alle typer af systemer, som kan anvendes til emnemæssig opmærkning.
+Klassifikation skal understøtte både ESDH-løsninger og fagsystemer og vil derfor kunne anvendes generelt
+
+Klassifikation skal understøtte både ESDH-løsninger og fagsystemer og vil derfor kunne anvendes generelt.
+
+Der henvises til standarden Generelle egenskaber for serviceinterfaces på sags- og dokumentområdet, som beskriver de generelle tværgående egenskaber, der gælder for alle Sag og dokument standarderne.
+
+</dcterms:description>
+	<rad:keyword xml:lang="en">ESDH</rad:keyword>
+	<rad:version xml:lang="en">ukendt</rad:version>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/DomainModel"/>
+	<dcterms:publisher rdf:resource="http://digitaliser.dk/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://digitaliser.dk/resource/"/>
+	<adms:contactPoint rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567856?orderBy799860431=VERSION&amp;sortOrder799860431=DESC">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567856">
+	<rad:distribution rdf:resource="http://digitaliser.dk/resource/1567856?orderBy799860431=VERSION&amp;sortOrder799860431=DESC"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<rad:keyword xml:lang="en">standarder</rad:keyword>
+	<rad:keyword xml:lang="en">sag og dokument</rad:keyword>
+	<rad:keyword xml:lang="en">Klassifikation</rad:keyword>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567695">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<dcterms:identifier>1567695.0</dcterms:identifier>
+	<rdfs:label xml:lang="en">Specifikation for Arkivstruktur (Sag og dokument standard)</rdfs:label>
+	<dcterms:alternative xml:lang="en">Archival Structure</dcterms:alternative>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-29T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">Standarden specificerer et interface til registrering af oplysninger om et eller flere logiske arkiver i organisationen.
+Herved sikres det, at sager og dokumenter, som er sagligt og logisk sammenhørende, men som befinder sig i forskellige it-systemer, kan håndteres samlet og eksempelvis fremfindes og afleveres til offentligt arkiv samlet.
+Formålet er at understøtte en mere smidig udveksling af oplysninger om logiske arkiver mellem systemer, herunder fagsystemer og ESDH-systemer.
+
+Herved sikres det, at sager og dokumenter, som er sagligt og logisk sammenhørende, men som befinder sig i forskellige it-systemer, kan håndteres samlet og eksempelvis fremfindes og afleveres til offentligt arkiv samlet.
+
+Formålet er at understøtte en mere smidig udveksling af oplysninger om logiske arkiver mellem systemer, herunder fagsystemer og ESDH-systemer.
+
+Der henvises til standarden Generelle egenskaber for serviceinterfaces på sags- og dokumentområdet, som beskriver de generelle tværgående egenskaber, der gælder for alle Sag og dokument standarderne.
+
+</dcterms:description>
+	<rad:keyword xml:lang="en">sag og dokument</rad:keyword>
+	<rad:version xml:lang="en">ukendt</rad:version>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/DomainModel"/>
+	<dcterms:publisher rdf:resource="http://digitaliser.dk/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://digitaliser.dk/resource/"/>
+	<adms:contactPoint rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567695?orderBy799860431=VERSION&amp;sortOrder799860431=DESC">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567695">
+	<rad:distribution rdf:resource="http://digitaliser.dk/resource/1567695?orderBy799860431=VERSION&amp;sortOrder799860431=DESC"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<rad:keyword xml:lang="en">standarder</rad:keyword>
+	<rad:keyword xml:lang="en">ESDH</rad:keyword>
+	<rad:keyword xml:lang="en">Arkiv</rad:keyword>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567672">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<dcterms:identifier>1567672.0</dcterms:identifier>
+	<rdfs:label xml:lang="en">Specifikation for Dokument (Sag og dokument standard)</rdfs:label>
+	<dcterms:alternative xml:lang="en">Document</dcterms:alternative>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-29T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">Standarden specificerer et interface til registrering af oplysninger om en organisations dokumenter. Formålet er at understøtte en mere smidig udveksling af dokumenter imellem systemer, herunder fagsystemer og ESDH-systemer.</dcterms:description>
+	<rad:keyword xml:lang="en">ESDH</rad:keyword>
+	<rad:version xml:lang="en">ukendt</rad:version>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/DomainModel"/>
+	<dcterms:publisher rdf:resource="http://digitaliser.dk/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://digitaliser.dk/resource/"/>
+	<adms:contactPoint rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567672?orderBy799860431=VERSION&amp;sortOrder799860431=DESC">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567672">
+	<rad:distribution rdf:resource="http://digitaliser.dk/resource/1567672?orderBy799860431=VERSION&amp;sortOrder799860431=DESC"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<rad:keyword xml:lang="en">Dokument</rad:keyword>
+	<rad:keyword xml:lang="en">standarder</rad:keyword>
+	<rad:keyword xml:lang="en">sag og dokument</rad:keyword>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567587">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<dcterms:identifier>1567587.0</dcterms:identifier>
+	<rdfs:label xml:lang="en">Specifikation for Sag (Sag og dokument standard)</rdfs:label>
+	<dcterms:alternative xml:lang="en">Case</dcterms:alternative>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-29T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">Standarden specificerer et serviceinterface til registrering og udveksling af sager imellem systemer, herunder ESDH-systemer og fagsystemer, der implementerer og anvender serviceinterfacet, hhv. sagsserviceudbydere og sagsserviceanvendere.</dcterms:description>
+	<rad:keyword xml:lang="en">Sag</rad:keyword>
+	<rad:version xml:lang="en">ukendt</rad:version>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/DomainModel"/>
+	<dcterms:publisher rdf:resource="http://digitaliser.dk/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://digitaliser.dk/resource/"/>
+	<adms:contactPoint rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567587?orderBy799860431=VERSION&amp;sortOrder799860431=DESC">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567587">
+	<rad:distribution rdf:resource="http://digitaliser.dk/resource/1567587?orderBy799860431=VERSION&amp;sortOrder799860431=DESC"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<rad:keyword xml:lang="en">standarder</rad:keyword>
+	<rad:keyword xml:lang="en">sag og dokument</rad:keyword>
+	<rad:keyword xml:lang="en">ESDH</rad:keyword>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567464">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAsset"/>
+	<dcterms:identifier>1567464.0</dcterms:identifier>
+	<rdfs:label xml:lang="en">Generelle egenskaber for Sag og dokument</rdfs:label>
+	<dcterms:alternative xml:lang="en">Common Attributes</dcterms:alternative>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-29T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">Formålet med standarden er at beskrive de generelle tværgående egenskaber, der gælder for alle Sag og dokument standarderne.
+
+Standarden fungerer således som fælles referenceramme for alle standarderne udarbejdet under OIO-udvalget for sags- og dokumentområdet.
+
+Det betyder, at en række af de begreber, koncepter og notationsformer, som anvendes i beskrivelserne af de enkelte standarder, er beskrevet i denne standard.
+
+</dcterms:description>
+	<rad:keyword xml:lang="en">Generelle egenskaber</rad:keyword>
+	<rad:version xml:lang="en">ukendt</rad:version>
+	<dcterms:type rdf:resource="http://purl.org/adms/assettype/DomainModel"/>
+	<dcterms:publisher rdf:resource="http://digitaliser.dk/"/>
+	<dcterms:language rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+	<dcterms:isPartOf rdf:resource="http://digitaliser.dk/resource/"/>
+	<adms:contactPoint rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567464?orderBy799860431=VERSION&amp;sortOrder799860431=DESC">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567464">
+	<rad:distribution rdf:resource="http://digitaliser.dk/resource/1567464?orderBy799860431=VERSION&amp;sortOrder799860431=DESC"/>
+	<adms:metadataLanguage rdf:resource="http://id.loc.gov/vocabulary/iso639-1/da"/>
+	<rad:keyword xml:lang="en">ESDH</rad:keyword>
+	<rad:keyword xml:lang="en">sag og dokument</rad:keyword>
+	<rad:keyword xml:lang="en">standarder</rad:keyword>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=95">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://dox.gs1.eu/download.php?id=95"/>
+	<dcterms:description xml:lang="en">EANCOM guidelines for Invoice, despatch advice and order</dcterms:description>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v11">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/LicenseDocument"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=95">
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v11"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/NET/mediatypes/application/zip">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/MediaTypeOrExtent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=95">
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/representationtechnique/HumanLanguage">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=95">
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=534">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://dox.gs1.eu/download.php?id=534"/>
+	<dcterms:description xml:lang="en">UNSPSC classificiation system - Danish</dcterms:description>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/LicenseDocument"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=534">
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/NET/mediatypes/application/vnd.ms-excel">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/MediaTypeOrExtent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=534">
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/vnd.ms-excel"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=541">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://dox.gs1.eu/download.php?id=541"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-02-02T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-02-02T00:00:00+0100</dcterms:modified>
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=557">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://dox.gs1.eu/download.php?id=557"/>
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=412">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://dox.gs1.eu/download.php?id=412"/>
+	<rdfs:label xml:lang="en">GS1 in Europe Despatch Advice guideline</rdfs:label>
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=558">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://dox.gs1.eu/download.php?id=558"/>
+	<rdfs:label xml:lang="en">GS1 Business message standard for GS1 XML INVOICE 3.</rdfs:label>
+	<dcterms:description xml:lang="en">An XML message specification and guideline for the invoice ina GS1 con</dcterms:description>
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/representationtechnique/XMLSchema">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/download.php?id=558">
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/XMLSchema"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_RDF_Schema_v1.00.zip">
+	<adms:accessURL rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_RDF_Schema_v1.00.zip"/>
+	<rad:distributionOf rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/100"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-18T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-18T00:00:00+0200</dcterms:modified>
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/representationtechnique/RDFSchema">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_RDF_Schema_v1.00.zip">
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/RDFSchema"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification_v1.00_Conceptual_Model.zip">
+	<adms:accessURL rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification_v1.00_Conceptual_Model.zip"/>
+	<rad:distributionOf rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/100"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-18T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-18T00:00:00+0200</dcterms:modified>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/representationtechnique/Diagram">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification_v1.00_Conceptual_Model.zip">
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/Diagram"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification_v1.00.zip">
+	<adms:accessURL rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification_v1.00.zip"/>
+	<rad:distributionOf rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/100"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-16T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-16T00:00:00+0200</dcterms:modified>
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v11"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_XML_Schema_v1.00.zip">
+	<adms:accessURL rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_XML_Schema_v1.00.zip"/>
+	<rad:distributionOf rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/100"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-16T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-04-16T00:00:00+0200</dcterms:modified>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/XMLSchema"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v0.98.zip">
+	<adms:accessURL rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v0.98.zip"/>
+	<rad:distributionOf rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/098"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-03-27T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-03-27T00:00:00+0200</dcterms:modified>
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v11"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v.0.9.zip">
+	<adms:accessURL rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v.0.9.zip"/>
+	<rad:distributionOf rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/09"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-03-07T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-03-07T00:00:00+0100</dcterms:modified>
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v11"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_RDF_schema-v0.8_0.zip">
+	<adms:accessURL rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_RDF_schema-v0.8_0.zip"/>
+	<rad:distributionOf rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/08"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-01-11T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-01-11T00:00:00+0100</dcterms:modified>
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/RDFSchema"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v0.8.zip">
+	<adms:accessURL rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_Specification-v0.8.zip"/>
+	<rad:distributionOf rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/08"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-01-06T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-01-06T00:00:00+0100</dcterms:modified>
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMS_XML_Schema-v0.8.zip">
+	<adms:accessURL rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMS_XML_Schema-v0.8.zip"/>
+	<rad:distributionOf rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/08"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-01-06T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2012-01-06T00:00:00+0100</dcterms:modified>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/XMLSchema"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/adms-specification-v0.7_second%20WG%20draft.zip">
+	<adms:accessURL rdf:resource="https://joinup.ec.europa.eu/system/files/project/adms-specification-v0.7_second%20WG%20draft.zip"/>
+	<rad:distributionOf rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/07"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-11-15T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-11-15T00:00:00+0100</dcterms:modified>
+	<dcterms:license rdf:resource="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMSv0.6.zip">
+	<adms:accessURL rdf:resource="https://joinup.ec.europa.eu/system/files/project/ADMSv0.6.zip"/>
+	<rad:distributionOf rdf:resource="http://joinup.ec.europa.eu/asset/adms/release/06"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-03-17T00:00:00+0100</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-03-17T00:00:00+0100</dcterms:modified>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/ns/adms#Copyright+%C2%A9+2011+SEMIC.EU%2C+All+Rights+Reserved">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/LicenseDocument"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/system/files/project/ADMSv0.6.zip">
+	<dcterms:license rdf:resource="http://www.w3.org/ns/adms#Copyright+%C2%A9+2011+SEMIC.EU%2C+All+Rights+Reserved"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/zip"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+	<dcterms:publisher rdf:resource="http://ec.europa.eu/"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/UnderDevelopment"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/2009/08/skos-reference/skos.rdf">
+	<adms:accessURL rdf:resource="http://www.w3.org/2009/08/skos-reference/skos.rdf"/>
+	<rdfs:label xml:lang="en">SKOS Simple Knowledge Organization System Namespace Document</rdfs:label>
+	<rad:distributionOf rdf:resource="http://www.w3.org/TR/2009/REC-skos-reference-20090818"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2009-08-18T00:00:00+0200</dcterms:created>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2009-08-18T00:00:00+0200</dcterms:modified>
+	<dcterms:description xml:lang="en">This document describes the schema available from the SKOS namespace.</dcterms:description>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/Consortium/Legal/ipr-notice#Copyright">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/LicenseDocument"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/2009/08/skos-reference/skos.rdf">
+	<dcterms:license rdf:resource="http://www.w3.org/Consortium/Legal/ipr-notice#Copyright"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/NET/mediatypes/application/rdf+xml">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/MediaTypeOrExtent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/2009/08/skos-reference/skos.rdf">
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/rdf+xml"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/representationtechnique/OWL">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/2009/08/skos-reference/skos.rdf">
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/OWL"/>
+	<dcterms:publisher rdf:resource="http://www.w3.org/data#W3C"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2010/10/11/dcmi-terms/">
+	<adms:accessURL rdf:resource="http://dublincore.org/documents/2010/10/11/dcmi-terms/"/>
+	<rad:distributionOf rdf:resource="http://dublincore.org/documents/2010/10/11/dcmi-terms/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://creativecommons.org/licenses/by/3.0/">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/LicenseDocument"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2010/10/11/dcmi-terms/">
+	<dcterms:license rdf:resource="http://creativecommons.org/licenses/by/3.0/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/NET/mediatypes/text/html">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/MediaTypeOrExtent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/documents/2010/10/11/dcmi-terms/">
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/text/html"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/2012/05/14/dcterms.rdf">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://dublincore.org/2012/05/14/dcterms.rdf"/>
+	<rad:distributionOf rdf:resource="http://dublincore.org/documents/2010/10/11/dcmi-terms/"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2010-10-11T00:00:00+0200</dcterms:modified>
+	<dcterms:license rdf:resource="http://creativecommons.org/licenses/by/3.0/"/>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/rdf+xml"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/RDFSchema"/>
+	<dcterms:publisher rdf:resource="http://purl.org/dc/aboutdcmi#DCMI"/>
+	<adms:status rdf:resource="http://purl.org/adms/status/Completed"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://digitaliser.dk/resource/736123"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-01-03T00:00:00+0100</dcterms:created>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/NET/mediatypes/application/vnd.oasis.opendocument.text-web">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/MediaTypeOrExtent"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736123">
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/vnd.oasis.opendocument.text-web"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736245">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://digitaliser.dk/resource/736245"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-01-03T00:00:00+0100</dcterms:created>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/vnd.oasis.opendocument.text-web"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/7043">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://digitaliser.dk/resource/7043"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2007-02-22T00:00:00+0100</dcterms:created>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/vnd.oasis.opendocument.text-web"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/736200">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://digitaliser.dk/resource/736200"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-01-03T00:00:00+0100</dcterms:created>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/vnd.oasis.opendocument.text-web"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1569113">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://digitaliser.dk/resource/1569113"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-30T00:00:00+0200</dcterms:created>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/vnd.oasis.opendocument.text-web"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567856">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://digitaliser.dk/resource/1567856"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-29T00:00:00+0200</dcterms:created>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/vnd.oasis.opendocument.text-web"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567695">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://digitaliser.dk/resource/1567695"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-29T00:00:00+0200</dcterms:created>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/vnd.oasis.opendocument.text-web"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567672">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://digitaliser.dk/resource/1567672"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-29T00:00:00+0200</dcterms:created>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/vnd.oasis.opendocument.text-web"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567587">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://digitaliser.dk/resource/1567587"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-29T00:00:00+0200</dcterms:created>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/vnd.oasis.opendocument.text-web"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1567464">
+	<rdf:type rdf:resource="http://www.w3.org/ns/adms#SemanticAssetDistribution"/>
+	<adms:accessURL rdf:resource="http://digitaliser.dk/resource/1567464"/>
+	<dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2011-06-29T00:00:00+0200</dcterms:created>
+	<dcterms:format rdf:resource="http://purl.org/NET/mediatypes/application/vnd.oasis.opendocument.text-web"/>
+	<adms:representationTechnique rdf:resource="http://purl.org/adms/representationtechnique/HumanLanguage"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.gs1.eu/?content=70">
+	<rdf:type rdf:resource="http://www.w3.org/2006/vcard/ns#VCard"/>
+	<vcard:label>Vesterbrogade 149
+1620 Copenhagen V
+Denmark</vcard:label>
+	<vcard:email rdf:resource="mailto:dsh@gs1.dk"/>
+	<vcard:fn>Doug Hill</vcard:fn>
+	<vcard:tel>+ 45 39 27 85 27</vcard:tel>
+	<foaf:homepage rdf:resource="http://GS1.org"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://ec.europa.eu/isa/contact">
+	<rdf:type rdf:resource="http://www.w3.org/2006/vcard/ns#VCard"/>
+	<vcard:label>European Commission DIGIT.B2
+Interoperability solutions for European public administrations (ISA) Programme
+MO34
+B-1049 BRUXELLES</vcard:label>
+	<vcard:email rdf:resource="mailto:isa@ec.europa.eu"/>
+	<vcard:fn>Interoperability Solutions for European Public Administrations</vcard:fn>
+	<vcard:tel>+(32) 2 2981014</vcard:tel>
+	<foaf:homepage rdf:resource="http://ec.europa.eu/isa/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dublincore.org/about/contact/">
+	<foaf:homepage rdf:resource="http://dublincore.org/about/contact/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/">
+	<vcard:label>Holsteinsgade 63, 
+2100 København Ø</vcard:label>
+	<vcard:email rdf:resource="http://www.w3.org/ns/adms#info@digitaliser.dk"/>
+	<vcard:fn>digitaliser.dk</vcard:fn>
+	<foaf:homepage rdf:resource="http://digitaliser.dk/"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10">
+	<rdfs:label xml:lang="en">ISA Open Metadata Licence v1.0</rdfs:label>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/licencetype/Attribution">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10">
+	<dcterms:type rdf:resource="http://purl.org/adms/licencetype/Attribution"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/licencetype/ReservedNames-Endorsement-OfficialStatus">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10">
+	<dcterms:type rdf:resource="http://purl.org/adms/licencetype/ReservedNames-Endorsement-OfficialStatus"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/licencetype/JurisdictionWithinTheEU">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10">
+	<dcterms:type rdf:resource="http://purl.org/adms/licencetype/JurisdictionWithinTheEU"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/licencetype/OtherRestrictiveClauses">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v10">
+	<dcterms:type rdf:resource="http://purl.org/adms/licencetype/OtherRestrictiveClauses"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/category/licence/isa-open-metadata-licence-v11">
+	<rdfs:label xml:lang="en">ISA Open Metadata Licence v1.1</rdfs:label>
+	<dcterms:type rdf:resource="http://purl.org/adms/licencetype/Attribution"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/licencetype/ReservedNames-Endorsement-OfficialStatus"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/licencetype/JurisdictionWithinTheEU"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/licencetype/OtherRestrictiveClauses"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://creativecommons.org/licenses/by/3.0">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/LicenseDocument"/>
+	<rdfs:label xml:lang="en">Creative Commons Attribution 3.0 Unported (CC BY 3.0)</rdfs:label>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/licencetype/PublicDomain">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://creativecommons.org/licenses/by/3.0">
+	<dcterms:type rdf:resource="http://purl.org/adms/licencetype/PublicDomain"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/licencetype/Attribution"/>
+	<dcterms:type rdf:resource="http://purl.org/adms/licencetype/OtherRestrictiveClauses"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://placetime.com/interval/gregorian/2012-03-07T00:00:00Z/P1M.html">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/PeriodOfTime"/>
+	<schema:startDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2012-03-07</schema:startDate>
+	<schema:endDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2012-04-07</schema:endDate>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://placetime.com/interval/gregorian/2012-01-06T00:00:00Z/P1M.html">
+	<rdf:type rdf:resource="http://purl.org/dc/terms/PeriodOfTime"/>
+	<schema:startDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2012-01-06</schema:startDate>
+	<schema:endDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2012-02-06</schema:endDate>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/publishertype/SupraNationalAuthority">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://ec.europa.eu">
+	<dcterms:type rdf:resource="http://purl.org/adms/publishertype/SupraNationalAuthority"/>
+	<foaf:name>European Commission</foaf:name>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/publishertype/NationalAuthority">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.xrepository.de/ns/adms/Publisher/Bundesverwaltungsamt">
+	<dcterms:type rdf:resource="http://purl.org/adms/publishertype/NationalAuthority"/>
+	<foaf:name>Bundesverwaltungsamt</foaf:name>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/publishertype/StandardisationBody">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/data#W3C">
+	<dcterms:type rdf:resource="http://purl.org/adms/publishertype/StandardisationBody"/>
+	<foaf:name>World Wide Web Consortium</foaf:name>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://dox.gs1.eu/">
+	<dcterms:type rdf:resource="http://purl.org/adms/publishertype/StandardisationBody"/>
+	<foaf:name>GS1 in Europe</foaf:name>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/">
+	<dcterms:type rdf:resource="http://purl.org/adms/publishertype/NationalAuthority"/>
+	<foaf:name>digitsliser.dk</foaf:name>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/publishertype/NonProfitOrganisation">
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/aboutdcmi#DCMI">
+	<dcterms:type rdf:resource="http://purl.org/adms/publishertype/NonProfitOrganisation"/>
+	<foaf:name>Dublin Core Metadata Initiative</foaf:name>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/elibrary/document/adms-brochure">
+	<rdfs:label>ADMS Brochure</rdfs:label>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/elibrary/video/towards-open-metadata-management-promo-video-adms-enabled-federation-repositories">
+	<rdfs:label>Towards Open Metadata Management: promo video of the ADMS-enabled federation of repositories</rdfs:label>
+</rdf:Description>
+
+<rdf:Description rdf:about="https://joinup.ec.europa.eu/asset/adms/description">
+	<rdfs:label>Asset Description Metadata Schema (ADMS): project</rdfs:label>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/ns/adms#SemanticAssetRepository">
+	<rdfs:label xml:lang="en">Semantic Asset Repository</rdfs:label>
+	<rdfs:comment xml:lang="en">A Semantic Asset Repository is a system or service that provides facilities for storage and maintenance of descriptions of Semantic Assets and Semantic Asset Distributions, and functionality that allows users to search and access these descriptions. A Semantic Asset Repository will typically contain descriptions of several Semantic Assets and related Semantic Asset Distributions.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/ns/adms#SemanticAsset">
+	<rdfs:label xml:lang="en">Semantic Asset</rdfs:label>
+	<rdfs:comment xml:lang="en">A Semantic Asset in the model is an abstract entity that reflects the intellectual content of the asset and represents those characteristics of the asset that are independent of its physical embodiment. This abstract entity combines the FRBR entities work (a distinct intellectual or artistic creation) and expression (the intellectual or artistic realization of a work). Assets can be versioned. Every time the intellectual content of an asset changes, the result is considered to be a new asset that can be linked to previous and next versions of the Asset. The physical embodiment of an Asset is called a Distribution. A particular Asset may have zero or more Distributions</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/ns/adms#SemanticAssetDistribution">
+	<rdfs:label xml:lang="en">Semantic Asset Distribution</rdfs:label>
+	<rdfs:comment xml:lang="en">A Semantic Asset Distribution in the model represents a particular physical embodiment of a Semantic Asset, which is an example of the FRBR entity manifestation (the physical embodiment of an expression of a work). A Distribution is typically a downloadable computer file (but in principle it could also be a paper document) that implements the intellectual content of an Asset. A particular Distribution is associated with one and only one Asset, while all Distributions of an Asset share the same intellectual content in different physical formats. Distributions themselves are not versioned.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Political">
+	<rdfs:label xml:lang="en">Political</rdfs:label>
+	<rdfs:comment xml:lang="en">Political Context: Cooperating partners with compatible visions, aligned priorities, and focused objectives</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Legal">
+	<rdfs:label xml:lang="en">Legal</rdfs:label>
+	<rdfs:comment xml:lang="en">Legal Interoperability - Legislative Alignment: Aligned legislation so that exchanged data is accorded proper legal weight</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Organisational">
+	<rdfs:label xml:lang="en">Organisational</rdfs:label>
+	<rdfs:comment xml:lang="en">Organisational Interoperability - Organisation and Process Alignment: Coordinated processes in which different organisations achieve a previously agreed and mutually beneficial goal</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Semantic">
+	<rdfs:label xml:lang="en">Semantic</rdfs:label>
+	<rdfs:comment xml:lang="en">Semantic Interoperability - Semantic Alignment: Precise meaning of exchanged information which is preserved and understood by all parties</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/adms/interoperabilitylevel/Technical">
+	<rdfs:label xml:lang="en">Technical</rdfs:label>
+	<rdfs:comment xml:lang="en">Technical Interoperability - Interaction &amp; Transport: Planning of technical issues involved in linking computer systems and services</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/contributor">
+	<rdfs:label xml:lang="en">Contributor</rdfs:label>
+	<rdfs:comment xml:lang="en">An entity responsible for making contributions to the resource.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/coverage">
+	<rdfs:label xml:lang="en">Coverage</rdfs:label>
+	<rdfs:comment xml:lang="en">The spatial or temporal topic of the resource, the spatial applicability of the resource, or the jurisdiction under which the resource is relevant.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/creator">
+	<rdfs:label xml:lang="en">Creator</rdfs:label>
+	<rdfs:comment xml:lang="en">An entity primarily responsible for making the resource.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/date">
+	<rdfs:label xml:lang="en">Date</rdfs:label>
+	<rdfs:comment xml:lang="en">A point or period of time associated with an event in the lifecycle of the resource.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/description">
+	<rdfs:label xml:lang="en">Description</rdfs:label>
+	<rdfs:comment xml:lang="en">An account of the resource.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/format">
+	<rdfs:label xml:lang="en">Format</rdfs:label>
+	<rdfs:comment xml:lang="en">The file format, physical medium, or dimensions of the resource.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/identifier">
+	<rdfs:label xml:lang="en">Identifier</rdfs:label>
+	<rdfs:comment xml:lang="en">An unambiguous reference to the resource within a given context.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/language">
+	<rdfs:label xml:lang="en">Language</rdfs:label>
+	<rdfs:comment xml:lang="en">A language of the resource.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/publisher">
+	<rdfs:label xml:lang="en">Publisher</rdfs:label>
+	<rdfs:comment xml:lang="en">An entity responsible for making the resource available.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/relation">
+	<rdfs:label xml:lang="en">Relation</rdfs:label>
+	<rdfs:comment xml:lang="en">A related resource.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/rights">
+	<rdfs:label xml:lang="en">Rights</rdfs:label>
+	<rdfs:comment xml:lang="en">Information about rights held in and over the resource.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/source">
+	<rdfs:label xml:lang="en">Source</rdfs:label>
+	<rdfs:comment xml:lang="en">A related resource from which the described resource is derived.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/subject">
+	<rdfs:label xml:lang="en">Subject</rdfs:label>
+	<rdfs:comment xml:lang="en">The topic of the resource.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/title">
+	<rdfs:label xml:lang="en">Title</rdfs:label>
+	<rdfs:comment xml:lang="en">A name given to the resource.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://purl.org/dc/elements/1.1/type">
+	<rdfs:label xml:lang="en">Type</rdfs:label>
+	<rdfs:comment xml:lang="en">The nature or genre of the resource.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/4121">
+	<rdfs:label xml:lang="en">RegularCPRPerson</rdfs:label>
+	<rdfs:comment xml:lang="en">Basisinformationer for en person, samt entydig identifikation ved navn og personnummer.Nyt i denne version: Bruger SimpleCPRPerson.</rdfs:comment>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://digitaliser.dk/resource/1439">
+	<rdfs:label xml:lang="en">SimpleCPRPerson</rdfs:label>
+	<rdfs:comment xml:lang="en">Entydig identifikation af en person, givet ved navn og CPR-nummer.Nyt i denne version: Bruger en ny version af PersonNameStructure.</rdfs:comment>
+</rdf:Description>
+
+</rdf:RDF>

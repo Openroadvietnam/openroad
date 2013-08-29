@@ -15,15 +15,24 @@ function isa_links_menus_datas() {
       'people/*'              => 'isa_links_get_people_menus()',
       'user/*'                => 'isa_links_get_people_menus()',
       'admin/*'               => 'array(\'Admin\' => isa_links_get_admin_menus())',
+      'catalogue/*'           => 'isa_links_get_assets_list_menus()',
       'community/all'         => 'isa_links_get_communities_list_menus()',
       'community/recommended' => 'isa_links_get_communities_list_menus()',
       'community/mine'        => 'isa_links_get_communities_list_menus()',
       'community/editor'      => 'isa_links_get_communities_list_menus()',
+      'community/all/*'       => 'isa_links_get_communities_list_menus()',
+      'community/recommended/*'=> 'isa_links_get_communities_list_menus()',
+      'community/mine/*'      => 'isa_links_get_communities_list_menus()',
+      'community/editor/*'    => 'isa_links_get_communities_list_menus()',
       'community/*/*'         => 'isa_links_get_group_menus(ISA_COMMUNITY_TYPE)',
       'asset/all'             => 'isa_links_get_assets_list_menus()',
       'asset/recommended'     => 'isa_links_get_assets_list_menus()',
       'asset/i_use'           => 'isa_links_get_assets_list_menus()',
       'asset/editor'          => 'isa_links_get_assets_list_menus()',
+      'asset/all/*'           => 'isa_links_get_assets_list_menus()',
+      'asset/recommended/*'   => 'isa_links_get_assets_list_menus()',
+      'asset/i_use/*'         => 'isa_links_get_assets_list_menus()',
+      'asset/editor/*'        => 'isa_links_get_assets_list_menus()',
       'asset/call_for_comment' => 'isa_links_get_assets_list_menus()',
       'asset/page/*'          => 'isa_links_get_assets_list_menus()',
       'asset/experts'         => 'isa_links_get_assets_list_menus()',
@@ -34,6 +43,11 @@ function isa_links_menus_datas() {
       'software/i_use'        => 'isa_links_get_software_list_menus()',
       'software/editor'       => 'isa_links_get_software_list_menus()',
       'software/my_oss'       => 'isa_links_get_software_list_menus()',
+      'software/all/*'        => 'isa_links_get_software_list_menus()',
+      'software/recommended/*'=> 'isa_links_get_software_list_menus()',
+      'software/i_use/*'      => 'isa_links_get_software_list_menus()',
+      'software/editor/*'     => 'isa_links_get_software_list_menus()',
+      'software/my_oss/*'     => 'isa_links_get_software_list_menus()',
       'software/federated_forge'  => 'isa_links_get_software_list_menus()',
       'software/license-wizard/*' => 'isa_links_get_software_list_menus()',
       'software/guidelines'   => 'isa_links_get_software_list_menus()',
@@ -57,6 +71,7 @@ function isa_links_menus_datas() {
       'contexthelp/*'         => 'isa_links_get_info_page_menus()',
       'help_topics'           => 'isa_links_get_info_page_menus()',
       'contexthelpfaq/*'      => 'isa_links_get_info_page_menus()',
+      'contexthelp_faq/*'     => 'isa_links_get_info_page_menus()',
       'contact'               => 'isa_links_get_info_page_menus()',
       'sitemap'               => 'isa_links_get_info_page_menus()',
       'glossary'              => 'isa_links_get_info_page_menus()',
@@ -69,10 +84,17 @@ function isa_links_menus_datas() {
       'news/*'                => 'isa_links_get_news_list_menus()',
       'newsletter/*'          => 'isa_links_get_news_list_menus()',
       'blog/*'                => 'isa_links_get_news_list_menus()',
+      'distribution/*'        => 'isa_links_get_assets_list_menus()',
+      'documentation/*'       => 'isa_links_get_assets_list_menus()',
+      'item/*'                => 'isa_links_get_assets_list_menus()',
+      'licence/*'             => 'isa_links_get_assets_list_menus()',
+      'publisher/*'           => 'isa_links_get_assets_list_menus()',
+      'contact_point/*'       => 'isa_links_get_assets_list_menus()',
       'event/*'               => 'isa_links_get_event_menus()',
       'elibrary/case/*'       => 'isa_links_get_node_menus()',
       'elibrary/*'            => 'isa_links_get_elibrary_menus()',
       'advertisement/*'       => 'isa_links_get_info_page_menus()',
+      'repository/*'          => 'isa_links_get_assets_list_menus()',
   );
   return $datas;
 }
@@ -129,6 +151,8 @@ function isa_links_get_add_menus() {
           return isa_links_get_software_list_menus();
         case ISA_NEWSLETTER_TYPE:
           return array('Admin' => isa_links_get_admin_menus());
+        case 'contact-point':
+          return isa_links_get_assets_list_menus();
         default:
           $node = new stdClass;
           $node->type = $path[2];
@@ -218,6 +242,16 @@ function isa_links_get_menus_type($node, $action) {
         return isa_links_treate_group_page($node);
       else
         return isa_links_get_info_page_menus();
+    case ISA_DISTRIBUTION_TYPE :
+    case ISA_PUBLISHER_TYPE :
+    case ISA_DOCUMENTATION_TYPE :
+    case ISA_CONTACT_POINT_TYPE :
+    case ISA_LICENCE_TYPE :
+    case ISA_ITEM_TYPE :
+    case ISA_REPOSITORY_TYPE:
+    case ISA_ASSET_RELEASE_TYPE:
+    case 'asset-release':
+      return isa_links_get_assets_list_menus();
     default:
       $node = node_load(array_shift($node->og_groups_both));
       if ($node) {
@@ -294,83 +328,87 @@ function isa_links_user_uid_blog() {
 
 /**
  */
+ //ISAICP-726
+//Modify the advanced search link
 function isa_links_get_assets_list_menus() {
+  if('node' == arg(0) and is_numeric(arg(1))){
+     $node_type = db_result(db_query("SELECT type FROM node WHERE nid=%s", arg(1)));
+  }
   return array(
-      'Semantic asset' => array(
+      'Semantic Assets' => array(
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+        //Change menu url from catalogue/all?current_checkbox=1 
           'menus' => array(
-              array(
-                  'title' => 'Assets on Joinup',
-                  'href' => 'node/2553',
+			'Catalogue of assets' => array(
+                  'title' => 'Catalogue of assets',
+                  'href' => 'catalogue/all',
+                  'query' => array('filters' => 'bs_current_version:true'),
               ),
               array(
-                  'title' => 'Find asset',
+                  'title' => 'Projects',
                   'href' => 'asset/all',
               ),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+        //Change menu url to catalogue/repository/all
+			  'Federated repositories' => array(
+                  'title' => 'Federated Repositories',
+                  'href' => 'catalogue/repository',
+                  'class' => 'repository' == $node_type  ? 'active' :  FALSE
+              ),
+			  
+			 'Advanced Search' => array(
+                  'title' => 'Advanced Search',
+                  'href' => 'search/apachesolr_search',
+                  // https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-730
+                  // Search path with the filter on the node type = asset release
+                  'query' => array(
+                      'filters' => 'sm_facetbuilder_facet_node_type:"facet_node_type:facet_24"  sm_facetbuilder_facet_node_type:"facet_node_type:facet_22"',
+                      'retain-filters' => '1',
+					  'hidden_type'	=> '1',
+                  ),
+              ),
+
               array(
                   'title' => 'Recommended',
                   'href' => 'asset/recommended',
+				  'permission' => 'access authoring information'
               ),
               array(
                   'title' => 'Assets I use',
                   'href' => 'asset/i_use',
+				  'permission' => 'access authoring information'
               ),
               array(
                   'title' => 'Editor\'s choice',
                   'href' => 'asset/editor',
-              ),
-          ),
-      ),
-      'Clearing process' => array(
-          'menus' => array(
-              array(
-                  'title' => 'What is it?',
-                  'href' => 'node/2554',
-              ),
-              array(
-                  'title' => 'Call for comment',
-                  'href' => 'asset/call_for_comment',
-              ),
-          ),
-      ),
-      'Methodologies' => array(
-          'menus' => array(
-              array(
-                  'title' => 'Asset assistant',
-                  'href' => 'node/2555',
-              ),
-              array(
-                  'title' => 'Practice aids',
-                  'href' => 'node/2556',
-              ),
-          ),
-      ),
-      'Partners' => array(
-          'menus' => array(
-              array(
-                  'title' => 'Partner projects',
-                  'href' => 'node/2558',
-              ),
-          ),
-      ),
+				  'permission' => 'access authoring information'
+              )
+          )
+      )    
   );
 }
 
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-897
 /**
  */
 function isa_links_get_software_list_menus() {
   return array(
       'Software' => array(
           'menus' => array(
+              /*array(
+                  'title' => 'Software releases',
+                  'href' => '',
+              ),*/
+          	  array(
+          		  'title' => 'Software projects',
+          		  'href' => 'software/all',
+          	  ),
+          	  array(
+          		  'title' => 'Federated Repositories',
+          		  'href' => 'software/federated_forge',
+          	  ),
               array(
-                  'title' => 'OSS on Joinup',
-                  'href' => 'node/2550',
-              ),
-              array(
-                  'title' => 'Find Software',
-                  'href' => 'software/all',
-              ),
-              array(
-                  'title' => 'My OSS Projects',
+                  'title' => 'My Software Projects',
                   'href' => 'software/my_oss',
               ),
               array(
@@ -411,7 +449,7 @@ function isa_links_get_software_list_menus() {
               ),
           ),
       ),
-      'Methodologies' => array(
+      /*'Methodologies' => array(
           'menus' => array(
               array(
                   'title' => 'Case studies',
@@ -422,8 +460,8 @@ function isa_links_get_software_list_menus() {
                   'href' => 'software/guidelines',
               ),
           ),
-      ),
-      'Partners' => array(
+      ),*/
+      /*'Partners' => array(
           'menus' => array(
               array(
                   'title' => 'OSS Centres',
@@ -438,7 +476,7 @@ function isa_links_get_software_list_menus() {
                   'href' => 'node/2568',
               ),
           ),
-      ),
+      ),*/
   );
 }
 
@@ -496,6 +534,10 @@ function isa_links_get_info_page_menus() {
                   'title' => 'Partners',
                   'href' => 'node/2644',
               ),
+          	  array(
+          		  'title' => 'Analytics disclaimer',
+          		  'href' =>  drupal_lookup_path('source', 'page/disclaimer-google-analytics'),
+          	  ),
               array(
                   'title' => 'Glossary',
                   'href' => 'glossary',
@@ -503,6 +545,10 @@ function isa_links_get_info_page_menus() {
               array(
                     'title' => 'Widget',
                     'href' => drupal_lookup_path('source', 'page/widget') ,
+                ),
+              array(
+                    'title' => 'Assets widget',
+                    'href' => drupal_lookup_path('source', 'page/widget_asset') ,
                 ),
           ),
       ),
@@ -718,18 +764,23 @@ function isa_links_get_news_list_menus() {
   return array(
       'News' => array(
           'menus' => array(
+          		//ISAICP-890
+          		//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-890
+          		// 1. Hidding 'news' and 'blogs' links
+          		// 2. Change 'browse all' to 'news'
+
               array(
-                  'title' => 'Browse all',
+                  'title' => 'News',
                   'href' => 'news/all',
               ),
-              array(
+              /*array(
                   'title' => 'News',
                   'href' => 'news/news',
               ),
               array(
                   'title' => 'Blogs',
                   'href' => 'news/blog',
-              ),
+              ),*/
               array(
                   'title' => 'Recommended',
                   'href' => 'news/recommended',
@@ -765,16 +816,25 @@ function isa_links_get_group_menus($group_type) {
   $cla_tool = NULL;
   $project_issue = NULL;
   $project_release = NULL;
+  $asset_release = NULL;
+  if ($group_type == ISA_REPOSITORY_TYPE) {
+    return isa_links_get_assets_list_menus();
+  }
   if ($group_type == 'software' || $group_type == 'asset') {
     $original_group = isa_toolbox_get_original_node(node_load($group_id));
     $short_name = isa_links_get_group_short_name($original_group);
     $project_issue = array('title' => 'Issues',
         'href' => "{$group_type}/{$short_name}/issue/all");
-    $project_release = array('title' => 'Releases',
+        if ($group_type == 'asset'){
+           $asset_release = array('title' => 'Asset Releases',
+        'href' => "{$group_type}/{$short_name}/asset_release/all");
+        }elseif ($group_type == 'software'){
+              $project_release = array('title' => 'Releases',
         'href' => "{$group_type}/{$short_name}/release/all");
+        }
   }
 
-  return array(
+  $menu_left = array(
       $menu_title => array(
           'menus' => array(
               array(
@@ -792,6 +852,7 @@ function isa_links_get_group_menus($group_type) {
               $cla_tool,
               $project_issue,
               $project_release,
+              $asset_release,
               array(
                   'title' => 'Metrics',
                   'href' => "{$group_type}/{$short_name}/metrics",
@@ -822,7 +883,7 @@ function isa_links_get_group_menus($group_type) {
                   'href' => "{$group_type}/{$short_name}/forum/all",
               ),
               array(
-                  'title' => 'News & Blogs',
+                  'title' => 'News',
                   'href' => "{$group_type}/{$short_name}/newsandblog/all",
               ),
               array(
@@ -837,4 +898,64 @@ function isa_links_get_group_menus($group_type) {
           'permission' => 'access community',
       ),
   );
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-898
+//Added menu Legal Corner (as in Software tab) to the community EUPL
+  if($group_type == 'community' && $short_name == 'eupl'){
+  	$array_legal = array('Legal Corner' => array(
+  			'menus' => array(
+  					array(
+  							'title' => 'License Wizard',
+  							'href' => 'node/2048',
+  					),
+  					array(
+  							'title' => 'EUPL',
+  							'href' => 'node/2567',
+  					),
+  					array(
+  							'title' => 'Licence & Comp. agreements',
+  							'href' => 'node/19778',
+  					),
+  					array(
+  							'title' => 'Licence compatibility',
+  							'href' => 'node/19779',
+  					),
+  					array(
+  							'title' => 'FAQ',
+  							'href' => 'software/page/faq',
+  					),
+  			),
+  		),
+  	);
+  	
+  	$menu_left['Legal Corner'] = $array_legal['Legal Corner'];
+  }
+  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-760
+  //Hide the forum link if the forum is disable for software projects, semantic asset projects and communities
+  $node = node_load($group_id);  
+  if ( $group_type == 'software' || $group_type == 'community' || $group_type == 'asset')
+  		if($node->field_project_forum_creation[0]['value'] == 'Deactivated' || $node->field_community_forum_creation[0]['value'] == 'Deactivated')
+   			unset($menu_left['Communications']['menus'][0]);
+  	
+  
+  return $menu_left;
+
 }
+
+/* Desactivated for 1.4.0.i1
+function isa_links_get_catalogue_menus(){
+    return array(
+        'Catalogue' => array(
+            'menus' => array(
+                'find release' => array(
+                    'title' => 'find asset release',
+                    'href' => 'catalogue/all',
+                ),
+                'find repository' => array(
+                    'title' => 'find repository',
+                    'href' => 'catalogue/repository/all'
+                )
+            )
+        )
+    );
+}
+*/

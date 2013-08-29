@@ -1,0 +1,6 @@
+; $Id
+version         = "6.x-0.1-dev"
+core            = "6.x"
+description     = "ISA Module for custom Apache Solr Facets"
+name            = "ISA Custom Apache Solr Facets"
+package         = "Apache Solr"

@@ -1,0 +1,21 @@
+/* Added Styles belong other files for validation CSS */	
+/* FILE: name file  */	
+
+/* FILE: sites\all\modules\contributed\modified\contexthelp\jqModal.css */
+* iframe.jqm {position:absolute;top:0;left:0;z-index:-1;
+	width: expression(this.parentNode.offsetWidth+'px');
+	height: expression(this.parentNode.offsetHeight+'px');
+}
+
+* html .jqmWindow {
+     position: absolute;
+     top: expression((document.documentElement.scrollTop || document.body.scrollTop) + Math.round(17 * (document.documentElement.offsetHeight || document.body.clientHeight) / 100) + 'px');
+}
+
+.detail-data-search-solr { width:400px;}
+
+/* FILE: sites\all\modules\contributed\modified\contexthelp\contexthelp.css */
+.ie6 #contextual-help-dialog { top: expression((window.documentElement.scrollTop || window.body.scrollTop) + Math.round(5 * (window.documentElement.offsetHeight || window.body.clientHeight) / 100) + 'px'); }
+.ie6 #contextual-help-dialog #contextual-help-content .item-list ul.ui-accordion li .views-field-title { zoom: 1;}
+.ie6 #contextual-help-dialog #contextual-help-content .item-list ul.ui-accordion li .views-field-body { zoom: 1; }
+

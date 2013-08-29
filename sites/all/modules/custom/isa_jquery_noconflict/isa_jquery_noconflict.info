@@ -1,0 +1,6 @@
+; $Id$
+name = ISA jQuery noconflict
+description = Allows to load several jquery and jquery ui libraries at the same time
+package = "ISA Toolbox"
+core = 6.x
+version = "6.x-0.1"

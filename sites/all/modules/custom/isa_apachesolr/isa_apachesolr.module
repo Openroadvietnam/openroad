@@ -1,0 +1,2206 @@
+<?php
+/**
+ * Implements hook_init
+ */
+function isa_apachesolr_init(){
+   //Redirect 301 for removed urls
+   if('catalogue' == arg(0) and 'all' == arg(1) and 1 == $_GET['current_checkbox']){
+        drupal_goto('catalogue/all', array('filters' => 'bs_current_version:true'), NULL, 301);
+        exit();
+   }
+   if('catalogue' == arg(0) and 'repository' == arg(1) and 'all' == arg(2)){
+	1 == $_GET['solr_search'] ? TRUE :  drupal_goto('catalogue/repository', array(), NULL, 301);
+   }
+}
+/**
+ * Implements hook_menu
+ */
+function isa_apachesolr_menu(){
+    $items  = array();
+    $config = _isa_apachesolr_config();
+    array_walk($config, function($val,$key) use (&$items){
+        TRUE === $val['ahah_page'] ?  $callback = '_isa_apachesolr_search_page_ahah' :   $callback = '_isa_apachesolr_search_page';
+        $items[$key] = array(
+            'title'            => $val['title'],
+            'page callback'    => $callback,
+            'access arguments' => array('search content'),
+            'page arguments'   => array($key, $val)//url,page conifg
+          ); 
+    });
+    return $items;
+}
+function isa_apachesolr_menu_alter(&$items) {
+    //Temporal hasta que se desactiven las vistas
+    db_query("UPDATE {system} SET weight = 200 WHERE name = 'isa_apachesolr'");
+    unset($items['catalogue/repository/all']);
+    $menu = isa_apachesolr_menu();
+    array_walk($menu, function($val,$key) use(&$items){
+        $items[$key] = $val;
+    });
+}
+/**
+* Implementation of hook_theme().
+*/
+function isa_apachesolr_theme() {
+    return array(
+        'isa_apachesolr_toolbox' => array(
+                'template' => 'templates/isa_apachesolr_toolbox_template',
+                'arguments' => array('sort_types' => NULL, 'sort_default' => NULL, 'url' => NULL, 'current' => NULL),
+            ),
+    );
+}
+/**
+ * Apachesolr index name for fc_search module.
+ */
+function isa_apachesolr_index_key($key) {
+    $keys = array(
+        'repository_origin' => array(
+            'name' => 'repository_origin',
+            'multiple' => FALSE,
+            'index_type' => 'integer',
+        ),
+        'publisher' => array(
+            'name' => 'publisher',
+            'multiple' => TRUE,
+            'index_type' => 'integer',
+        ),
+        'publisher_type' => array(
+            'name' => 'publisher_type',
+            'multiple' => TRUE,
+            'index_type' => 'integer',
+        ),
+        'licence' => array(
+            'name' => 'licence',
+            'multiple' => TRUE,
+            'index_type' => 'integer',
+        ),
+        'licence_type' => array(
+            'name' => 'licence_type',
+            'multiple' => TRUE,
+            'index_type' => 'integer',
+        ),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-818
+        //Set facet variable as simple boolean
+        'current_version' => array(
+            'name' => 'current_version'
+,            'multiple' => FALSE,
+            'index_type' => 'boolean',
+        ),
+    );
+    return apachesolr_index_key($keys[$key]);
+}
+
+/**
+ * Implementation of hook_apachesolr_update_index
+ * @param type $document
+ * @param type $node
+ */
+function isa_apachesolr_apachesolr_update_index(&$document, $node) {
+    global $user;
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-871
+    //Apply index filter by workflow state
+    static $workflows, $type_map, $merged_config, $facets, $admin_user;
+    !$workflows ?  $workflows = workflow_get_all() : FALSE;
+    if(!$type_map){
+        $type_map = array();
+        $result = db_query("SELECT wid, type FROM {workflow_type_map}");
+        while ($data = db_fetch_object($result)) {
+            $type_map[$data->type] = $data->wid;
+        }
+    }
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-854
+    //Use user first and last name as author
+    $node_profile = node_load(db_result(db_query("SELECT nid FROM node WHERE uid=%d AND type='%s'", $node->uid, 'profile')));
+    $document->setField('name', _isa_user_get_real_name($node_profile));	
+    if($type_map[$node->type] > 0){
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-871
+        //Set is_global tag, this includes node types case,document,event,news,presentation
+        if( 1 == $type_map[$node->type]  ){
+            //For this workflow type the content is global when it doesn't belong to a group or it's state is published
+            if( 23 == $node->_workflow ){
+                $document->addField('is_global', 1);
+            }else{
+                $sql = "SELECT group_nid  FROM og_ancestry WHERE og_ancestry.nid=%d";
+                db_result(db_query($sql, $node->nid)) > 0 ? TRUE : $document->addField('is_global', 1);
+            } 
+        }else{
+            $document->addField('is_global', 1);
+        }
+        $result = db_query("SELECT * FROM {workflow_access} WHERE grant_view = 1 AND  sid = %d", $node->_workflow);
+        while ($row = db_fetch_object($result)) {
+            -1 == $row->rid ? $document->addField('is_workflow_author', $node->uid) : $document->addField('im_workflow_roles', $row->rid);    
+        }
+    }else{
+        $document->addField('im_workflow_roles', 1);
+    }
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-871
+    //Assign node type facets to non public content, using the code from apachesolr_facetbuilder_apachesolr_update_index
+    //Use admin user because it has access to all content
+    $save_user = $user;
+    !$facets ? $facets =  _apachesolr_facetbuilder_get_all_facets() : FALSE;
+    $admin_user ? $user = $admin_user : $user = $admin_user = user_load(1);
+    foreach ($facets as $facet) {
+        // Clone the view to remove the cache from the last run.
+        $view = $facet['view']->clone_view();
+        $view->facetbuilder_node = $node;
+        $view->execute($facet['display_id']);
+        // If this node appears in this display of this view, mark it with this facet.
+        if (count($view->result)) {
+            $document->setMultiValue($facet['facet_field'], $facet['facet_value']);
+         }
+        $view->destroy();
+        unset($view);
+    }
+    //Restore the previous user
+    $user = $save_user;
+    if ($node->type == 'asset_release') {
+        $sql = "SELECT n.nid as nnid, n1.nid, n1.title, COUNT(*) AS total
+          FROM node n
+          	LEFT JOIN {og_ancestry} o ON (n.nid=o.nid)
+          	LEFT JOIN {node} n1 ON (o.group_nid=n1.nid)
+          WHERE n.type='asset_release' AND
+          	n1.type='repository' AND n.nid=" . $node->nid .
+                " GROUP BY n1.nid
+          LIMIT 1";
+        $rs = db_query($sql);
+        while ($item = db_fetch_array($rs)) {
+            $resp = $item['nid'];
+        }
+        if (isset($resp)) {
+            $document->is_repository_origin = $resp;
+        }
+
+        $publisher_types = array();
+        $publishers = array();
+        foreach ($node->field_asset_publisher as $publisher) {
+            $publishers[] = $publisher['nid'];
+            $publisher_node = node_load($publisher['nid']);
+            if (isset($publisher_node->taxonomy)) {
+                foreach ($publisher_node->taxonomy as $type) {
+                    if ($type->vid == ISA_VID_PUBLISHER_TYPE) {
+                        $publisher_types[] = $type->tid;
+                    }
+                }
+            }
+        }
+
+        $licence_types = array();
+        $licences = array();
+        foreach ($node->field_asset_distribution as $distribution) {
+            $distribution_node = node_load($distribution['nid']);
+            if (isset($distribution_node->field_distribution_licence)) {
+                foreach ($distribution_node->field_distribution_licence as $licence) {
+                    $licences[] = $licence['nid'];
+                    $licence_node = node_load($licence['nid']);
+                    if (isset($licence_node->taxonomy)) {
+                        foreach ($licence_node->taxonomy as $type) {
+                            if ($type->vid == ISA_VID_LICENCE_TYPE) {
+                                $licence_types[] = $type->tid;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        $document->im_publisher = $publishers;
+        $document->im_publisher_type = $publisher_types;
+        $document->im_licence = $licences;
+        $document->im_licence_type = $licence_types;
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-818
+        //Check current version in the indexed node
+        //Check if node is Current Version
+        if (true === _isa_apachesolr_is_current_version($node)) {
+            $document->bs_current_version = TRUE;
+        }
+    }
+    //Add page views
+    $hits = statistics_get($node->nid);
+    $document->setField('is_page_hits', (int) $hits['totalcount']);
+    //Index for simple searches
+    $page_config = _isa_apachesolr_config();
+    //Merge config array
+    if( !isset($merged_config) ){
+        array_walk($page_config, function($val) use (&$merged_config){
+            foreach($val['node_types'] as $key => $value){
+                isset($merged_config[$value]) ?  TRUE : $merged_config[$value] = array();
+                $merged_config[$value] = array_merge($merged_config[$value],$val['sort_types']);
+                $merged_config[$value] = array_merge($merged_config[$value],$val['additional_filters']);
+                $merged_config[$value] = array_unique($merged_config[$value]);
+            }
+        });
+    }  
+    //Add filter values to nodes, using the configuration array [sort_types,additional_filters]
+    array_walk($merged_config, function($val,$key) use (&$document,&$node){
+        //////////////////////////////////////////////////////////SORT TYPES
+        if($key != $node->type){
+            return;
+        }
+        if(in_array('members', $val )){
+            $members = og_subscriber_count_link($node);
+            $document->setField('is_members', (int) $members[0] );
+        }
+        //Filter federated_projects in project_project index
+        if(in_array('project_downloads', $val) and 'project_project' == $node->type){
+                $document->setField('is_project_download',  isa_private_files_get_project_downloads_count($node->nid));
+        }
+        if(in_array('assets', $val)){
+            $sql = "SELECT COUNT(og_ancestry.nid) FROM og_ancestry
+                    INNER JOIN node ON og_ancestry.nid=node.nid AND node.type='%s'  
+                    WHERE og_ancestry.group_nid=%d";
+            $document->setField('is_assets',  db_result(db_query($sql, 'asset_release', $node->nid)) );
+        }
+        if(in_array('rating', $val)){
+            $votes =  fivestar_get_votes('node', $node->nid);
+            isset($votes['average']['value']) ? $rating = $votes['average']['value'] : $rating = 0;
+            $document->setField('is_rating',(int)  $rating );
+        }
+        if(in_array('kudos', $val)){
+            //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+            //Error in is_kudos sort
+            $sql = "SELECT SUM(points) FROM userpoints_txn WHERE uid=%d;";
+            $document->setField('is_kudos', (int) db_result(db_query($sql,$node->uid)) );
+        }
+        //////////////////////////////////////////////////////////ADDITIONAL FILTERS
+        if(in_array('editor', $val)){
+            $flags = flag_get_counts('node', $node->nid);
+            isset($flags['editor_choice']) and $flags['editor_choice'] == 1 ? $document->setField('is_editor', 1) : FALSE;
+        }
+        if(in_array('recommended', $val)){
+            $terms =  taxonomy_node_get_terms($node);
+            $vid = variable_get('domains_vid', 27);
+            array_walk($terms, function($val) use (&$document,$vid){
+                $vid == $val->vid ?  $document->addField('im_recommended', $val->tid) : FALSE;
+            });
+        }
+        if(in_array('i_use',$val)){
+            $flags = flag_get_content_flags('node', $node->nid);
+            if(count($flags) > 0){
+                array_walk($flags, function($val) use (&$document){
+                    isset($val['i_use_this_project']) ? $document->addField('im_i_use', $val['i_use_this_project']->uid) : FALSE;
+                });
+            }
+        }
+        if(in_array('og_member',$val)){
+            $result = db_query(og_list_users_sql(0, 0, NULL), $node->nid);
+            while ($row = db_fetch_object($result)) {
+                1 == $row->is_active ?  $document->addField('im_og_member', $row->uid) : FALSE;
+            }
+        }
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-965
+        //Use end date to filter events
+        if(in_array('event_date_from',$val)){
+            if(isset($node->field_event_dates[0]['value'])){
+                $event_date = new DateTime($node->field_event_dates[0]['value']);
+                $solr_format_date = $event_date->format('Y-m-d') . 'T' . $event_date->format('H:i:s') . 'Z';
+                $document->setField('ds_from_date', $solr_format_date);
+            }
+        }
+        if(in_array('event_date_up_to',$val)){
+            if(isset($node->field_event_dates[0]['value2'])){
+                $event_date = new DateTime($node->field_event_dates[0]['value2']);
+                $solr_format_date = $event_date->format('Y-m-d') . 'T' . $event_date->format('H:i:s') . 'Z';
+                $document->setField('ds_up_to_date', $solr_format_date);
+            }
+        }
+        if(in_array('event_date_from',$val) or in_array('event_date_up_to',$val)){
+            if(isset($node->field_event_dates[0]['value'])){
+                $event_date = new DateTime($node->field_event_dates[0]['value']);
+                $solr_format_date = $event_date->format('Y-m-d') . 'T' . $event_date->format('H:i:s') . 'Z';
+                $document->setField('ds_sort_date', $solr_format_date);
+            }
+        }
+        if(in_array('moderator',$val) and 'profile' == $node->type){
+            $profile_user = user_load($node->uid);
+            in_array('moderator',$profile_user->roles) ? $document->setField('is_moderator', 1 ) : FALSE;
+        }
+        if(in_array('workflow_status',$val)){
+            $document->setField('is_workflow_status', $node->_workflow);
+        }
+        if(in_array('federated_forge_parent',$val)){
+            $document->setField('is_federated_forge_parent', $node->field_fed_project_forge[0]['nid']);
+        }
+        if(in_array('asset_project',$val)){
+	      0 == $node->field_project_common_type[0]['value'] ? $document->setField('bs_asset_project', 1) : $document->setField('bs_asset_project', 0);      
+        }
+        //Filter federated_projects in project_project index
+        if(in_array('software_project',$val) and 'project_project' == $node->type){
+	      1 == $node->field_project_common_type[0]['value'] ? $document->setField('bs_software_project', true) : $document->setField('bs_software_project', 0);
+        }
+	    if(in_array('wellcome_community',$val)){
+    		$short_name = isa_links_get_group_short_name($node);
+    		$document->addField('ss_wellcome_community', "community/" . $short_name . "/home"); 
+	    }
+	    if(in_array('wellcome_asset',$val) and 0 == $node->field_project_common_type[0]['value'] ){
+    		$short_name = isa_links_get_group_short_name($node);
+    		$document->addField('ss_wellcome_asset', "asset/" . $short_name . "/home"); 
+	    }
+        //Filter federated_projects in project_project index
+	    if(in_array('wellcome_software',$val) and 1 == $node->field_project_common_type[0]['value']  and 'project_project' == $node->type){
+    		$short_name = isa_links_get_group_short_name($node);
+    		$document->addField('ss_wellcome_software', "software/" . $short_name . "/home"); 
+	    }
+        if(in_array('og_ancestry',$val)){
+            $sql = "SELECT group_nid  FROM og_ancestry WHERE og_ancestry.nid=%d";
+            $result = db_query($sql, $node->nid);
+            while ($row = db_fetch_object($result)) {
+                $document->addField('im_og_ancestry', $row->group_nid);
+            }
+        }
+        if(in_array('highlight',$val)){
+            $result = db_query("SELECT * FROM isa_highlight WHERE nid=%d",$node->nid);
+            while ($row = db_fetch_object($result)) {
+                $document->addField('im_highlight', $row->gid);
+            }
+        }
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-950
+        //Count downloads using distribution  nodes from the node
+        if(in_array('node_downloads', $val)){
+            $sql = "SELECT count FROM isa_download_statistics_count WHERE nid=%d";
+            $file_downloads = (int) db_result(db_query($sql, $node->nid));
+            $sql = "SELECT COUNT(dsid) FROM isa_download_external_statics WHERE nid=%d";
+            $url_downloads = (int) db_result(db_query($sql, $node->nid));
+            $document->addField('is_node_downloads',$url_downloads + $file_downloads);
+        }
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+        //Use profile name instead of username
+        if(in_array('name', $val)){
+            //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-854
+            //Use the correct function 
+            $document->setField('title', _isa_user_get_real_name($node));
+        }
+
+
+
+
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+        //Use the same date field to sort results
+        if(in_array('update_date', $val)){
+            $solr_format_date = date('Y-m-d', $node->changed) . 'T' . date('H:i:s', $node->changed) . 'Z';
+            $document->setField('ds_sort_date', $solr_format_date);
+        }
+        if(in_array('creation_date', $val)){
+            $solr_format_date = date('Y-m-d', $node->created) . 'T' . date('H:i:s', $node->created) . 'Z';
+            $document->setField('ds_sort_date', $solr_format_date);
+        }
+    });
+    //solr_format_date image to index
+    $image_fields = array(
+	'field_community_logo',
+	'field_event_logo',
+	'field_forges_logo',
+	'field_photo',
+	'field_project_soft_logo',
+	'field_repository_logo',
+    );
+    array_walk($image_fields, function($val) use (&$document,&$node){
+    	if( isset($node->{$val}[0]['filepath']) and "default_image_upload" != $node->{$val}[0]['source'] or 'asset_release' == $node->type){
+    	    if('asset_release' == $node->type){
+    		// use (non-default) repository logo, if exists
+    		    if ($node->og_groups && is_array($node->og_groups) && count($node->og_groups)) {
+        		    foreach($node->og_groups as $og_id) {
+            		    $_group = node_load($og_id);
+                        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-799
+                        //Add project logo to semantic assets in search results
+                        if ($_group && 'project_project' == $_group->type && $_group->field_project_soft_logo && $_group->field_project_soft_logo[0] && $_group->field_project_soft_logo[0]['filepath']) {
+                             $path = $_group->field_project_soft_logo[0]['filepath']; 
+                             $filename =  $_group->field_project_soft_logo[0]['filename'];
+                             break; 
+                        }
+                        if ($_group && 'repository'== $_group->type && $_group->field_repository_logo && $_group->field_repository_logo[0] && $_group->field_repository_logo[0]['filepath']) {
+                             $path = $_group->field_repository_logo[0]['filepath']; 
+                             $filename =  $_group->field_repository_logo[0]['filename'];
+                        }
+        		    }
+    		    }
+        	}else{
+        		$path = $node->{$val}[0]['filepath'];
+        		$filename = $node->{$val}[0]['filename'];
+    	    }
+    	    if(imageapi_image_open($path)){
+        		imagecache_create_path('profile_photo', $path);
+        		$preset = imagecache_preset_by_name('profile_photo');
+        		$dst = imagecache_create_path('profile_photo', $path);
+        		imagecache_build_derivative($preset['actions'], $path, $dst);
+        		$img = base_path() ."sites/default/files/imagecache/profile_photo/".$filename;
+        		$document->setField('ss_picture', "<img src='$img' alt='".$node->type."' />");
+    	    }
+    	}
+    });
+}
+
+/**
+ * Implementation of hook_apachesolr_facets().
+ *
+ * Returns an array keyed by block delta.
+ */
+function isa_apachesolr_apachesolr_facets() {
+    $facets = array();
+    $facets[isa_apachesolr_index_key('repository_origin')] = array(
+        'info' => t('Apache Solr: Repository of origin'),
+        'facet_field' => isa_apachesolr_index_key('repository_origin'),
+    );
+
+    $facets[isa_apachesolr_index_key('publisher')] = array(
+        'info' => t('Apache Solr: Publisher'),
+        'facet_field' => isa_apachesolr_index_key('publisher'),
+    );
+
+    $facets[isa_apachesolr_index_key('publisher_type')] = array(
+        'info' => t('Apache Solr: Publisher type'),
+        'facet_field' => isa_apachesolr_index_key('publisher_type'),
+    );
+
+    $facets[isa_apachesolr_index_key('licence')] = array(
+        'info' => t('Apache Solr: Licence'),
+        'facet_field' => isa_apachesolr_index_key('licence'),
+    );
+
+    $facets[isa_apachesolr_index_key('licence_type')] = array(
+        'info' => t('Apache Solr: Licence type'),
+        'facet_field' => isa_apachesolr_index_key('licence_type'),
+    );
+
+    $facets[isa_apachesolr_index_key('current_version')] = array(
+        'info' => t('Apache Solr: Current Version'),
+        'facet_field' => isa_apachesolr_index_key('current_version'),
+    );
+    return $facets;
+}
+/**
+ * Implementation of hook_votingapi_results().
+  * @param $results
+ *   An alterable array of aggregatre vote results.
+ * @param $content_type
+ *   A string identifying the type of content being rated. Node, comment,
+ *   aggregator item, etc.
+ * @param $content_id
+ *   The key ID of the content being rated.
+ *
+ * @see votingapi_recalculate_results()
+ */
+function isa_apachesolr_votingapi_results_alter(&$results, $content_type, $content_id) {
+    //Set to reindex node after voting
+    apachesolr_nodeapi_update(node_load($content_id));
+}
+/**
+ * Implementation of hook_userpoints
+ */
+function isa_apachesolr_userpoints($op, $params = array()) {
+    //Set profile node to reindex after being awarded kudos 
+    if ('points after' == $op) {
+        $profile = content_profile_load('profile', $params['uid']);
+        apachesolr_nodeapi_update($profile);
+    }
+}
+/**
+ * Implementation of hook_block().
+ */
+function isa_apachesolr_block($op = 'list', $delta = 0, $edit = array()) {
+    switch ($op) {
+        case 'list':
+            $blocks[0]['info'] = t('Apache Solr: Repository of Origin');
+            $blocks[1]['info'] = t('Apache Solr: Publisher');
+            $blocks[2]['info'] = t('Apache Solr: Publisher Type');
+            $blocks[3]['info'] = t('Apache Solr: Licence');
+            $blocks[4]['info'] = t('Apache Solr: Licence Type');
+            $blocks[5]['info'] = t('Apache Solr: Current Version');
+            $blocks[6]['info'] = t('Selected search filters');
+	    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-854
+	    //Add title to facets column
+            $blocks[7]['info'] = t('Refine your search');
+            return $blocks;
+            break;
+        case 'view':
+            if (apachesolr_has_searched()) {
+                // Get the query and response. Without these no blocks make sense.
+                $response = apachesolr_static_response_cache();
+                if (empty($response)) {
+                    return;
+                }
+                $query = apachesolr_current_query();
+
+                $facets = apachesolr_get_enabled_facets('apachesolr_search');
+                if (isset($facets[$delta]) && ($delta != 'currentsearch')) {
+                    return;
+                }
+                if (!apachesolr_block_visibility($query, 'apachesolr_search', $delta)) {
+                    return;
+                }
+
+                switch ($delta) {
+                    case '0':
+                        return isa_apachesolr_facet_block($response, $query, 'isa_apachesolr', $delta, 'is_repository_origin', t('Repository of origin'), '_isa_apachesolr_repository_origin');
+                        break;
+                    case '1':
+                        return isa_apachesolr_facet_block($response, $query, 'isa_apachesolr', $delta, 'im_publisher', t('Publisher'), '_isa_apachesolr_publisher');
+                        break;
+                    case '2':
+                        return isa_apachesolr_facet_block($response, $query, 'isa_apachesolr', $delta, 'im_publisher_type', t('Publisher type'), '_isa_apachesolr_publisher_type');
+                        break;
+                    case '3':
+                        return isa_apachesolr_facet_block($response, $query, 'isa_apachesolr', $delta, 'im_licence', t('Licence'), '_isa_apachesolr_licence');
+                        break;
+                    case '4':
+                        return isa_apachesolr_facet_block($response, $query, 'isa_apachesolr', $delta, 'im_licence_type', t('Licence type'), '_isa_apachesolr_licence_type');
+                        break;
+                    case '5':
+                        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-818
+                        //Set valid variable name [bs_current_version]
+                        return isa_apachesolr_facet_block($response, $query, 'isa_apachesolr', $delta, 'bs_current_version', t('Current version'), '_isa_apachesolr_current_version');
+                        break;
+        		    case '6':
+            			if(true == module_exists('isa_jquery_noconflict')){
+            			    $new_jquery_object_name = isa_jquery_noconflict_include_jquery();
+            			    $path = drupal_get_path('module', 'isa_apachesolr');  
+            			    drupal_add_js($path .'/js/solr_filter_block.js');
+            			    $json = json_encode(array('resetUrl' => base_path() . $_GET['q']));
+            			    drupal_add_js("newjQuery().selectedFacets($json)", 'inline');
+            			}
+            			if(isset($_GET['filters'])){
+            			    $block ['content'] = " <div class='selected-facets-title'>".t('Filtering by') .":</div>". 
+            						    "<div class='selected-facets'>".		    
+            						    "<div class='selected-facets-body'></div>
+            						 </div>"
+            						 ;
+            			}else{
+            			    $block ['content'] = '';
+            			}
+            			return $block;
+        		        break;
+        		    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-854
+        		    //Add title to facets column
+                    case '7':
+                        $block ['content'] = t('Refine your search');
+                        return $block;
+                        break;  
+                }
+            }
+            break;
+    }
+}
+
+function isa_apachesolr_preprocess_block(&$variables) {
+    if ($variables['block']->bid == "apachesolr_facetbuilder-sm_facetbuilder_current_version_facet") {
+        $variables['block']->subject = t('Current Version');
+    }
+}
+
+/**
+ * Builds a block containing information about repository of origin for all projects
+ * @return array The block to use in hook_block
+ */
+function _isa_apachesolr_repository_origin($facet, $options) {    
+    //return t('Respository of origin');
+    $node = node_load($facet);
+    if ($node->type == 'repository') {
+        $text = $node->title;
+    } else {
+        $text = null;
+    }
+
+    return $text;
+}
+
+/**
+ * Show information about a publisher
+ * @return array The block to use in hook_block
+ */
+function _isa_apachesolr_publisher($facet, $options) {
+    $node = node_load($facet);
+
+    if ($node->type == 'publisher') {
+        $text = $node->title;
+    } else {
+        $text = null;
+    }
+
+    return $text;
+}
+
+/**
+ * Show information about a publisher type
+ * @return array The block to use in hook_block
+ */
+function _isa_apachesolr_publisher_type($facet, $options) {
+    $term = taxonomy_get_term($facet);
+
+    return $term->name;
+}
+
+/**
+ * Show information about a licence
+ * @return array The block to use in hook_block
+ */
+function _isa_apachesolr_licence($facet, $options) {
+    $node = node_load($facet);
+
+    if ($node->type == 'licence') {
+        $text = $node->title;
+    } else {
+        $text = null;
+    }
+
+    return $text;
+}
+
+/**
+ * Show information about a licence type
+ * @return array The block to use in hook_block
+ */
+function _isa_apachesolr_licence_type($facet, $options) {
+    $term = taxonomy_get_term($facet);
+
+    return $term->name;
+}
+
+/**
+ * Show information about a current version for asset
+ * @return array The block to use in hook_block
+ */
+function _isa_apachesolr_current_version($facet, $options) {
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-818
+    //Set return for the isa_apachesolr_facet_block callback
+    return t('Current Version');
+}
+
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+//Error in function name
+/**
+ * Implementation of hook_apachesolr_modify_query().
+ */
+function isa_apachesolr_apachesolr_modify_query(&$query, &$params, $caller) {
+    global $user;
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-857
+    //Remove highlight when searching no text
+    "" == $query->get_keys() ? $params['hl.fl'] = '' : FALSE;
+    //Filtrar el contenido por workflow
+    if ($caller == 'apachesolr_search') {
+        // Also retrieve repository origin.
+        $params['fl'] .= ',repository_origin,publisher,publisher_type,licence,licence_type';
+    }
+     //Extra params for Solr search
+    $params['fl'] .= ',is_kudos';
+    $params['fl'] .= ',is_editor';
+    $params['fl'] .= ',im_recommended';
+    $params['fl'] .= ',im_i_use';
+    $params['fl'] .= ',im_og_member';
+    $params['fl'] .= ',ds_event_date';
+    $params['fl'] .= ',is_moderator';
+    $params['fl'] .= ',is_workflow_status';
+    $params['fl'] .= ',is_members';
+    $params['fl'] .= ',is_project_download';
+    $params['fl'] .= ',is_assets';
+    $params['fl'] .= ',is_rating';
+    $params['fl'] .= ',ds_event_date';
+    $params['fl'] .= ',is_page_hits';
+    $params['fl'] .= ',bs_asset_project';
+    $params['fl'] .= ',bs_software_project';
+    $params['fl'] .= ',bs_current_version';
+    $params['fl'] .= ',ss_picture';
+    $params['fl'] .= ',ss_wellcome_asset';
+    $params['fl'] .= ',ss_wellcome_community';
+    $params['fl'] .= ',ss_wellcome_software';
+    $params['fl'] .= ',im_highlight';
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-965
+        //Use end date to filter events
+    $params['fl'] .= ',ds_from_date';
+    $params['fl'] .= ',ds_up_to_date';
+    $params['fl'] .= ',im_og_ancestry';
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-871
+    //Apply index filter by workflow state
+    $params['fl'] .= ',is_workflow_author';
+    $params['fl'] .= ',im_workflow_roles';
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-871
+    //Set is_global tag, this includes node types case,document,event,news,presentation
+    $params['fl'] .= ',is_global';
+    $params['fl'] .= ',is_federated_forge_parent';
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-950
+    //Count downloads using distribution  nodes from the node
+    $params['fl'] .= ',is_node_downloads';
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+    //Use the same date field to sort results
+    $params['fl'] .= ',ds_sort_date';
+    $query->set_available_sort('ds_sort_date', array('created' => t('Date') , 'default' => 'desc'));
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+    //Apply workflow rules for  anonymous users
+    $query->add_filter('im_workflow_roles', 1);
+    /* This code list contents according to workflow user access
+    if( 1 != $user->uid ){
+        $subquery = apachesolr_drupal_query();
+        $subquery->add_filter('is_workflow_author', $user->uid);
+        $subquery->add_filter('im_workflow_roles', 1);
+        foreach ($user->roles as $key => $value) {
+            $subquery->add_filter('im_workflow_roles', $key);
+        }
+        $query->add_subquery($subquery, 'OR'); 
+    }*/
+    //Add popularity/hits sort
+    $query->set_available_sort('is_page_hits', array('title' => t('Popularity') , 'default' => 'desc'));
+    //Check if this page is in the config array
+    $page_config = _isa_apachesolr_this_page_config();
+    if( FALSE === $page_config ){
+        return;
+    }
+    //Filter searches by node type
+    $subquery = apachesolr_drupal_query();
+    array_walk($page_config['facet_node_types'], function($val) use (&$subquery){ 
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+        //Use facets for simple search 
+        $subquery->add_filter('sm_facetbuilder_facet_node_type','facet_node_type:' . _isa_apachesolr_facet_node_type($val));
+    });
+    $query->add_subquery($subquery, 'OR'); 
+    //Filter searches by additional filters
+    'community' == arg(0) ? $group_nid = db_result(db_query("SELECT nid FROM content_type_community WHERE field_community_short_name_value='%s'", arg(1))) : FALSE;
+    'asset' == arg(0) || 'software' == arg(0) ? $group_nid = db_result(db_query("SELECT nid FROM project_projects WHERE uri='%s'", arg(1))) : FALSE;
+    array_walk($page_config['additional_filters'], function($val) use (&$query, $group_nid){
+        global $user;
+        if('editor' == $val){
+            $query->add_filter('is_editor', 1);
+        }
+        if('recommended' == $val){
+            $profile = NULL;
+            isset($user->node_profile) ? $profile = $user->node_profile : $profile = content_profile_load('profile', $user->uid);
+            //limit nodes with the $profuser profile term of vocabulary 'domains' as in sites/all/modules/custom/isa_toolbox/isa_toolbox.module line 1922
+            $term = taxonomy_node_get_terms_by_vocabulary($profile, variable_get('domains_vid', 27));
+            $term_list = array_keys($term);
+            //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+            //Show correct recommended content
+            $subquery = apachesolr_drupal_query();
+            foreach($term_list as $key => $value){
+                $subquery->add_filter('im_recommended', $value);
+            }
+            $query->add_subquery($subquery, 'OR'); 
+        }
+        'i_use' == $val ? $query->add_filter('im_i_use', $user->uid) : FALSE;
+        'og_member' == $val ? $query->add_filter('im_og_member', $user->uid) : FALSE;
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-965
+        //Use star and end date to filter events
+        'event_date_from' == $val ? $query->add_filter('ds_up_to_date','[NOW TO *]') : FALSE;
+        'event_date_up_to' == $val ? $query->add_filter('ds_up_to_date','[* TO NOW]') : FALSE;
+        'moderator' == $val ? $query->add_filter('is_moderator',1) : FALSE;        
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-871
+        //Set is_global tag, this includes node types case,document,event,news,presentation
+        if('global' == $val){
+            $query->add_filter('is_global',1);
+        }
+        if('federated_forge_parent' == $val){//Apply only on federated_forge node page
+            $node_url = drupal_get_normal_path(arg(0) . "/" . arg(1));
+            $url_array = explode("/", $node_url);
+            $page_node = node_load($url_array[1]);
+            if('federated_forge' == $page_node->type){
+                $query->add_filter('is_federated_forge_parent', $page_node->nid);
+            };
+        }
+     });
+
+	if (in_array('highlight', $page_config['additional_filters']) and in_array('og_ancestry', $page_config['additional_filters']) ) {
+		$subquery = apachesolr_drupal_query();           
+		$subquery->add_filter('im_highlight', $group_nid);
+		$subquery->add_filter('im_og_ancestry', $group_nid);
+		$query->add_subquery($subquery, 'OR'); 
+	} elseif (in_array('highlight', $page_config['additional_filters']) or in_array('og_ancestry', $page_config['additional_filters']) ) {
+		if (in_array('highlight', $page_config['additional_filters'])){
+			$query->add_filter('im_highlight', $group_nid);
+		} 
+		if (in_array('og_ancestry', $page_config['additional_filters'])){
+			$query->add_filter('im_og_ancestry', $group_nid);
+		}
+	}	
+	
+    //Add available sorts
+    array_walk($page_config['sort_types'], function($val,$key) use (&$query){
+            //The prefix is_ in is_members sets the value type, using the names from the schema.xml file in apachesolr module
+        'members' == $val ? $query->set_available_sort('is_members', array('title' => t('Members') , 'default' => 'desc')) : FALSE;
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+        //Error in projects download sort
+        'project_downloads' == $val ? $query->set_available_sort('is_project_download', array('title' => t('Downloads') , 'default' => 'desc')) : FALSE;
+        'assets' == $val ? $query->set_available_sort('is_assets', array('title' => t('Assets') , 'default' => 'desc')) : FALSE;
+        'rating' == $val ? $query->set_available_sort('is_rating', array('title' => t('Rating') , 'default' => 'desc')) : FALSE;
+        'kudos' == $val ? $query->set_available_sort('is_kudos', array('title' => t('Kudos') , 'default' => 'desc')) : FALSE;
+        'event_date' == $val ? $query->set_available_sort('ds_sort_date', array('title' => t('Event date') , 'default' => 'desc')) : FALSE;
+		'event_date_prox' == $val ? $query->set_available_sort('ds_sort_date', array('title' => t('Event date') , 'default' => 'asc')) : FALSE;
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-950
+        //Count downloads using distribution  nodes from the node
+        'node_downloads' == $val ? $query->set_available_sort('is_node_downloads', array('title' => t('Downloads') , 'default' => 'desc')) : FALSE;
+    });
+    //Set default sort
+    if(!isset($_GET['solrsort'])){
+        'default' == $page_config['default_sort'] ? $query->set_solrsort('sort_title', 'asc') : FALSE;
+        'creation_date' == $page_config['default_sort'] ? $query->set_solrsort('ds_sort_date', 'desc') : FALSE;
+        'updated_date' == $page_config['default_sort'] ? $query->set_solrsort('ds_sort_date', 'desc') : FALSE;
+        'event_date' == $page_config['default_sort'] ? $query->set_solrsort('ds_sort_date', 'desc') : FALSE;
+		'event_date_prox' == $page_config['default_sort'] ? $query->set_solrsort('ds_sort_date', 'asc') : FALSE;
+        'project_downloads' == $page_config['default_sort'] ? $query->set_solrsort('is_project_download', 'desc') : FALSE;
+        'node_downloads' ==  $page_config['default_sort'] ? $query->set_solrsort('is_node_downloads', 'desc') : FALSE;
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+        //Default sort ascending
+        'name' ==  $page_config['default_sort'] ? $query->set_solrsort('sort_title', 'asc') : FALSE;
+    }
+    //Query mods for AHAH search
+    //Set keys for ahah search
+    if(1 == $page_config['ahah_page']){
+        $query->set_keys($_POST['search']); 
+        if("" != $_POST['solrsort']){
+            $sort_array = preg_split('/ +/u',$_POST['solrsort'], NULL, PREG_SPLIT_NO_EMPTY);
+            $query->set_solrsort($sort_array[0], $sort_array[1]);
+        }
+    }
+    return;
+}
+function isa_apachesolr_apachesolr_process_results(&$results) {
+    foreach ($results as $index => $item) {
+        if ($item['node']->type == 'asset_release' && !empty($item['node']->repository_origin)) {
+            $results[$index]['repository_origin'] .= t('Summary: @summary', array('@summary' => $item['node']->repository_origin));
+        }
+
+        if ($item['node']->type == 'asset_release' && !empty($item['node']->publisher)) {
+            $results[$index]['publisher'] .= t('Summary: @summary', array('@summary' => $item['node']->publisher));
+        }
+
+        if ($item['node']->type == 'asset_release' && !empty($item['node']->publisher_type)) {
+            $results[$index]['publisher_type'] .= t('Summary: @summary', array('@summary' => $item['node']->publisher_type));
+        }
+
+        if ($item['node']->type == 'asset_release' && !empty($item['node']->licence)) {
+            $results[$index]['licence'] .= t('Summary: @summary', array('@summary' => $item['node']->licence));
+        }
+
+        if ($item['node']->type == 'asset_release' && !empty($item['node']->licence_type)) {
+            $results[$index]['licence_type'] .= t('Summary: @summary', array('@summary' => $item['node']->licence_type));
+        }
+    }
+   
+}
+
+/**
+ * Helper function for displaying a facet block. Extends from apachesolr_facet_block to especializate "repository of origin"
+ */
+function isa_apachesolr_facet_block($response, $query, $module, $delta, $facet_field, $filter_by, $facet_callback = FALSE) {
+    
+    if (!isset($response->_parsedData->facet_counts->facet_fields->{$facet_field})) {
+        $facet_query_sorts = variable_get('apachesolr_facet_query_sorts', array());
+        $contains_active = FALSE;
+        $items = array();
+        foreach ($response->facet_counts->facet_fields->{$facet_field} as $facet => $count) {
+            $options = array('delta' => $delta);
+            $exclude = FALSE;
+            // Solr sends this back if it's empty.
+            if ($facet == '_empty_') {
+                $exclude = TRUE;
+                $facet = '[* TO *]';
+                $options['html'] = TRUE;
+            }
+            if ($facet_callback && function_exists($facet_callback)) {
+                $facet_text = $facet_callback($facet, $options);
+                if (is_null($facet_text)) {
+                    continue;
+                }
+            } elseif ($exclude) {
+                $facet_text = theme('placeholder', t('Missing this field'));
+            } else {
+                $facet_text = $facet;
+            }
+
+            $active = $query->has_filter($facet_field, $facet);
+            if ($active) {
+                // '*' sorts before all numbers.
+                $sortpre = '*';
+            } elseif (isset($facet_query_sorts[$module][$delta]) && strpos($facet_query_sorts[$module][$delta], 'index key') === 0) {
+                // If this block is to be alphabetically sorted by key, change $sortpre.
+                $sortpre = $facet;
+            } elseif (isset($facet_query_sorts[$module][$delta]) && strpos($facet_query_sorts[$module][$delta], 'index') === 0) {
+                // If this block is to be alphabetically/numerically sorted by value, change $sortpre.
+                $sortpre = $facet_text;
+            } elseif ($exclude) {
+                // '-' sorts before all numbers, but after '*'.
+                $sortpre = '-';
+            } else {
+                $sortpre = 1000000 - $count;
+            }
+
+            $new_query = clone $query;
+            if ($active) {
+                $contains_active = TRUE;
+                $new_query->remove_filter($facet_field, $facet);
+                $options['query'] = $new_query->get_url_queryvalues();
+                $link = theme('apachesolr_unclick_link', $facet_text, $new_query->get_path(), $options);
+            } else {
+                $new_query->add_filter($facet_field, $facet, $exclude);
+                $options['query'] = $new_query->get_url_queryvalues();
+                $link = theme('apachesolr_facet_link', $facet_text, $new_query->get_path(), $options, $count, FALSE, $response->response->numFound);
+            }
+            if ($count || $active) {
+                $items[$sortpre . '*' . $facet_text] = $link;
+            }
+        }
+        // Unless a facet is active only display 2 or more.
+        if ($items && ($response->response->numFound > 1 || $contains_active)) {
+            switch ($facet_query_sorts[$module][$delta]) {
+                case 'index numeric asc':
+                    ksort($items, SORT_NUMERIC);
+                    break;
+                case 'index numeric desc':
+                    krsort($items, SORT_NUMERIC);
+                    break;
+                case 'index desc':
+                case 'index key desc':
+                    krsort($items, SORT_STRING);
+                    break;
+                case 'index asc':
+                case 'index key asc':
+                default:
+                    ksort($items, SORT_STRING);
+                    break;
+            }
+            // Get information needed by the rest of the blocks about limits.
+            $initial_limits = variable_get('apachesolr_facet_query_initial_limits', array());
+            $limit = isset($initial_limits[$module][$delta]) ? $initial_limits[$module][$delta] : variable_get('apachesolr_facet_query_initial_limit_default', 10);
+            $output = theme('apachesolr_facet_list', $items, $limit, $delta);
+            return array('subject' => $filter_by, 'content' => $output, 'bid' => $module . '-' . $facet_field);
+            return array('subject' => $filter_by, 'content' => $output, 'bid' => $module . '-' . $facet_field);
+        }
+    }
+    return NULL;
+}
+
+function _isa_apachesolr_prepare_sort_dropdown() {
+
+    $query = apachesolr_current_query();
+    if (!isset($query)) {
+        return array();
+    }
+    $sorts = $query->get_available_sorts();
+
+    // Get the current sort as an array.
+    $solrsort = $query->get_solrsort();
+
+    $sort_links = array();
+    $path = $query->get_path();
+
+    $new_query = clone $query;
+    $toggle = array('asc' => 'desc', 'desc' => 'asc');
+    $default_value = ''; //Contains URL to default value
+    foreach ($sorts as $name => $sort) {
+        $active = $solrsort['#name'] == $name;
+        $title = $sort['title'];
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-726
+        //Change �relevancy� by �relevance�
+        if ($name == 'score') {
+            $direction = '';
+            $new_direction = 'desc'; // We only sort by descending score.
+            $title = t('Relevance');
+        } elseif ($active) {
+            $direction = $toggle[$solrsort['#direction']];
+            $new_direction = $toggle[$solrsort['#direction']];
+        } else {
+            $direction = '';
+            $new_direction = $sort['default'];
+        }
+        $new_query->set_solrsort($name, $new_direction);
+        $parameters = array('query' => $new_query->get_url_queryvalues());
+        if ($_GET['hidden_type']) {
+            $parameters['query']['hidden_type'] = $_GET['hidden_type'];
+        }
+        if ($_GET['retain-filters']) {
+            $parameters['query']['retain-filters'] = $_GET['retain-filters'];
+        }
+
+        $searchPath = url($path, $parameters);
+        $sort_links[$name] = array(
+            'title' => $title,
+            'path' => $searchPath,
+            //'options' => array('query' => $new_query->get_url_queryvalues()),
+            'active' => $active,
+            'direction' => $direction,
+        );
+        if ($name == 'score') {
+            // Set a solrsort parameter so we can distinguish between a user
+            // selecting "score desc" and the page defaulting to "score desc".
+            $sort_links[$name]['options']['query']['solrsort'] = 'score desc';
+        }
+        if ($active) {
+            $default_value = $searchPath;
+        }
+    }
+    foreach ($sort_links as $name => $link) {
+        $themed_links[$link['path']] = $link['title'];
+    }
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-726
+    //Change �sort� by �sort by�
+    return array('#type' => 'select',
+        '#title' => t('Sort by'),
+        '#id' => 'search-sort',
+        '#options' => $themed_links,
+        '#attributes' => array('onchange' => 'window.location=this.value', 'class' => 'form-item searchSortForm'),
+        '#default_value' => $default_value);
+}
+
+function isa_apachesolr_form_alter(&$form, &$form_state, $form_id) {
+    if ($form_id == 'search_form') {
+        drupal_add_css(drupal_get_path('module', 'isa_apachesolr') . '/isa_apachesolr.css', 'theme');
+        $form['basic']['inline']['sort_element'] = _isa_apachesolr_prepare_sort_dropdown();
+    	$form['#prefix'] = '<div class="advanced-search-form-solr">';
+    	$form['#suffix'] = '</div>';
+    	$form['basic']['#title'] = t('Keywords');
+    	//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+    	//Remove suggestion
+    	unset($form['basic']['suggestion']);
+    }
+    //Removes Solr search form on the custom search pages
+    'search_form' == $form_id and FALSE !== _isa_apachesolr_this_page_config() ? $form = array() : FALSE;
+    if('search_form' == $form_id and 'search' == arg(0) and 'apachesolr_search' == arg(1)){
+	drupal_set_title(arg(2) ? t("Search results for") . ' "' . arg(2) . '"' : t("Search results")  );
+        unset($form['basic']['inline']['sort_element']);
+    }
+}
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-818
+//Checks if an asset_release node is current version
+/**
+ * Checks if an asset_release node is current version
+ * @param object $node
+ * @return boolean
+ */
+function _isa_apachesolr_is_current_version($node) {
+    $is_current_version = true;
+    if ('asset_release' != $node->type) {
+        return false;
+    }
+    if (!isset($node->field_asset_node_reference) or empty($node->field_asset_node_reference)) {//No referenced nodes
+        return true;
+    }
+    foreach ($node->field_asset_node_reference as $value) {
+        if (isset($value['value']['field_asset_node_relationship'][0]['value']) && 1 == $value['value']['field_asset_node_relationship'][0]['value']) {//Referenced current version
+            if ($node->nid == $value['value']['field_asset_node_reference_node'][0]['nid']) {//Self referenced current version
+                return true;
+            } else {
+                $is_current_version = false;
+            }
+        }
+    }
+    return $is_current_version;
+}
+/**
+ * Page callback: Displays search form and results.
+ *
+ * @param string $url
+ * @param array $page_config
+ *
+ * @return string
+ */
+function _isa_apachesolr_search_page($url, $page_config){
+    return drupal_get_form('_isa_apachesolr_search_form',  $url, $page_config)
+            . _isa_apachesolr_search_view('apachesolr_search', $url);
+}
+/**
+ * Page callback: Displays search form and results for an ahah callback.
+ *
+ * @param string $url
+ * @param array $page_config
+ *
+ * @return string
+ */
+function _isa_apachesolr_search_page_ahah($url, $page_config){
+    return drupal_json(array('status' => TRUE, 'data' => _isa_apachesolr_search_view('apachesolr_search', $url)));
+}
+/**
+ * Re-implementation of apachesolr_search_view().
+ * @see apachesolr_search_view
+ */
+function _isa_apachesolr_search_view($type = NULL, $url) {
+  if (empty($type)) {
+    // Note: search/X can not be a default tab because it would take on the
+    // path of its parent (search). It would prevent remembering keywords when
+    // switching tabs. This is why we drupal_goto to it from the parent instead.
+    drupal_goto('search/apachesolr_search');
+  }
+  //Sets pagination for AHAH searches
+  $_POST['page'] ? $_GET['page'] = $_POST['page'] : FALSE;
+  //Sets filters for AHAH searches
+  $_POST['filters'] ? $_GET['filters'] = $_POST['filters'] : FALSE;
+  $keys = trim(_isa_apachesolr_search_get_keys(count(explode("/", $url))));
+  // Construct the search form.  If the user submits POST data, this will
+  // redirect to a GET request before the search actually runs.
+  if (isset($_POST['form_id']) && $_POST['form_id'] == 'search_form') {
+    $form = drupal_get_form('search_form', NULL, $keys, $type);
+  }
+  // We did not redirect, so run the search if needed.
+  $content = '';
+
+  $filters = '';
+  if (isset($_GET['filters'])) {
+    $filters = trim($_GET['filters']);
+  }
+  // Only perform search if there is non-whitespace search term or filters:
+  if ($keys || $filters || variable_get('apachesolr_search_browse', 'browse') == 'results') {
+    if (variable_get('apachesolr_logging', TRUE)) {
+      // Log the search keys:
+      $log = $keys;
+      if ($filters) {
+        $log .= 'filters='. $filters;
+      }
+      watchdog('search', '%keys (@type).', array('%keys' => $log, '@type' => t('Search')), WATCHDOG_NOTICE, l(t('results'), 'search/'. $type .'/'. $keys));
+    }
+
+    // Collect the search results. See search_data().
+    $content = module_invoke($type, 'search', 'search', $keys);
+    if (isset($content) && is_array($content) && count($content)) {
+      if (module_hook($type, 'search_page')) {
+        $output = module_invoke($type, 'search_page', $content);
+      }
+      else {
+        $output = theme('search_results', $content, $type);
+      }
+      return drupal_get_form('search_form', NULL, $keys, $type) . $output;
+    }
+
+    // See search_view().
+    if ($content) {
+      $content = theme('box', t('Search results'), $content);
+    }
+    else {
+      $content = theme('box', t('Your search yielded no results'), theme('apachesolr_search_noresults'));
+    }
+  }
+  elseif ($type != 'node') {
+    // Ignore $type == node. Since we override the menu path to search to point
+    // to this function, we have to count on core searches coming in here, too.
+
+    switch (variable_get('apachesolr_search_browse', 'browse')) {
+      case 'browse':
+        try {
+          // Show search form and browse-by blocks.
+          $blocks = apachesolr_search_browse('', '', '', 'search/' . $type);
+          if (count($blocks) > 0) {
+            $content = theme('apachesolr_browse_blocks', $blocks);
+          }
+        }
+        catch (Exception $e) {
+          watchdog('Apache Solr', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
+          apachesolr_failure(t('Solr search'), $keys);
+        }
+        break;
+      case 'blocks':
+        // Launch search so that hook_block() will show blocks.
+        $dummy = search_data($keys, $type);
+        break;
+      default:
+        break;
+    }
+  }
+  if (empty($form)) {
+    // The form may be altered based on the query that was run.
+    $form = drupal_get_form('search_form', NULL, $keys, $type);
+  }
+  return theme('apachesolr_search_results_page', $form, $content);
+}
+/**
+ * Re-implementation of search_get_keys().
+ * @see search_get_keys
+ */
+function _isa_apachesolr_search_get_keys($count){
+    static $return;
+    if (!isset($return)) {
+        // Extract keys as remainder of path
+        // Note: support old GET format of searches for existing links.
+        $path = explode('/', $_GET['q'], $count+1);
+        $keys = empty($_REQUEST['keys']) ? '' : $_REQUEST['keys'];
+        $return = count($path) == $count+1 ? $path[$count] : $keys; 
+    }
+    return $return;
+}
+/**
+* Form constructor for the user search form.
+*
+* @param string $url
+*   The url of the page
+* @param array $page_config
+*   The configuration from the config array in _isa_apachesolr_config.
+*
+* @ingroup forms
+*/
+function _isa_apachesolr_search_form(&$form_state,  $url, $page_config) {
+    $form['#id'] = 'search-_isa-apachesolr-search_form';
+    $form['#prefix'] = '<div class="advanced-search-form-solr">';
+    $form['#suffix'] = '</div>';
+    //Additional search fields by configuration array 
+    !empty($page_config['form_callback']) ?  $form = array_merge($form,call_user_func ($page_config['form_callback'], $form_state)) : FALSE ;
+    $default_search = trim(_isa_apachesolr_search_get_keys(count(explode("/", $url))));
+    $form['search'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Keywords'),
+	    '#size' => 35,
+        "#default_value" => $default_search
+    );
+   
+    $form['custom_search_submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Search')
+    );
+    //Redirect to the result page using  the facets url values
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+    //Keep previous order in simple search
+    if( $form_state['post']['sort'] ){
+       $vars = "solrsort=" . $form_state['post']['sort'];
+    }else{
+        $_GET['solrsort'] ?  $vars ="solrsort=" .$_GET['solrsort'] : FALSE;
+    }
+    $filters = '&solr_search=1';
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-850
+    //Link to advanced search with actual values
+    $isa_apachesolr_settings = array();
+    $vars .= trim($filters);
+    if( TRUE == $page_config['ahah_page'] ){
+        //Configuration for javascript ahah
+        $isa_apachesolr_settings = array(
+            'isa_apachesolr' => array(
+                    'formId' => "#-isa-apachesolr-search-form",
+                    'toolboxId' => "#solr-sort-tollbox",
+                    'submitButton' => '#edit-custom-search-submit',
+                    'hiddenSort' => '#edit-solrsort',
+                    'hiddenPage' => '#edit-page',
+                    'url' => $url,
+                    'paginationDiv' => '.result-solr-pager'
+                )
+            );
+        $form['custom_search_submit']['#ahah'] = array(
+            'event' => 'click',
+            'path' =>  $url,
+            'wrapper' => $page_config['wrapper-id'],
+            'method' => 'replace',
+            'effect' => 'fade',
+            'progress' => array(
+                'type' => 'throbber',
+                'message' => t('Loading...')
+            )     
+        );
+         $form['solrsort'] = array(
+            '#type' => 'hidden',
+            '#title' => t('Sort'),
+            "#default_value" =>  $_POST['solrsort'] ?  $_POST['solrsort'] : ''
+        );
+         $form['page'] = array(
+            '#type' => 'hidden',
+            '#title' => t('Page'),
+            "#default_value" =>  0
+        );
+        $form['#method'] = 'get';
+        //capture toolbox
+    }else{
+        $form['#redirect'] = array(str_replace('%views_arg', arg(1), $url) . "/" . $form_state['post']['search'], $vars);
+    }
+    //Show advanced search links only on
+    if(TRUE == $page_config['advanced_search_link']){
+        //Configuration for advanced link javascript generatior
+        $isa_apachesolr_settings['isa_apachesolr']['searchLinkId'] = '#advanced_search_link';
+        $isa_apachesolr_settings['isa_apachesolr']['filtersClass'] = '.filter-advanced-search';
+        $isa_apachesolr_settings['isa_apachesolr']['formId'] = '#search-_isa-apachesolr-search_form';
+        $isa_apachesolr_settings['isa_apachesolr']['searchIField'] = '#edit-search';
+        $isa_apachesolr_settings['isa_apachesolr']['searchPath'] = base_path() . 'search/apachesolr_search';
+        //Add link to advanced search
+        $advanced_search = '';
+        array_walk($page_config['facet_node_types'], function($val) use(&$advanced_search){
+            $advanced_search .='sm_facetbuilder_facet_node_type:"facet_node_type:'. _isa_apachesolr_facet_node_type($val).'" ';
+        }); 
+        $params = array(
+                    'query' => array(
+                                'retain-filters' => 1,
+                                'hidden_type' => 1
+                            ),
+                    'attributes' => array('id' => 'advanced_search_link')
+                );
+        $form['filters']['facets'] = array(
+            '#type' => 'hidden',
+            '#value' => $advanced_search
+        );
+        $form['advanced_search'] = array(
+            '#type' => 'item',
+            '#id' => 'advanced-search-link',
+            '#title' => '',
+            '#value' => l(t('Advanced search'),'search/apachesolr_search/' . $form['search']['#default_value'], $params),
+        );
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-850
+        //Link to advanced search with actual values
+        foreach($form['filters'] as $key => $value){
+            $form['filters'][$key]['#attributes'] = array('class' => 'filter-advanced-search');
+        }
+    }
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-850
+    //Link to advanced search with actual values
+    //Add javascript
+    $path = base_path() . drupal_get_path('module', 'isa_apachesolr');  
+    drupal_add_js($path ."/js/URI.min.js") ; 
+    drupal_add_js($isa_apachesolr_settings, 'setting');
+    if( TRUE == $page_config['ahah_page'] ){
+        drupal_add_js($path . "/js/isa_apache_solr_ahah_form.js") ; 
+    }
+    if( TRUE == $page_config['advanced_search_link'] ){
+        drupal_add_js($path .'/js/advanced_search_link.js');
+    }
+    return $form;
+}
+/**
+ * Returns the facet associated with a node type
+ *
+ * @param string $node_type
+ *
+ * @return string
+ */
+function _isa_apachesolr_facet_node_type($node_type){
+    $node_type_to_facet = array(
+                            'asset_release' => 'facet_24',
+                            'blog' => 'facet_1',
+                            'case' => 'facet_2',
+                            'community' => 'facet_3',
+                            'document' => 'facet_6',
+                            'event' => 'facet_7',
+                            'factsheet' => 'facet_8',
+                            'federated_project' => 'facet_10',
+                            'news' => 'facet_13',
+                            'presentation' => '',//TODO
+                            'profile' => 'facet_16',
+                            'project_project_asset' => 'facet_22',
+                            'project_project_software' => 'facet_18',
+                            'repository' => 'facet_25',
+                            'video' => 'facet_19',
+                            'wiki' => 'facet_20',
+                            //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-969
+                            //Add facet for newsletters
+                            'newsletter' => 'facet_14',
+                        );
+    return $node_type_to_facet[$node_type];
+}
+/**
+ * Gets the url of the actual page, removing the keywords added to it
+ *
+ * @param string $keys
+ *
+ * @return array 
+ */
+function _isa_apachesolr_this_page_config($path = null){
+    $path == null ? $path = $_GET['q'] : FALSE;
+    $path_array = explode("/",$path);
+    $path_to_check = '';
+    foreach ($path_array as $key => $value) {
+        $i++;
+        $config =  _isa_apachesolr_config(trim($path_to_check . $value, "/"));
+        if( FALSE === $config and 2 == $i){//The url placeholder must be in second position
+            $value = '%views_arg';
+            $config =  _isa_apachesolr_config(trim($path_to_check . $value, "/"));
+        }
+        if(FALSE !== $config){
+            break;
+        }
+        $path_to_check .= $value . "/" ;
+    }
+    return $config;
+}
+/**
+ * Adds search fields for federatred_project search form
+ *
+ * @param array $form_state
+ *
+ * @return array
+ */
+function _isa_apachesolr_federated_project_fields($form_state){
+    global $user;
+    if(1 == $user->uid OR in_array("moderator", $user->roles)){
+        $options_status = array(
+            '' => t('Any status'),
+            'is_workflow_status:13' => t('unpublished'),
+            'is_workflow_status:15' => t('published'),
+            'is_workflow_status:25' => t('rejected')
+        );
+        $default_status = '';
+        array_walk($options_keys, function($val) use(&$default_status,$options_status) {
+            isset($options_status[$val]) ? $default_status = $val : FALSE ;
+        });
+        $form['filters']['status'] = array(
+            '#type' => 'select',
+            '#title' => t('Status'),
+            '#options' => $options_status,
+            '#default_value' => $default_status
+        );
+        return $form;
+    }
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+    //Fix form layout when there a no filters
+    return array();
+}
+/**
+ * Adds search fields for asset release search form
+ *
+ * @param array $form_state
+ *
+ * @return array
+ */
+function _isa_apachesolr_asset_fields($form_state){
+    global $user;
+    $options_keys = preg_split('/ +/u',$_GET['filters'], NULL, PREG_SPLIT_NO_EMPTY);
+    if(1 == $user->uid OR in_array("moderator", $user->roles)){
+        $options_status = array(
+            '' => t('Any status'),
+            'is_workflow_status:37' => t('Proposed'),
+            'is_workflow_status:39' => t('Validated'),
+            'is_workflow_status:40' => t('In assessment'),
+            'is_workflow_status:41' => t('Assessed'),
+            'is_workflow_status:50' => t('Request deletion'),
+            'is_workflow_status:52' => t('Blacklisted')
+        );
+        $default_status = '';
+        array_walk($options_keys, function($val) use(&$default_status,$options_status) {
+            isset($options_status[$val]) ? $default_status = $val : FALSE ;
+        });
+        $form['filters']['status'] = array(
+            '#type' => 'select',
+            '#title' => t('Status'),
+            '#options' => $options_status,
+            '#default_value' => $default_status
+        );
+    }
+    $languages = locale_language_list();
+    $options_lang[''] = t('Any language');
+    foreach($languages as $key => $value){
+        $options_lang['sm_cck_field_language_multiple:' . $key] = $value;
+    }
+    $default_language = '';
+    array_walk($options_keys, function($val) use(&$default_language,$options_lang) {
+        isset($options_lang[$val]) ? $default_language = $val : FALSE ;
+    });
+    $form['filters']['language'] = array(
+        '#type' => 'select',
+        '#title' => t('Language'),
+        '#options' => $options_lang,
+        '#default_value' => $default_language
+    );
+    $form['filters']['asset_release'] = array(    
+        '#type' => 'checkboxes', 
+        '#options' => array(
+            'bs_current_version:true' => t('Current version'),
+        ),
+        '#default_value' => in_array('bs_current_version:true', $options_keys) ? array('bs_current_version:true') : FALSE
+    );
+    return $form;
+}
+function _isa_apachesolr_sort_toolbox(){
+    $keys = arg(2);
+    $sort_array = array(
+        'relevant' => array(
+                        'score' => array(
+                                'param' => 'score',
+                                'name' => t('Relevancy'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+        'hits' => array(
+                        'is_page_hits' => array(
+                                'param' => 'is_page_hits',
+                                'name' => t('Popularity'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+        'date' => array(
+                        'ds_sort_date' => array(
+                                'param' => 'ds_sort_date',
+                                'name' => t('Date'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+        //Default sort by date
+        'update_date' => array(
+                        'ds_sort_date' => array(
+                                'param' => 'ds_sort_date',
+                                'name' => t('Date'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+        'creation_date' => array(
+                        'ds_sort_date' => array(
+                                'param' => 'ds_sort_date',
+                                'name' => t('Date'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+        'event_date' => array(
+                        'ds_sort_date' => array(
+                                'param' => 'ds_sort_date',
+                                'name' => t('Date'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+		'event_date_prox' => array(
+                        'ds_sort_date' => array(
+                                'param' => 'ds_sort_date',
+                                'name' => t('Date'),
+                                'sort' => 'asc' 
+                            )
+                    ),
+        'default' => array(
+                        'sort_title' => array(
+                                'param' => 'sort_title',
+                                'name' => t('Title'),
+                                'sort' => 'asc' 
+                            )
+                    ),
+        'name' => array(
+                        'sort_title' => array(
+                                'param' => 'sort_title',
+                                'name' => t('Name'),
+                                'sort' => 'asc' 
+                            )
+                    ),
+        'project_downloads' => array(
+                        'is_project_download' => array(
+                                'param' => 'is_project_download',
+                                'name' => t('Downloads'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+        'members' => array(
+                        'is_members' => array(
+                                'param' => 'is_members',
+                                'name' => t('Members'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+        'node_downloads' => array(
+                        'is_node_downloads' => array(
+                                'param' => 'is_node_downloads',
+                                'name' => t('Downloads'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+        'assets' => array(
+                        'is_assets' => array(
+                                'param' => 'is_assets',
+                                'name' => t('Assets'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+        'kudos' => array(
+                        'is_kudos' => array(
+                                'param' => 'is_kudos',
+                                'name' => t('Kudos'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+        'rating' => array(
+                        'is_rating' => array(
+                                'param' => 'is_rating',
+                                'name' => t('Rating'),
+                                'sort' => 'desc' 
+                            )
+                    ),
+        'author' => array(
+                        'sort_name' => array(
+                                'param' => 'sort_name',
+                                'name' => t('Author'),
+                                'sort' => 'asc' 
+                            )
+                    )
+    );
+    //Default solr search page
+    if('search' == arg(0) and 'apachesolr_search' == arg(1)){
+        $sort_types = array('relevant','hits', 'default' ,'author','date');//Available sorts for this page
+        $sort_default = 'relevant';//Default search, used in case no sort is pased to the search
+    }else{
+        $page_config = _isa_apachesolr_this_page_config();
+        if(FALSE !== $page_config){
+            $sort_types = $page_config['sort_types'];
+            $sort_default = $page_config['default_sort'];
+        }else{
+            return;
+        }
+    }
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+    //Sort selected sort_types by sort configuration
+    $ordered_sort_types = array();
+    foreach($sort_array as $key => $value){
+        if(in_array($key, $sort_types)){
+            $ordered_sort_types[] = $key;
+        }
+    }
+    $sort_types = $ordered_sort_types;
+    //Get the current sort params
+    $params = $_GET;
+    if( "" != $_GET['solrsort'] ){
+        $current = preg_split('/ +/u',$_GET['solrsort'], NULL, PREG_SPLIT_NO_EMPTY);
+    }elseif($_POST['solrsort'] ){
+        $current = preg_split('/ +/u',$_POST['solrsort'], NULL, PREG_SPLIT_NO_EMPTY);
+    } else{
+        $tem_sort_array = $sort_array;
+        $current_sort = array_pop($tem_sort_array[$sort_default]);
+        $current = array($current_sort['param'],$current_sort['sort']);
+    }
+    //Recurse the array and configure it with the current order
+    $change_values = function(&$val,$key='') use (&$change_values,$current){
+        foreach($val as $array_key => $value){
+            if(is_array($value)){
+                if($current[0] == $array_key){
+                    $val[$array_key]['sort'] = $current[1];
+                }
+                $change_values($val[$array_key],$array_key);
+            }
+        }
+    };
+    $change_values($sort_array);
+    //Set sort options from configuration
+    $sort_types_config = array();
+    array_walk($sort_types, function($val) use(&$sort_types_config,$sort_array){
+        $sort_types_config[$val] = $sort_array[$val];
+    });
+    return theme('isa_apachesolr_toolbox',  $sort_types_config, $sort_default , $params, $current);
+}
+/**
+ * Returns the urls configured to use solr search with their configuration
+ *
+ * @param string $url
+ *
+ * @return array
+ */
+function _isa_apachesolr_config($url = FALSE){
+    $config = array(
+            "community/all" => array(
+                                'title' => t('Find Communities'),//Page title
+                                'form_callback' => '',//Additional form params for search
+                                'facet_node_types' => array('community'),//Facets to use in search
+                                'node_types' => array('community'),//Node types to use in index
+                                'sort_types' => array('default','members','rating','update_date'),//Sort options
+                                'default_sort' => 'default',//Field to order when no sort criteria is set
+                                'additional_filters' => array('wellcome_community'),//Fixed additional filters for this path
+                                'advanced_search_link' => TRUE//Show advanced search link in search form
+                            ),
+            "community/mine" => array(
+                                'title' => t('My Communities'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('community'),
+                                'node_types' => array('community'),
+                                'sort_types' => array('default','members','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('og_member','wellcome_community')
+                            ),
+            "community/recommended" => array(
+                                'title' => t('Find Recommended Communities'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('community'),
+                                'node_types' => array('community'),
+                                'sort_types' => array('default','members','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('recommended','wellcome_community')
+                            ),
+            "community/editor" => array(
+                                'title' => t("Editor's Choice"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('community'),
+                                'node_types' => array('community'),
+                                'sort_types' => array('default','members','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('editor','wellcome_community')
+                            ),
+            "catalogue/all" => array(
+                                'title' => t("Semantic Assets"),
+                                'form_callback' => '_isa_apachesolr_asset_fields',
+                                'facet_node_types' => array('asset_release'),
+                                'node_types' => array('asset_release'),
+                                'sort_types' => array('default','rating','update_date','node_downloads'),
+                                //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+                                //Default sort by date
+                                'default_sort' => 'update_date',
+                                'additional_filters' => array('workflow_status'),
+                                'advanced_search_link' => TRUE
+                            ),
+            "catalogue/repository" => array(
+                                'title' => t("Federated Reposotories"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('repository'),
+                                'node_types' => array('repository'),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+        //Default sort by creation date
+                                'sort_types' => array('default','assets','rating','creation_date'),
+                                'default_sort' => 'creation_date',
+                                'additional_filters' => array('assets'),
+                                'advanced_search_link' => TRUE
+                            ),
+            "asset/all" => array(
+                                'title' => t("Find and Reuse Semantic Assets"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_asset'),
+                                'node_types' => array('project_project'),
+                                'sort_types' => array('default','project_downloads','rating','update_date'),
+                                'default_sort' => 'project_downloads',
+                                'additional_filters' => array('asset_project','wellcome_asset'),
+                                //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-850
+                                //Include advanced search linkt to asset project search
+                                'advanced_search_link' => TRUE
+                            ),
+            "asset/recommended" => array(
+                                'title' => t("Find recommended Semantic Assets"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_asset'),
+                                'node_types' => array('project_project'),
+                                'sort_types' => array('default','project_downloads','rating','update_date'),
+                                'default_sort' => 'project_downloads',
+                                'additional_filters' => array('recommended','asset_project','wellcome_asset')
+                            ),
+            "asset/i_use" => array(
+                                'title' => t("Assets I Use"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_asset'),
+                                'node_types' => array('project_project'),
+                                'sort_types' => array('default','project_downloads','rating','update_date'),
+                                'default_sort' => 'project_downloads',
+                                'additional_filters' => array('i_use','asset_project','wellcome_asset')
+                            ),
+            "asset/editor" => array(
+                                'title' => t("Editor's Choice"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_asset'),
+                                'node_types' => array('project_project'),
+                                'sort_types' => array('default','project_downloads','rating','update_date'),
+                                'default_sort' => 'project_downloads',
+                                'additional_filters' => array('editor','asset_project','wellcome_asset')
+                            ),
+            "software/all" => array(
+                                'title' => t("Find Software"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_software','federated_project'),
+                                'node_types' => array('project_project','federated_project'),
+                                'sort_types' => array('default','project_downloads','members','rating','update_date'),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+        //Default sort by date
+                                'default_sort' => 'update_date',
+                                'additional_filters' => array('software_project','wellcome_software'),
+                                'advanced_search_link' => TRUE
+                            ),
+            "software/my_oss" => array(
+                                'title' => t("My OSS Projects"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_software','federated_project'),
+                                'node_types' => array('project_project','federated_project'),
+                                'sort_types' => array('default','members','project_downloads','rating','update_date'),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+        //Default sort by date
+                                'default_sort' => 'update_date',
+                                'additional_filters' => array('og_member','software_project','wellcome_software')
+                            ),
+            "software/i_use" => array(
+                                'title' => t("Software i use"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_software','federated_project'),
+                                'node_types' => array('project_project','federated_project'),
+                                'sort_types' => array('default','members','project_downloads','rating','update_date'),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+        //Default sort by date
+                                'default_sort' => 'update_date',
+                                'additional_filters' => array('i_use','software_project','wellcome_software')
+                            ),
+            "software/recommended" => array(
+                                'title' => t("Find recommended Software"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_software','federated_project'),
+                                'node_types' => array('project_project','federated_project'),
+                                'sort_types' => array('default','members','project_downloads','rating','update_date'),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+        //Default sort by date
+                                'default_sort' => 'update_date',
+                                'additional_filters' => array('recommended','software_project','wellcome_software')
+                            ),
+            "software/editor" => array(
+                                'title' => t("Editor's choice"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_software','federated_project'),
+                                'node_types' => array('project_project','federated_project'),
+                                'sort_types' => array('default','members','project_downloads','rating','update_date'),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+        //Default sort by date
+                                'default_sort' => 'update_date',
+                                'additional_filters' => array('editor','software_project','wellcome_software')
+                            ),
+            "news/all" => array(
+                                'title' => t("Find news"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('blog', 'news'),
+                                'node_types' => array('blog', 'news'),
+                                'sort_types' => array('default','rating','creation_date'),
+                                'default_sort' => 'creation_date',
+                                'additional_filters' => array('og_ancestry_joinup','global'),
+                                'advanced_search_link' => TRUE
+                            ),
+            "news/blog" => array(
+                                'title' => t("Find News"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('blog'),
+                                'node_types' => array('blog'),
+                                'sort_types' => array('default','rating','creation_date'),
+                                'default_sort' => 'creation_date',
+                                'additional_filters' => array(),
+                                'advanced_search_link' => TRUE
+                            ),
+            "news/recommended" => array(    
+                                'title' => t("Find Recommended News"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('blog', 'news'),
+                                'node_types' => array('blog', 'news'),
+                                'sort_types' => array('default','rating','creation_date'),
+                                'default_sort' => 'creation_date',
+                                'additional_filters' => array('recommended')
+                            ),
+            "news/editor" => array(
+                                'title' => t("Latest Editor's Choice"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('blog', 'news'),
+                                'node_types' => array('blog', 'news'),
+                                'sort_types' => array('default','rating','creation_date'),
+                                'default_sort' => 'creation_date',
+                                'additional_filters' => array('editor')
+                            ),
+            "news/newsletter" => array(
+                                'title' => t("Newsletters Archived"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('newsletter'),
+                                'node_types' => array('newsletter'),
+                                'sort_types' => array('default','rating','creation_date'),
+                                'default_sort' => 'creation_date',
+                                'additional_filters' => array(),
+                                'advanced_search_link' => TRUE
+                            ),
+            "event/all" => array(
+                                'title' => t("Find Events"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('event'),
+                                'node_types' => array('event'),
+                                'sort_types' => array('default','rating','event_date_prox'),
+                                'default_sort' => 'event_date_prox',
+                                'additional_filters' => array('event_date_from','global'),
+                                'advanced_search_link' => TRUE
+                            ),
+            "event/archives" => array(
+                                'title' => t("Find Archived Events"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('event'),
+                                'node_types' => array('event'),
+                                'sort_types' => array('default','rating','event_date'),
+                                'default_sort' => 'event_date',
+                                'additional_filters' => array('event_date_up_to','global'),
+                                'advanced_search_link' => TRUE
+                            ),
+            "event/recommended" => array(
+                                'title' => t("Find Recommended Events"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('event'),
+                                'node_types' => array('event'),
+                                'sort_types' => array('default','rating','event_date'),
+                                'default_sort' => 'event_date',
+                                'additional_filters' => array('recommended')
+                            ),
+            "event/editor" => array(
+                                'title' => t("Editor's Choice Events"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('event'),
+                                'node_types' => array('event'),
+                                'sort_types' => array('default','rating','event_date'),
+                                'default_sort' => 'event_date',
+                                'additional_filters' => array('editor')
+                            ),
+            "elibrary/all" => array(
+                                'title' => t("Find e-Library items"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
+                                //Allow date order in elibrary
+                                'node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                'sort_types' => array('default','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('global'),
+                                'advanced_search_link' => TRUE
+                            ),
+            "elibrary/case" => array(
+                                'title' => t("Find cases"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('case'),
+                                'node_types' => array('case'),
+                                'sort_types' => array('default','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('global'),
+                                'advanced_search_link' => TRUE
+                            ),
+            "elibrary/presentation" => array(
+                                'title' => t("Find Presentation"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('presentation'),
+                                'node_types' => array('presentation'),
+                                'sort_types' => array('default','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('global'),
+                                'advanced_search_link' => TRUE
+                            ),
+            "elibrary/factsheet" => array(
+                                'title' => t("Find Factsheet"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('factsheet'),
+                                'node_types' => array('factsheet'),
+                                'sort_types' => array('default','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array(),
+                                'advanced_search_link' => TRUE
+                            ),
+            "elibrary/video" => array(
+                                'title' => t("Find Web TV shows"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('video'),
+                                'node_types' => array('video'),
+                                'sort_types' => array('default','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array(),
+                                'advanced_search_link' => TRUE
+                            ),
+            "elibrary/document" => array(
+                                'title' => t("Find documents"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('document'),
+                                'node_types' => array('document'),
+                                'sort_types' => array('default','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('global'),
+                                'advanced_search_link' => TRUE
+                            ),
+            "elibrary/recommended" => array(
+                                'title' => t("Find Recommended Items"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                'node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                'sort_types' => array('default','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('recommended')
+                            ),
+            "elibrary/editor" => array(
+                                'title' => t("Find editor's choice items"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                'node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                'sort_types' => array('default','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('editor')
+                            ),
+            "people/all" => array(
+                                'title' => t("Find registered users"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('profile'),
+                                'node_types' => array('profile'),
+                                'sort_types' => array('name','kudos','rating','update_date'),
+                                'default_sort' => 'name',
+                                'additional_filters' => array(),
+                                'advanced_search_link' => TRUE
+                            ),
+            "people/moderators" => array(
+                                'title' => t("Find Registered Moderators"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('profile'),
+                                'node_types' => array('profile'),
+                                'sort_types' => array('name','kudos','rating','update_date'),
+                                'default_sort' => 'name',
+                                'additional_filters' => array('moderator')
+                            ),
+            "people/recommended" => array(
+                                'title' => t("Find Recommended People"),
+                                'form_callback' => '',
+                                'facet_node_types' => array('profile'),
+                                'node_types' => array('profile'),
+                                'sort_types' => array('name','kudos','rating','update_date'),
+                                'default_sort' => 'name',
+                                'additional_filters' => array('recommended')
+                            ),
+            //If we use a placeholder in the url it must be in second position
+            "federated_forge/%views_arg/ahah_search" => array(
+                                'title' => t('Associated Projects'),
+                                'form_callback' => '_isa_apachesolr_federated_project_fields',
+                                'facet_node_types' => array('federated_project'),
+                                'node_types' => array('federated_project'),
+                                'sort_types' => array('default','update_date','rating'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('workflow_status','federated_forge_parent'),
+                                'ahah_page' => TRUE,
+                                'wrapper-id' => 'federated-projects-results'
+,                               'advanced_search_link' => TRUE
+                            ),
+            "software/%views_arg/highlights/asset/all" => array(
+                                'title' => t('Highlighted Assets'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_asset'),
+                                'node_types' => array('project_project'),
+                                'sort_types' => array('default','project_downloads','rating','update_date'),
+                                'default_sort' => 'project_downloads',
+                                'additional_filters' => array('software_project','wellcome_software','highlight')
+                            ),
+            "software/%views_arg/highlights/software/all" => array(
+                                'title' => t('Highlighted Software'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_software','federated_project'),
+                                'node_types' => array('project_project','federated_project'),
+                                'sort_types' => array('default','members','project_downloads','rating','update_date'),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+        //Default sort by date
+                                'default_sort' => 'update_date',
+                                'additional_filters' => array('software_project','wellcome_software','highlight')
+                            ),
+            "software/%views_arg/highlights/community/all" => array(
+                                'title' => t('Highlighted Communities'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('community'),
+                                'node_types' => array('community'),
+                                'sort_types' => array('default','members','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('wellcome_community','highlight')
+                            ),
+            "software/%views_arg/event/all" => array(
+                                'title' => t('Upcoming Events'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('event'),
+                                'node_types' => array('event'),
+                                'sort_types' => array('default','rating','event_date'),
+                                'default_sort' => 'event_date',
+                                'additional_filters' => array('og_ancestry')
+                            ),
+            "software/%views_arg/newsandblog/all" => array(
+                                'title' => t('Latest News'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('blog', 'news'),
+                                'node_types' => array('blog', 'news'),
+                                'sort_types' => array('default','rating','creation_date'),
+                                'default_sort' => 'creation_date',
+                                'additional_filters' => array('og_ancestry')
+                            ),
+            "software/%views_arg/elibrary/all" => array(
+                                'title' => t('Latest e-Library Items'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                'node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                'sort_types' => array('default','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('og_ancestry', 'highlight')
+                            ),
+            "community/%views_arg/highlights/asset/all" => array(
+                                'title' => t('Highlighted Assets'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_asset'),
+                                'node_types' => array('project_project'),
+                                'sort_types' => array('default','project_downloads','rating','update_date'),
+                                'default_sort' => 'project_downloads',
+                                'additional_filters' => array('software_project','wellcome_software','highlight')
+                            ),
+            "community/%views_arg/highlights/software/all" => array(
+                                'title' => t('Highlighted Software'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_software','federated_project'),
+                                'node_types' => array('project_project','federated_project'),
+                                'sort_types' => array('default','members','project_downloads','rating','update_date'),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+        //Default sort by date
+                                'default_sort' => 'update_date',
+                                'additional_filters' => array('software_project','wellcome_software','highlight')
+                            ),
+            "community/%views_arg/highlights/community/all" => array(
+                                'title' => t('Highlighted Communities'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('community'),
+                                'node_types' => array('community'),
+                                'sort_types' => array('default','members','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('wellcome_community','highlight')
+                            ),
+            "community/%views_arg/newsandblog/all" => array(
+                                'title' => t('Latest News'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('blog', 'news'),
+                                'node_types' => array('blog', 'news'),
+                                'sort_types' => array('default','rating','og_ancestry','creation_date'),
+                                'default_sort' => 'creation_date',
+                                'additional_filters' => array('og_ancestry')
+                            ),
+            "community/%views_arg/event/all" => array(
+                                'title' => t('Upcoming Events'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('event'),
+                                'node_types' => array('event'),
+                                'sort_types' => array('default','rating','event_date'),
+                                'default_sort' => 'event_date',
+                                'additional_filters' => array('og_ancestry')
+                            ),
+            "community/%views_arg/elibrary/all" => array(
+                                'title' => t('Latest e-Library Items'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                'node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                'sort_types' => array('default','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('og_ancestry', 'highlight')
+                            ),
+            "asset/%views_arg/asset_release/all" => array(
+                                'title' => t("Semantic Assets"),
+                                'form_callback' => '_isa_apachesolr_asset_fields',
+                                'facet_node_types' => array('asset_release'),
+                                'node_types' => array('asset_release'),
+                                'sort_types' => array('default','rating','update_date','node_downloads'),
+                                'default_sort' => 'title',
+                                'additional_filters' => array('workflow_status','og_ancestry')
+                             ),
+            "asset/%views_arg/highlights/asset/all" => array(
+                                'title' => t('Highlighted Assets'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_asset'),
+                                'node_types' => array('project_project'),
+                                'sort_types' => array('default','project_downloads','rating','update_date'),
+                                'default_sort' => 'project_downloads',
+                                'additional_filters' => array('software_project','wellcome_software','highlight')
+                            ),
+            "asset/%views_arg/highlights/software/all" => array(
+                                'title' => t('Highlighted Software'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('project_project_software','federated_project'),
+                                'node_types' => array('project_project','federated_project'),
+                                'sort_types' => array('default','members','project_downloads','rating','update_date'),
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+        //Default sort by date
+                                'default_sort' => 'update_date',
+                                'additional_filters' => array('software_project','wellcome_software','highlight')
+                            ),
+            "asset/%views_arg/highlights/community/all" => array(
+                                'title' => t('Highlighted Communities'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('community'),
+                                'node_types' => array('community'),
+                                'sort_types' => array('default','members','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('wellcome_community','highlight')
+                            ),
+            "asset/%views_arg/newsandblog/all" => array(
+                                'title' => t('Latest News'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('blog', 'news'),
+                                'node_types' => array('blog', 'news'),
+                                'sort_types' => array('default','rating','creation_date'),
+                                'default_sort' => 'creation_date',
+                                'additional_filters' => array('og_ancestry')
+                            ),
+            "asset/%views_arg/event/all" => array(
+                                'title' => t('Upcoming Events'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('event'),
+                                'node_types' => array('event'),
+                                'sort_types' => array('default','rating','event_date'),
+                                'default_sort' => 'event_date',
+                                'additional_filters' => array('og_ancestry')
+                            ),
+            "asset/%views_arg/elibrary/all" => array(
+                                'title' => t('Latest e-Library Items'),
+                                'form_callback' => '',
+                                'facet_node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                'node_types' => array('case','document','factsheet','presentation','video','wiki'),
+                                'sort_types' => array('default','rating','update_date'),
+                                'default_sort' => 'default',
+                                'additional_filters' => array('og_ancestry', 'highlight')
+                            ),
+        );
+    return FALSE === $url ? $config : (isset($config[$url]) ? $config[$url] : FALSE);
+}

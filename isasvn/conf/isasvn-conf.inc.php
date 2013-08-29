@@ -1,7 +1,8 @@
 <?php
+
 /*
 	Common configuration for ISA/SVN scripts.
-*/
+ */
 
 // adjust include path - we expect the "isacommon" directory to be a sibling of isaweb/
 set_include_path(get_include_path() . PATH_SEPARATOR . dirname(__FILE__) . '/../../isacommon');
@@ -9,16 +10,16 @@ set_include_path(get_include_path() . PATH_SEPARATOR . dirname(__FILE__) . '/../
 // The local server is a MySQL database located on the current machine
 // It does not contain anything but a cache table used to check whether a given
 // user/password couple is valid or not.
-define('LOCAL_SERVER',      '127.0.0.1');
-define('LOCAL_DB_USERNAME', 'svnservice');
-define('LOCAL_DB_PASSWORD', 'change me');
-define('LOCAL_DB_NAME',     'isasvn');
+define('LOCAL_SERVER', 'localhost');
+define('LOCAL_DB_USERNAME', 'isa_svn');
+define('LOCAL_DB_PASSWORD', 'isa_svn');
+define('LOCAL_DB_NAME', 'isa_svn');
 
 // The ISA server is the MySQL database of the ISA Drupal application.
-define('ISA_SERVER',        'isadrupalserver');
-define('ISA_DB_USERNAME',   'isa');
-define('ISA_DB_PASSWORD',   'change me');
-define('ISA_DB_NAME',       'isa');
+define('ISA_SERVER', 'localhost');
+define('ISA_DB_USERNAME', 'isa_web');
+define('ISA_DB_PASSWORD', 'isa_web');
+define('ISA_DB_NAME', 'isa_web');
 
 // This directory will host lock files
 define('LOCK_DIR', '/tmp');
@@ -38,7 +39,8 @@ define('ML_DOMAIN', 'joinup.ec.europa.eu');
 // command to run in order to send a mail describing a commit
 // available placeholders: @username, @repos_path, @repos_shortname,
 // @ message, @revision, @date
-define('MAIL_COMMAND', dirname(__FILE__) . '/../bin/commit-email.pl @repos_path @revision --from svn-commits@joinup.ec.europa.eu -r @commit_address @commit_address');
+define('MAIL_COMMAND',
+  dirname(__FILE__) . '/../bin/commit-email.pl @repos_path @revision --from svn-commits@joinup.ec.europa.eu -r @commit_address @commit_address');
 
 // Parent directory for all Subversion repositories
 // Note the directory must exist and be writable.
@@ -51,11 +53,16 @@ define('SVN_SKELETON_COMMIT_AUTHOR',  'ISA Subversion service');
 
 // This prefix will be stripped from the received URI when authenticating a user.
 // the service is given through the AuthExternalContext Apache directive
-$service = ($_ENV['CONTEXT'] == 'subversion') ? 'svn' : 'webdav';
+$service = getenv('CONTEXT') == 'subversion' ? 'svn' : 'webdav';
+//$service = isset($_ENV['CONTEXT']) && ($_ENV['CONTEXT'] == 'subversion') ? 'svn' : 'webdav';
 //Allows to use different permissions
-define('AUTH_CONTEXT', $service);
+//define('AUTH_CONTEXT', $service);
+// This value indicate the time in second in which the cache is available in the local database
+define('AUTH_CACHE_LIFETIME', 600);
 
-if (preg_match("/^(\/(?:isa|joinup)-$service)/", getenv('URI'), $matches)) {
+if (preg_match("#^/((isa|joinup)?-?$service)/.*#", getenv('URI'), $matches)) {
 	$prefix = $matches[1];
-	define('SVN_URI_PREFIX', $prefix);
+  define('URI_PREFIX', $prefix);
+} else {
+  define('URI_PREFIX', 'svn');
 }

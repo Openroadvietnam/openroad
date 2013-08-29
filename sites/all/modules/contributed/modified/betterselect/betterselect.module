@@ -161,18 +161,14 @@ function betterselect_process($element, $edit, $form_state, $complete_form) {
       $prev = NULL;
       $prev_depth = 0;
       $open_ul =0;
-	  
+
       foreach (element_children($element) as $key) {
         $title = $element[$key]['#title'];
         $trim_title = ltrim($title, '-');
         // SGS: remove /2
-        $depth = (strlen($title) - strlen($trim_title));// / 2;		
-        if ($prev !== NULL && $depth > 0) {
-          $element[$key]['#prefix'] = "<div class='betterselect-checkbox-li'>\n";
-        }
-        else {
-          $element[$key]['#prefix'] = "<div class='betterselect-checkbox'>\n";
-        }
+        $depth = (strlen($title) - strlen($trim_title));// / 2;
+
+        $element[$key]['#prefix'] = "<div class='li'>\n";
         $element[$key]['#suffix'] = "</div>\n";
         $element[$key]['#attributes']['class'] = "betterselect";
 
@@ -184,19 +180,16 @@ function betterselect_process($element, $edit, $form_state, $complete_form) {
           if ($depth > $prev_depth) {
             // Gone down a level, so previous must get 'has-children' class
             $prev['#prefix'] = str_replace("file", "folder", $prev['#prefix']);
-            $prev['#suffix'] = "<div>\n";
+            $prev['#suffix'] = "<div class='ul'>\n";
             $open_ul++;
           }
 
           // checks whether a previously opened ul should be closed or not
           else if($depth < $prev_depth && $open_ul > 0) {
               // we went up one level, so we close the previously opened ul
-              $element[$key]['#prefix'] = str_repeat("</div>\n</div>\n", $prev_depth - $depth) . "<div class='betterselect-checkbox-ul'>\n";
+              $element[$key]['#prefix'] = str_repeat("</div>\n</div>\n", $prev_depth - $depth) . $element[$key]['#prefix'];
               $open_ul-= $prev_depth - $depth;
-          } 
-        }
-        else {
-          $element[$key]['#prefix'] = "<div class='betterselect-checkbox'>\n";
+          }
         }
 
         $prev = &$element[$key];
@@ -208,7 +201,7 @@ function betterselect_process($element, $edit, $form_state, $complete_form) {
     if($open_ul > 0) {
         $prev['#suffix'] .=  str_repeat('</div></div>', $open_ul);
     }
-    
+
 
     // Add the necessary prefix/suffix to make JS/CSS work.
     $size   = isset($element['#size']) ? $element['#size'] : 10;
@@ -216,7 +209,7 @@ function betterselect_process($element, $edit, $form_state, $complete_form) {
     $suffix = isset($element['#suffix']) ? $element['#suffix'] : '';
     $fixheight = count($element['#options']) > $size ? ' betterfixed' : '';
     $id = 'better-select-' . $element['#id'];
-    $element['#prefix'] = '<div id="' . $id . '" class="better-select' . $fixheight . '">' . $prefix . '<div class="treeview-default">';
+    $element['#prefix'] = '<div id="' . $id . '" class="better-select' . $fixheight . '">' . $prefix . '<div class="treeview-default ul">';
     $element['#suffix'] = '</div>' . $suffix . '</div>';
   }
   return $element;

@@ -3,6 +3,7 @@
 /**
  * Auto-attach standard client side file input validation.
  */
+ 
 Drupal.behaviors.filefieldValidateAutoAttach = function(context) {
   $("input[type=file]").next().attr('disabled', 'true');
   $("input[type=file]", context).bind('change', Drupal.filefield.validateExtensions);
@@ -30,7 +31,7 @@ Drupal.behaviors.filefieldPreviewLinks = function(context) {
 Drupal.behaviors.filefieldAdmin = function(context) {
   var $listField = $('div.filefield-list-field', context);
   if ($listField.size()) {
-    $listField.find('input').change(function() {
+    $listField.find('input').change(function() {	
       if (this.checked) {
         if (this.value == 0) {
           $('#edit-list-default-wrapper').css('display', 'none');
@@ -39,8 +40,79 @@ Drupal.behaviors.filefieldAdmin = function(context) {
           $('#edit-list-default-wrapper').css('display', 'block');
         }
       }
-    }).change();
+    }).change();	
   }
+	//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-658
+	//Changed the form. Choice between url or file
+	var distribution = Array();
+	var documentation = Array();
+	$("#edit-field-distribution-access-url1-0-url-wrapper label").hide();
+    $("#edit-field-distribution-access-url-0-upload1-wrapper label").hide();
+	$("#edit-field-documentation-access-url1-0-url-wrapper label").hide();
+    $("#edit-field-documentation-access-url-0-upload1-wrapper label").hide();
+	if ($("#edit-field-distribution-access-url-0-fid").val() > 0) {		
+		$("#edit-field-distribution-access-url-0-upload1-wrapper").show();
+		$("#edit-field-distribution-access-url1-0-url-wrapper").hide();	
+		distribution[0] = 'checked';
+		distribution[1] = '';
+	} else {
+		$("#edit-field-distribution-access-url-0-upload1-wrapper").hide();
+		$("#edit-field-distribution-access-url1-0-url-wrapper").show();		
+		distribution[0] = '';
+		distribution[1] = 'checked';
+	}
+	
+	if ($("#edit-field-documentation-access-url-0-fid").val() > 0) {			
+		$("#edit-field-documentation-access-url-0-upload1-wrapper").show();
+		$("#edit-field-documentation-access-url1-0-url-wrapper").hide();
+		documentation[0] = 'checked';
+		documentation[1] = '';
+	} else {	
+		$("#edit-field-documentation-access-url-0-upload1-wrapper").hide();
+		$("#edit-field-documentation-access-url1-0-url-wrapper").show();
+		documentation[0] = '';
+		documentation[1] = 'checked';
+	}
+
+	if (!$("#url_file_selector_dist input[type=radio][name=group1_dist]").val()) {		
+		var radio_selector_dist = "<div id='url_file_selector_dist' class='form-item'><label   >Access URL or file <span class='form-required' title='This field is required.'>*</span></label> <br /><input type='radio' name='group1_dist' value='url' id='url_group1_dist_url' " + distribution[1] + "> Url<br><input type='radio' name='group1_dist' value='file' id='url_group1_dist_file' " + distribution[0] + "> File<br></div> ";    
+		$("#edit-field-distribution-access-url1-0-url-wrapper").before(radio_selector_dist);  	
+	}
+	
+	if (!$("#url_file_selector_doc input[type=radio][name=group1_doc]").val() ){		
+		var radio_selector_doc = "<div id='url_file_selector_doc' class='form-item'><label   >Access URL or file <span class='form-required' title='This field is required.'>*</span></label> <br /><input type='radio' name='group1_doc' value='url' id='url_group1_doc_url' " + documentation[1] + "> Url<br><input type='radio' name='group1_doc' value='file' id='url_group1_doc_file' " + documentation[0] + "> File<br></div> ";       
+		$("#edit-field-documentation-access-url1-0-url-wrapper").before(radio_selector_doc);  	        
+	}
+	
+   //display 2 check box to chose url or fileupload   
+    $("#url_file_selector_dist input[type=radio][name=group1_dist]").click(
+        function(){
+            if(this.value=="file")	
+            {
+                $("#edit-field-distribution-access-url-0-upload1-wrapper").show();
+                $("#edit-field-distribution-access-url1-0-url-wrapper").hide();				
+            }
+            else if (this.value=="url")
+            {
+                $("#edit-field-distribution-access-url-0-upload1-wrapper").hide();
+                $("#edit-field-distribution-access-url1-0-url-wrapper").show();				
+            }   
+        });    
+		
+	//display 2 check box to chose url or fileupload
+	$("#url_file_selector_doc input[type=radio][name=group1_doc]").click(
+        function(){
+            if(this.value=="file")	
+            {              
+				$("#edit-field-documentation-access-url-0-upload1-wrapper").show();
+                $("#edit-field-documentation-access-url1-0-url-wrapper").hide();
+            }
+            else if (this.value=="url")
+            {                
+				$("#edit-field-documentation-access-url-0-upload1-wrapper").hide();
+                $("#edit-field-documentation-access-url1-0-url-wrapper").show();
+            }   
+        });    
 };
 
 /**
@@ -51,7 +123,6 @@ Drupal.filefield = {
   validateExtensions: function(event) {
     // Remove any previous errors.
     $('.file-upload-js-error').remove();
-
     var fieldName = this.name.replace(/^files\[([a-z0-9_]+)_\d+\]$/, '$1');
     var extensions = '';
     if (Drupal.settings.filefield && Drupal.settings.filefield[fieldName]) {
@@ -81,7 +152,7 @@ Drupal.filefield = {
 
     // Check if we're working with an "Upload" button.
     var $enabledFields = [];
-    if ($(this).parents('div.filefield-element').size() > 0) {
+    if ($(this).parents('div.filefield-element').size() > 0) {	
       $enabledFields = $(this).parents('div.filefield-element').find('input.form-file');
     }
     // Otherwise we're probably dealing with CCK's "Add another item" button.
@@ -100,7 +171,8 @@ Drupal.filefield = {
     // has a 1 millisecond timeout.
     setTimeout(function(){
       $disabledFields.attr('disabled', '');
-    }, 1000);
+    }, 1000);	
+	
   },
   progressBar: function(event) {
     var clickedButton = this;

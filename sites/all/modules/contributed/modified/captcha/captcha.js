@@ -23,9 +23,10 @@ $(document).ready(function(){
 
 });
 
-Drupal.behaviors.captcha = {
-  attach: function (context) {
+//CSR Modify the context attachment : javascript error on registration page
+Drupal.behaviors.captcha =  function(context) {
+//  attach: function (context) {
   // Turn off autocompletion for the CAPTCHA response field
   $("#edit-captcha-response").attr("autocomplete", "off");
-  }
+  //}
 };

@@ -65,20 +65,14 @@
 			<h2><?php print $title ?></h2>
 		</div>
 		<div class="field field-content-body"><?php print $node->content['body']['#value']; ?></div>
-		<?php if (isset($documents)): ?>
+		<?php if (isset($field_factsheet_upload_files_rendered)): ?>
 			<div class="field field-documentation">
-				<h3><?php print t('Documentation'); ?></h3>
-				<ul>
-					<?php foreach ($documents as $key => $value): ?>
-						<?php if ($value): ?>
-							<li><?php print $value; ?></li>
-						<?php endif; ?>
-					<?php endforeach; ?>
-				</ul>
+				<h3 class="page-subtitle-content"><?php print t('Documentation'); ?></h3>
+                <?php print $field_factsheet_upload_files_rendered; ?>
 			</div>
 		<?php endif; ?>
 		<div id="node-information" class="box information">
-			<h3 class="accessibility-info"><?php print t('Information'); ?></h3>
+			<h3 class="page-subtitle-content"><?php print t('Information'); ?></h3>
 			<div class="odd nodes-row-first nodes-row-last clearfix">
 				<dl class="colspans-2-5 push-1 last fields">
 					<?php foreach ($taxonomy_terms as $vocab => $terms): ?>

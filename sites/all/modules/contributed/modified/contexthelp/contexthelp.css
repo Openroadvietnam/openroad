@@ -1,7 +1,9 @@
 /* $id */
 
+/*https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-482*/
+/*Changed overflow*/
 html.modal, .modal html,   body.modal, .modal body {
-  overflow: hidden; }
+  overflow: auto; }
 
 #contextual-help-toggle {
   font-size: 12px;
@@ -20,24 +22,25 @@ html.modal, .modal html,   body.modal, .modal body {
 .gecko #contextual-help-toggle {
   padding-bottom: 1px; }
 
+  /*https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-482*/
+  /*Changed Align to right and overflow*/
 #contextual-help-dialog {
-  border-radius: 5px;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
-  display: none;
-  position: fixed;
-  top: 5%;
-  left: 50%;
-  margin-left: -430px;
-  width: 800px;
-  height: 80%;
-  background-color: #fff;
-  color: #333;
-  border: 10px solid #ccc;
-  padding: 50px 10px 10px 10px; }
+      background-color: #FFFFFF;
+    border: 10px solid #CCCCCC;
+    border-radius: 5px 5px 5px 5px;
+    color: #333333;
+    display: inline;
+    height: 400px;
+    padding: 50px 10px 10px;
+    top: 5%;
+    width: 400px;
+    position: absolute;
+    right: 0px;
+    overflow: hidden; }
   .ie6 #contextual-help-dialog {
     position: absolute;
-    top: expression((document.documentElement.scrollTop || document.body.scrollTop) + Math.round(5 * (document.documentElement.offsetHeight || document.body.clientHeight) / 100) + 'px'); }
+/*    top: expression((window.documentElement.scrollTop || window.body.scrollTop) + Math.round(5 * (window.documentElement.offsetHeight || window.body.clientHeight) / 100) + 'px'); */
+	}
   #contextual-help-dialog a#contextual-help-close {
     font-size: 12px;
     border-radius: 3px;
@@ -75,8 +78,8 @@ html.modal, .modal html,   body.modal, .modal body {
       height: 0;
       clear: both;
       visibility: hidden; }
-    .ie #contextual-help-dialog ul#contextual-help-tabs {
-      zoom: 1; }
+    /*.ie #contextual-help-dialog ul#contextual-help-tabs {
+      zoom: 1; }*/
     #contextual-help-dialog ul#contextual-help-tabs li {
       float: left; }
     #contextual-help-dialog ul#contextual-help-tabs li {
@@ -143,7 +146,7 @@ html.modal, .modal html,   body.modal, .modal body {
           background-color: #C2CEE0;
           background-position: 99% -43px; }
         .ie6 #contextual-help-dialog #contextual-help-content .item-list ul.ui-accordion li .views-field-title {
-          zoom: 1;
+          /*zoom: 1;*/
           background-image: url(../images/ie6/block-plusminus.png); }
       #contextual-help-dialog #contextual-help-content .item-list ul.ui-accordion li .views-field-body {
         display: block;
@@ -152,7 +155,7 @@ html.modal, .modal html,   body.modal, .modal body {
         border-top: none;
         background: none; }
         .ie6 #contextual-help-dialog #contextual-help-content .item-list ul.ui-accordion li .views-field-body {
-          zoom: 1; }
+          /*zoom: 1; */}
   #contextual-help-dialog .block {
     display: none; }
 

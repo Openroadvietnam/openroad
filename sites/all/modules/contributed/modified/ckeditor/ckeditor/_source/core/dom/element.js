@@ -1489,7 +1489,7 @@ CKEDITOR.tools.extend( CKEDITOR.dom.element.prototype,
 				}
 			}
 
-			return $ && new CKEDITOR.dom.document( $.contentWindow.document );
+			return $ && $.contentWindow && new CKEDITOR.dom.document( $.contentWindow.document );
 		},
 
 		/**
@@ -1589,6 +1589,15 @@ CKEDITOR.tools.extend( CKEDITOR.dom.element.prototype,
 		{
 			return this.$.childNodes.length;
  		},
+
+		/**
+		 *  Whether this element is not present in the DOM tree.
+		 */
+		isOffline : function()
+		{
+			var root = this.getDocument().getDocumentElement();
+			return !root.contains( this );
+		},
 
 		disableContextMenu : function()
 		{

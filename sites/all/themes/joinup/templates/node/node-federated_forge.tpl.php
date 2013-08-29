@@ -61,7 +61,7 @@
       <?php endif; ?>
     <div class="field field-submitted"><?php print $submitted; ?></div>
     <div class="field field-mission-description">
-      <h3><?php print t('Description'); ?></h3>
+      <h3 class="page-subtitle-content"><?php print t('Description'); ?></h3>
       <?php print $node->content['body']['#value']; ?>
     </div>
     <?php /* a block already display get involved
@@ -72,7 +72,7 @@
       </div>
           <?php endif; */?>
     <div id="node-information" class="box information">
-      <h3 class="accessibility-info"><?php print t('Information'); ?></h3>
+      <h3  class="page-subtitle-content"><?php print t('Information'); ?></h3>
       <div class="odd nodes-row-first nodes-row-last clearfix">
         <dl class="colspans-3-5 first last fields">
           <?php if ($field_forges_homepage['0']['view']): ?>
@@ -88,3 +88,5 @@
     </div>
   </div>
 </div>
+<?php echo drupal_get_form('_isa_apachesolr_search_form',   $node->path . "/ahah_search", _isa_apachesolr_this_page_config( $node->path . "/ahah_search" )) ?>
+<div id="federated-projects-results"></div>

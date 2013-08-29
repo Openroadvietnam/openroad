@@ -6,8 +6,6 @@
  * This is the main file for the isa_private_files module.
  * @ingroup isa_private_files
  */
-
-
 /**
  * Implement of hook_menu_alter().
  * Used here to set our own callbacks on system/files
@@ -58,7 +56,14 @@ function isa_private_files_transfer() {
             FROM {files} f
             INNER JOIN {project_release_file} prf on prf.fid = f.fid
             INNER JOIN {project_release_nodes} prn on prf.nid = prn.nid
-            WHERE f.filepath LIKE '%s'", $filepath_path));
+            WHERE f.filepath LIKE '%s'
+            UNION
+            SELECT field_distribution_access_url_fid, cfad.nid, oa.group_nid
+            FROM {content_type_distribution} ctd
+            INNER JOIN {content_field_asset_distribution} cfad ON cfad.field_asset_distribution_nid = ctd.nid
+            INNER JOIN {og_ancestry} oa ON oa.nid = cfad.nid
+            INNER JOIN {files} f ON f.fid = ctd.field_distribution_access_url_fid
+            WHERE f.filepath LIKE '%s'", $filepath_path, $filepath_path));
       //only save download statistics for project release (if nid is not null)
       if ($result->pid) {
         $project = node_load($result->pid);
@@ -74,7 +79,6 @@ function isa_private_files_transfer() {
     $file_object = new stdClass();
     $file_object->fid = $fileinfo->fid;
     $nids = filefield_get_file_references($file_object);
-
     if (!empty($nids)) {
       if (($node = node_load(key($nids)))) {
         if (!node_access('view', $node)) {
@@ -85,7 +89,6 @@ function isa_private_files_transfer() {
       }
     }
   }
-
   // we let everybody specify HTTP headers, but we do not take any '-1' (aka
   // 'deny') value into account. Also we call file_transfer even if no headers
   // were provided by modules.
@@ -125,27 +128,42 @@ function isa_private_files_save_statistics($filepath_path) {
   //$fid = db_result(db_query("SELECT fid FROM {files} WHERE filename='%s'",$filepath));
   global $user;
   if (is_string($filepath_path)) {
-    $result = db_fetch_object(db_query("
+    $query = db_query("
             SELECT f.fid , prn.nid , prn.pid
             FROM {files} f
-            LEFT JOIN {project_release_file} prf on prf.fid = f.fid
-            LEFT JOIN {project_release_nodes} prn on prf.nid = prn.nid
-            WHERE f.filepath LIKE '%s'", $filepath_path));
-    //only save download statistics for project release (if nid is not null)
-    if ($result->nid) {
-      $time = time();
-      $sql = "INSERT INTO {isa_download_statistics} (nid, pid, fid, uid, timestamp) VALUES(%d, %d, %d, %d, %d)";
-      db_query($sql, $result->nid, $result->pid, $result->fid, $user->uid, $time);
+            INNER JOIN {project_release_file} prf on prf.fid = f.fid
+            INNER JOIN {project_release_nodes} prn on prf.nid = prn.nid
+            WHERE f.filepath LIKE '%s'
+            UNION
+            SELECT field_distribution_access_url_fid, cfad.nid, oa.group_nid
+            FROM {content_type_distribution} ctd
+            INNER JOIN {content_field_asset_distribution} cfad ON cfad.field_asset_distribution_nid = ctd.nid
+            INNER JOIN {og_ancestry} oa ON oa.nid = cfad.nid
+            INNER JOIN {files} f ON f.fid = ctd.field_distribution_access_url_fid
+            WHERE f.filepath LIKE '%s'
+            ", $filepath_path, $filepath_path);
+    //only save download statistics for project release (software) and files distribution (asset)
+   //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-950
+   //Count the file downloads from asset_releases from project releases 
+   while ($result = db_fetch_object($query)) { 
+      if ($result->nid) {
+        $time = time();
+        $sql = "INSERT INTO {isa_download_statistics} (nid, pid, fid, uid, timestamp) VALUES(%d, %d, %d, %d, %d)";
+        db_query($sql, $result->nid, $result->pid, $result->fid, $user->uid, $time);
 
-      // update isa_download_statistics_count table
-      $result_count = db_fetch_object(db_query("SELECT count FROM {isa_download_statistics_count} WHERE nid = %d AND pid = %d AND fid = %d", $result->nid, $result->pid, $result->fid));
-      if ($result_count) {
-        $count = $result_count->count;
-        $count++;
-        db_query("UPDATE {isa_download_statistics_count} SET count = %d WHERE nid = %d AND pid = %d AND fid = %d", $count, $result->nid, $result->pid, $result->fid);
-      }
-      else {
-        db_query("INSERT INTO {isa_download_statistics_count} (nid, pid, fid, count) VALUES (%d, %d, %d, 1)", $result->nid, $result->pid, $result->fid);
+        // update isa_download_statistics_count table
+        $result_count = db_fetch_object(db_query("SELECT count FROM {isa_download_statistics_count} WHERE nid = %d AND pid = %d AND fid = %d", $result->nid, $result->pid, $result->fid));
+        if ($result_count) {
+          $count = $result_count->count;
+          $count++;
+          db_query("UPDATE {isa_download_statistics_count} SET count = %d WHERE nid = %d AND pid = %d AND fid = %d", $count, $result->nid, $result->pid, $result->fid);
+        }
+        else {
+          db_query("INSERT INTO {isa_download_statistics_count} (nid, pid, fid, count) VALUES (%d, %d, %d, 1)", $result->nid, $result->pid, $result->fid);
+        }
+        //Set project/node to reindex after download
+        apachesolr_nodeapi_update(node_load($result->pid));
+        apachesolr_nodeapi_update(node_load($result->nid));
       }
     }
   }
@@ -162,9 +180,8 @@ function isa_private_files_views_api() {
 }
 
 function isa_private_files_get_project_downloads_count($pid) {
-  $result = db_result(db_query("
-    SELECT COUNT(*) FROM {isa_download_statistics}
-    WHERE pid = '%d'", $pid));
+  //Correct project download count
+  $result = db_result(db_query("SELECT IFNULL(sum(count),0) FROM isa_download_statistics_count WHERE pid=%d", $pid));
   return $result;
 }
 
@@ -181,6 +198,11 @@ function isa_private_files_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
     }
     elseif ($node->type == 'project_release') {
       db_query("DELETE FROM {isa_download_statistics} WHERE nid = %d ", $node->nid);
+    }
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-950
+    //Count external downloads in asset release
+    elseif ($node->type == 'asset_release') {
+      db_query("DELETE FROM {isa_download_external_statics} WHERE nid = %d ", $node->nid);
     }
   }
 }
@@ -200,6 +222,13 @@ function isa_private_files_menu() {
       'access callback' => 1,
           //'type' => MENU_LOCAL_TASK,
   );
+  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-950
+  //Count external downloads in asset release
+  $items['system/count_asset_external_downloads'] = array(
+    'title'            => t('Count asset external downloads'),
+    'page callback'    => 'isa_private_files_add_asset_external_downloads',
+    'access arguments' => array('view content')
+  );  
   return $items;
 }
 
@@ -222,17 +251,24 @@ function isa_private_files_anonymous_page($release, $fid) {
     return (FALSE);
   }
 
-
   //prepare login link
-  $pid = $release->project_release['pid'];
-  $project = node_load($pid);
+  //for a software
+  if ($release->type == ISA_PROJECT_RELEASE_TYPE) {
+    $pid = $release->project_release['pid'];
+    $project = node_load($pid);
+  }
+  //for an asset
+  elseif ($release->type == ISA_ASSET_RELEASE_TYPE) {
+    $pid = array_shift($release->og_groups);
+    $project = node_load($pid);
+  }
 
   if ($project->field_project_anonymous_download[0]['value'] == 1) {
     $option = array('query' => array('destination' => $release->path));
     $vars['login_link'] = l(variable_get('anonymous_validation_page_login_link_title', 'login'), 'user/login', $option);
 
     //prepare download link
-    $file = project_release_load_file($fid);
+    $file = db_fetch_object(db_query("SELECT filepath FROM {files} WHERE fid = %d", $fid));
     $file_url = file_create_url($file->filepath);
     $vars['file_link'] = l(variable_get('anonymous_validation_page_download_link_title', 'download'), $file_url, array('attributes' => array('class' => 'hijackDestination')));
 
@@ -243,7 +279,6 @@ function isa_private_files_anonymous_page($release, $fid) {
   else {
     $vars['info_text_login'] = variable_get('anonymous_validation_page_not_allowed_desciption', 'NULL');
   }
-
   $content = theme('anonymous_validation_page', $vars);
   drupal_set_title(variable_get('anonymous_validation_page_title', ''));
 
@@ -260,4 +295,15 @@ function isa_private_files_theme() {
       'template' => 'anonymous_validation_page',
   );
   return $items;
+}
+/**
+ * Add to asset_release external download counter
+ */ 
+function isa_private_files_add_asset_external_downloads(){
+  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-950
+  //Count external downloads in asset release
+  global $user;
+  db_query("INSERT INTO {isa_download_external_statics} (did,nid,uid) VALUES(%d,%d,%d)", $_GET['did'], $_GET['nid'], $user->uid);
+  //Set project/node to reindex after download
+  apachesolr_nodeapi_update(node_load($_GET['nid']));
 }

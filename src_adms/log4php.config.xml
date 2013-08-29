@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns="http://logging.apache.org/log4php/">
+  <appender name="consoleAppender" class="LoggerAppenderConsole">
+    <layout class="LoggerLayoutPattern">
+      <!--param name="conversionPattern" value="%c - %d{Y-m-d H:i:s} %p - %m%n" /-->
+      <param name="conversionPattern" value="%c - %p - %m%n" />
+    </layout>
+  </appender>
+  <!--appender name="DrupalOutputAppender" class="LoggerAppenderFile">
+    <layout class="LoggerLayoutPattern">
+      <param name="conversionPattern" value="%p - %m%n" />
+    </layout>
+    <param name="file" value="drupalAdapterLog.log" />
+  </appender-->
+  <root>
+    <level value="ERROR" />
+    <appender_ref ref="consoleAppender" />
+  </root>
+</configuration>

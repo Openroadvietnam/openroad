@@ -161,7 +161,10 @@ function isa_highlight_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
         foreach ($node->og_groups as $gid => $group) {
           if ($group > 0) {
             $tid = db_result(db_query("SELECT tid FROM {nat} WHERE nid = %d", $gid));
-            $node->taxonomy[$tid] = taxonomy_get_term($tid);
+            if ($tid) {
+                $node->taxonomy[$tid] = taxonomy_get_term($tid);
+            }
+            
           }
         }
       }
@@ -170,7 +173,10 @@ function isa_highlight_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
         $gid = variable_get('current_group', isa_toolbox_get_community_nid());
         if ($gid) {
           $tid = db_result(db_query("SELECT tid FROM {nat} WHERE nid = %d", $gid));
-          $node->taxonomy[$tid] = taxonomy_get_term($tid);
+          if ($tid) {
+              $node->taxonomy[$tid] = taxonomy_get_term($tid);
+          }
+          
         }
       }
       break;

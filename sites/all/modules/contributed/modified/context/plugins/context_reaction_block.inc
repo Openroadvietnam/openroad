@@ -273,7 +273,12 @@ class context_reaction_block extends context_reaction {
     // active contexts include blocks in those regions.
     $contexts = context_active_contexts();
     if (!isset($build_queue) || $build_contexts != array_keys($contexts)) {
-      $info = $this->get_blocks();
+      //Rebuild block list to avoid problems with no cached blocks 
+       $info = $this->get_blocks();
+       //Check it Filter by type facet is cached and reset it otherwise
+       if(FALSE === array_key_exists('apachesolr_facetbuilder-sm_facetbuilder_facet_node_type', $info)){
+        $info = $this->get_blocks(NULL, NULL, TRUE);
+       }
       $build_queue = array();
       $build_contexts = array_keys($contexts);
       foreach ($contexts as $context) {
@@ -284,7 +289,22 @@ class context_reaction_block extends context_reaction {
             $block->context = $context->name;
             $block->bid = "{$block->module}-{$block->delta}";
             $block->cache = isset($info[$block->bid]->cache) ? $info[$block->bid]->cache : BLOCK_NO_CACHE;
-            $build_queue[$block->region][] = $block;
+            //To apply the patch http://drupal.org/node/905714
+            $block_append = FALSE;
+            if($block->module != 'views'){
+              if (!empty($info[$block->bid])) {
+                $block_append = TRUE;
+              }
+            } else {
+              $result = db_query('SELECT bid FROM {blocks} WHERE module = "%s" AND delta = "%s"', $block->module, $block->delta);
+              $result_bid = db_result($result);
+              if ($result_bid){
+                $block_append = TRUE;
+              }
+            }
+            if($block_append){
+              $build_queue[$block->region][] = $block;
+            }
           }
         }
       }

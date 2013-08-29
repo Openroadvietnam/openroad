@@ -30,7 +30,7 @@ function isa_svn_help($path, $arg) {
  * @return type 
  */
 function isa_svn_perm() {
-  return array('access source code repository', 'access webdav repository');
+  return array('access webdav repository', 'SCM write into branches', 'SCM write into tags', 'SCM write into trunk');
 }
 
 /**
@@ -40,7 +40,10 @@ function isa_svn_enable() {
   // Create role and grant permission
   $role = permissions_create_role('developer');
   variable_set('developer_rid', $role->rid);
-  permissions_grant_permissions('developer', array('access source code repository'));
+  $role = permissions_create_role('contributor');
+  variable_set('contributor_rid', $role->rid);
+  permissions_grant_permissions('developer', array('SCM write into branches', 'SCM write into tags', 'SCM write into trunk'));
+  permissions_grant_permissions('contributor', array('SCM write into branches'));
 }
 
 /**

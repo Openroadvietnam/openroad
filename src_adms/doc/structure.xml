@@ -1,0 +1,2439 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project version="2.0.0a6" title="">
+  <file path="Adapters\AdapterFactory.php" hash="d44dbc85f617807037aeca44d16b2fca" package="Default">
+    <class final="false" abstract="false" namespace="Adapters" line="27" package="Default">
+      <extends/>
+      <name>AdapterFactory</name>
+      <full_name>\Adapters\AdapterFactory</full_name>
+      <docblock line="27">
+        <description><![CDATA[This class is implementing the design pattern "Factory" in order to manage
+the creation of Loaders.]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="Adapters" line="36" package="Default">
+        <name>getAdapter</name>
+        <full_name>getAdapter</full_name>
+        <docblock line="36">
+          <description><![CDATA[This function is retrieving the correct loader based on the parameter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="36" name="param" description="type the type of loader needed" type="string" variable="$mimetype">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="36" name="return" description="an object of Loader type" type="\ILoader">
+            <type by_reference="false">\ILoader</type>
+          </tag>
+          <tag line="36" name="access" description="public"/>
+          <tag line="36" name="throws" description="if the type is not registered" type="\UnexpectedValueException">
+            <type by_reference="false">\UnexpectedValueException</type>
+          </tag>
+        </docblock>
+        <argument line="36">
+          <name>$mimetype</name>
+          <default><![CDATA['application/rdf+xml']]></default>
+          <type/>
+        </argument>
+      </method>
+    </class>
+  </file>
+  <file path="Adapters\DrupalAdapter.php" hash="81c8d1471875688a80b75e7d37de7091" package="Default">
+    <include line="133" type="Include Once" package="Default">
+      <name>./includes/bootstrap.inc</name>
+    </include>
+    <class final="false" abstract="false" namespace="Adapters" line="28" package="Default">
+      <extends/>
+      <implements>Adapters\IExporter</implements>
+      <implements>Adapters\ILoader</implements>
+      <name>DrupalAdapter</name>
+      <full_name>\Adapters\DrupalAdapter</full_name>
+      <docblock line="28">
+        <description><![CDATA[This class is aimed to export Data from the library into a well structured
+implementation of ADMS into Drupal (see Joinup)
+class DrupalAdapter]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="private" line="30" namespace="Adapters" package="Default">
+        <name>$_classes</name>
+        <default><![CDATA[array('ADMS\\SemanticAssetDistribution' => 'distribution', 'ADMS\\SemanticAssetRepository' => 'repository', 'ADMS\\SemanticAsset' => 'asset_release', 'ADMS\\Item' => 'item', 'ADMS\\Documentation' => 'documentation', 'ADMS\\ContactInformation' => 'contact_point', 'RADion\\Agent' => 'publisher', 'RADion\\License' => 'licence')]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="41" namespace="Adapters" package="Default">
+        <name>$_taxo_repository</name>
+        <default><![CDATA[array('spatialCoverage' => 'geographic_coverage_vid', 'themeTaxonomy' => 'domains_vid')]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="45" namespace="Adapters" package="Default">
+        <name>$_taxo_asset</name>
+        <default><![CDATA[array('spatialCoverage' => 'geographic_coverage_vid', 'themeTaxonomy' => 'domains_vid', 'interoperabilityLevel' => 'interoperability_level_vid', 'status' => 'status_vid', 'theme' => 'domains_vid', 'type' => 'asset_type_vid')]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="53" namespace="Adapters" package="Default">
+        <name>$_taxo_distribution</name>
+        <default><![CDATA[array('format' => 'file_format_vid', 'representationTechnique' => 'representation_technique_vid', 'status' => 'status_vid')]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="58" namespace="Adapters" package="Default">
+        <name>$_taxo_publisher</name>
+        <default><![CDATA[array('type' => 'publisher_type_vid')]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="62" namespace="Adapters" package="Default">
+        <name>$_taxo_license</name>
+        <default><![CDATA[array('type' => 'license_vid')]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="65" namespace="Adapters" package="Default">
+        <name>$_flexi_asset</name>
+        <default><![CDATA[array('version_note' => 'textfield', 'version' => 'textfield', 'alternative_name' => 'textfield', 'supportedSchema' => 'textfield')]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="71" namespace="Adapters" package="Default">
+        <name>$_field_contenttype_asset</name>
+        <default><![CDATA[array('publisher' => 'publisher', 'contactPoint' => 'contact_point', 'distribution' => 'distribution', 'includedItem' => 'item', 'relatedDocumentation' => 'related_doc', 'relatedWebPage' => 'related_doc')]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="79" namespace="Adapters" package="Default">
+        <name>$_field_contenttype_distribution</name>
+        <default><![CDATA[array('publisher' => 'publisher', 'license' => 'licence')]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="84" namespace="Adapters" package="Default">
+        <name>$_asset_nodereference</name>
+        <default><![CDATA[array('previousVersion' => '2', 'currentVersion' => '1', 'nextVersion' => '0', 'sample' => '6', 'includedAsset' => '4', 'translation' => '3', 'relatedAsset' => '5')]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="95" namespace="Adapters" package="Default">
+        <name>$data</name>
+        <default><![CDATA[]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="98" namespace="Adapters" package="Default">
+        <name>$data_copy</name>
+        <default><![CDATA[]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="101" namespace="Adapters" package="Default">
+        <name>$repository_nid</name>
+        <default><![CDATA[]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="103" namespace="Adapters" package="Default">
+        <name>$repository_uri</name>
+        <default><![CDATA[]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="106" namespace="Adapters" package="Default">
+        <name>$user_id</name>
+        <default><![CDATA[]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="109" namespace="Adapters" package="Default">
+        <name>$treatment_type</name>
+        <default><![CDATA[]]></default>
+      </property>
+      <property final="false" static="false" visibility="private" line="112" namespace="Adapters" package="Default">
+        <name>$right_item</name>
+        <default><![CDATA[]]></default>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Adapters" line="114" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Adapters" line="152" package="Default">
+        <name>export</name>
+        <full_name>export</full_name>
+        <docblock line="152">
+          <description><![CDATA[This function needs to be implemented in order to export the data]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="152" name="param" description="data the data (AdmsObject table) which should be exported" type="\adms:AdmsObject[]" variable="$data">
+            <type by_reference="false">\adms:AdmsObject[]</type>
+          </tag>
+          <tag line="152" name="throws" description="" type="\Exception">
+            <type by_reference="false">\Exception</type>
+          </tag>
+          <tag line="152" name="return" description="" type="boolean">
+            <type by_reference="false">boolean</type>
+          </tag>
+          <tag line="152" name="access" description="public"/>
+        </docblock>
+        <argument line="152">
+          <name>$data</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="152">
+          <name>$output</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="152">
+          <name>$type</name>
+          <default><![CDATA[1]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="195" package="Default">
+        <name>_verif_node</name>
+        <full_name>_verif_node</full_name>
+        <docblock line="195">
+          <description><![CDATA[This method create the drupal node from the data received
+and check if it's correct
+@$item $object to convert into drupal node]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="195" name="access" description="private"/>
+        </docblock>
+        <argument line="195">
+          <name>$item</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="726" package="Default">
+        <name>_check_node</name>
+        <full_name>_check_node</full_name>
+        <docblock line="726">
+          <description><![CDATA[This method check if a content type is already exisiting in joinup
+or in the file ta treat and create it if possible]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="726" name="param" description="the path to the file which should be loaded" type="\$object" variable="$uri">
+            <type by_reference="false">\$object</type>
+          </tag>
+          <tag line="726" name="return" description="nid of the new node or false if can't create it" type="\the">
+            <type by_reference="false">\the</type>
+          </tag>
+          <tag line="726" name="access" description="private"/>
+        </docblock>
+        <argument line="726">
+          <name>$uri</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="726">
+          <name>$contenttype</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Adapters" line="763" package="Default">
+        <name>CheckStatus</name>
+        <full_name>CheckStatus</full_name>
+        <argument line="763">
+          <name>$Input</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="776" package="Default">
+        <name>_verifURI</name>
+        <full_name>_verifURI</full_name>
+        <docblock line="776">
+          <description><![CDATA[This method check if an URI is in the correct format]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="776" name="param" description="the path to the file which should be loaded" type="\$object" variable="$uri">
+            <type by_reference="false">\$object</type>
+          </tag>
+          <tag line="776" name="return" description="or false" type="true">
+            <type by_reference="false">true</type>
+          </tag>
+          <tag line="776" name="access" description="private"/>
+        </docblock>
+        <argument line="776">
+          <name>$uri</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="793" package="Default">
+        <name>_verifURL</name>
+        <full_name>_verifURL</full_name>
+        <docblock line="793">
+          <description><![CDATA[This method check if an URL is in the correct format]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="793" name="param" description="the path to the file which should be loaded" type="\$object" variable="$url">
+            <type by_reference="false">\$object</type>
+          </tag>
+          <tag line="793" name="return" description="or false" type="true">
+            <type by_reference="false">true</type>
+          </tag>
+          <tag line="793" name="access" description="private"/>
+        </docblock>
+        <argument line="793">
+          <name>$url</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Adapters" line="813" package="Default">
+        <name>load</name>
+        <full_name>load</full_name>
+        <docblock line="813">
+          <description><![CDATA[This method loads a table of AdmsObject from an RDF XML file]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="813" name="param" description="the path to the file which should be loaded" type="\$object" variable="$object">
+            <type by_reference="false">\$object</type>
+          </tag>
+          <tag line="813" name="return" description="a table of AdmsObject" type="\adms:AdmsObject[]">
+            <type by_reference="false">\adms:AdmsObject[]</type>
+          </tag>
+          <tag line="813" name="access" description="public"/>
+        </docblock>
+        <argument line="813">
+          <name>$object</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="Adapters" line="825" package="Default">
+        <name>compare_weight</name>
+        <full_name>compare_weight</full_name>
+        <docblock line="825">
+          <description><![CDATA[This function is used by the usort function to order the object in the $data array]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="825" name="param" description="compare by the usort function" type="\$object" variable="$a">
+            <type by_reference="false">\$object</type>
+          </tag>
+          <tag line="825" name="return" description="instead of the compare value" type="\-1,0,1">
+            <type by_reference="false">\-1,0,1</type>
+          </tag>
+          <tag line="825" name="access" description="public"/>
+        </docblock>
+        <argument line="825">
+          <name>$a</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="825">
+          <name>$b</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="837" package="Default">
+        <name>_verif_taxo</name>
+        <full_name>_verif_taxo</full_name>
+        <docblock line="837">
+          <description><![CDATA[This function check if at least one term of a vocabulary is fill for the node]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="837" name="param" description="compare by the usort function" type="\$object" variable="$term_array">
+            <type by_reference="false">\$object</type>
+          </tag>
+          <tag line="837" name="return" description="instead of the compare value" type="\-1,0,1">
+            <type by_reference="false">\-1,0,1</type>
+          </tag>
+          <tag line="837" name="access" description="public"/>
+        </docblock>
+        <argument line="837">
+          <name>$term_array</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="837">
+          <name>$var_taxo</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="837">
+          <name>$property</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="837">
+          <name>$contenttype</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+    </class>
+    <markers>
+      <todo line="131">to be checked</todo>
+      <todo line="368">check the drupal function for URL</todo>
+      <todo line="752">message error</todo>
+    </markers>
+    <parse_markers>
+      <error line="30" code="50018">No DocBlock was found for property $_classes</error>
+      <error line="41" code="50018">No DocBlock was found for property $_taxo_repository</error>
+      <error line="45" code="50018">No DocBlock was found for property $_taxo_asset</error>
+      <error line="53" code="50018">No DocBlock was found for property $_taxo_distribution</error>
+      <error line="58" code="50018">No DocBlock was found for property $_taxo_publisher</error>
+      <error line="62" code="50018">No DocBlock was found for property $_taxo_license</error>
+      <error line="65" code="50018">No DocBlock was found for property $_flexi_asset</error>
+      <error line="71" code="50018">No DocBlock was found for property $_field_contenttype_asset</error>
+      <error line="79" code="50018">No DocBlock was found for property $_field_contenttype_distribution</error>
+      <error line="84" code="50018">No DocBlock was found for property $_asset_nodereference</error>
+      <error line="95" code="50018">No DocBlock was found for property $data</error>
+      <error line="98" code="50018">No DocBlock was found for property $data_copy</error>
+      <error line="101" code="50018">No DocBlock was found for property $repository_nid</error>
+      <error line="103" code="50018">No DocBlock was found for property $repository_uri</error>
+      <error line="106" code="50018">No DocBlock was found for property $user_id</error>
+      <error line="109" code="50018">No DocBlock was found for property $treatment_type</error>
+      <error line="112" code="50018">No DocBlock was found for property $right_item</error>
+      <error line="114" code="50010">No DocBlock was found for method __construct()</error>
+      <error line="152" code="50015">Argument $output is missing from the Docblock of export()</error>
+      <error line="152" code="50015">Argument $type is missing from the Docblock of export()</error>
+      <error line="195" code="50015">Argument $item is missing from the Docblock of _verif_node()</error>
+      <error line="726" code="50015">Argument $contenttype is missing from the Docblock of _check_node()</error>
+      <error line="763" code="50010">No DocBlock was found for method CheckStatus()</error>
+      <error line="825" code="50015">Argument $b is missing from the Docblock of compare_weight()</error>
+      <error line="837" code="50015">Argument $var_taxo is missing from the Docblock of _verif_taxo()</error>
+      <error line="837" code="50015">Argument $property is missing from the Docblock of _verif_taxo()</error>
+      <error line="837" code="50015">Argument $contenttype is missing from the Docblock of _verif_taxo()</error>
+    </parse_markers>
+  </file>
+  <file path="Adapters\IExporter.php" hash="62c933a9b3b64495e655550f3bf957b5" package="Default">
+    <interface namespace="Adapters" line="27" package="Default">
+      <name>IExporter</name>
+      <full_name>\Adapters\IExporter</full_name>
+      <docblock line="27">
+        <description><![CDATA[This interface is the abstract aimed to structure the exporters for the ADMS
+library]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Adapters" line="38" package="Default">
+        <name>export</name>
+        <full_name>export</full_name>
+        <docblock line="38">
+          <description><![CDATA[This function needs to be implemented in order to export the data]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="38" name="param" description="data the data (AdmsObject table) which should be exported" type="\adms:AdmsObject[]" variable="$data">
+            <type by_reference="false">\adms:AdmsObject[]</type>
+          </tag>
+          <tag line="38" name="param" description="output another output than the simple boolean value" type="string" variable="$output">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="38" name="throws" description="" type="\DomainException">
+            <type by_reference="false">\DomainException</type>
+          </tag>
+          <tag line="38" name="throws" description="" type="\InvalidArgumentException">
+            <type by_reference="false">\InvalidArgumentException</type>
+          </tag>
+          <tag line="38" name="return" description="" type="boolean">
+            <type by_reference="false">boolean</type>
+          </tag>
+          <tag line="38" name="access" description="public"/>
+        </docblock>
+        <argument line="38">
+          <name>$data</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="38">
+          <name>$output</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+    </interface>
+  </file>
+  <file path="Adapters\ILoader.php" hash="c9ab7fb5cfca063f5b0a6f630d62ee36" package="Default">
+    <interface namespace="Adapters" line="26" package="Default">
+      <name>ILoader</name>
+      <full_name>\Adapters\ILoader</full_name>
+      <docblock line="26">
+        <description><![CDATA[interface Loader]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Adapters" line="34" package="Default">
+        <name>load</name>
+        <full_name>load</full_name>
+        <docblock line="34">
+          <description><![CDATA[This method loads a table of AdmsObject from an RDF XML file]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="34" name="param" description="the path to the file which should be loaded" type="\$object" variable="$object">
+            <type by_reference="false">\$object</type>
+          </tag>
+          <tag line="34" name="return" description="a table of AdmsObject" type="\adms:AdmsObject[]">
+            <type by_reference="false">\adms:AdmsObject[]</type>
+          </tag>
+          <tag line="34" name="access" description="public"/>
+        </docblock>
+        <argument line="34">
+          <name>$object</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+    </interface>
+  </file>
+  <file path="Adapters\XmlAdapter.php" hash="b634356d4bfc009c2df59e7a4bb0bf33" package="Default">
+    <class final="false" abstract="false" namespace="Adapters" line="26" package="Default">
+      <extends/>
+      <name>XmlAdapter</name>
+      <full_name>\Adapters\XmlAdapter</full_name>
+      <docblock line="26">
+        <description><![CDATA[class XmlLoader]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Adapters" line="34" package="Default">
+        <name>load</name>
+        <full_name>load</full_name>
+        <docblock line="34">
+          <description><![CDATA[This method loads a table of AdmsObject from an RDF XML file]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="34" name="param" description="the path to the file which should be loaded" type="\$object" variable="$object">
+            <type by_reference="false">\$object</type>
+          </tag>
+          <tag line="34" name="return" description="a table of AdmsObject" type="\adms:AdmsObject[]">
+            <type by_reference="false">\adms:AdmsObject[]</type>
+          </tag>
+          <tag line="34" name="access" description="public"/>
+        </docblock>
+        <argument line="34">
+          <name>$object</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Adapters" line="46" package="Default">
+        <name>export</name>
+        <full_name>export</full_name>
+        <docblock line="46">
+          <description><![CDATA[This function needs to be implemented in order to export the data]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="46" name="param" description="data the data (AdmsObject table) which should be exported" type="\adms:AdmsObject[]" variable="$data">
+            <type by_reference="false">\adms:AdmsObject[]</type>
+          </tag>
+          <tag line="46" name="throws" description="" type="\Exception">
+            <type by_reference="false">\Exception</type>
+          </tag>
+          <tag line="46" name="return" description="" type="boolean">
+            <type by_reference="false">boolean</type>
+          </tag>
+          <tag line="46" name="abstract" description=""/>
+          <tag line="46" name="access" description="public"/>
+        </docblock>
+        <argument line="46">
+          <name>$data</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+    </class>
+  </file>
+  <file path="Adapters\XmlRdfAdapter.php" hash="202e20f7b6b86692be90e8e3332c6028" package="Default">
+    <include line="170" type="Require Once" package="Default">
+      <name/>
+    </include>
+    <include line="171" type="Require Once" package="Default">
+      <name/>
+    </include>
+    <constant namespace="Adapters" line="23" package="Default">
+      <name>CREATION_URI</name>
+      <full_name>\Adapters\CREATION_URI</full_name>
+      <value><![CDATA['http://www.w3.org/1999/02/22-rdf-syntax-ns#type']]></value>
+    </constant>
+    <class final="false" abstract="false" namespace="Adapters" line="30" package="Default">
+      <extends/>
+      <implements>Adapters\ILoader</implements>
+      <implements>Adapters\IExporter</implements>
+      <name>XmlRdfAdapter</name>
+      <full_name>\Adapters\XmlRdfAdapter</full_name>
+      <docblock line="30">
+        <description><![CDATA[This class is an implementation of the interfaces ILoader and IExporter]]></description>
+        <long-description><![CDATA[]]></long-description>
+        <tag line="30" name="see" description="\util\Adapters\ILoader" refers="\util\Adapters\ILoader"/>
+        <tag line="30" name="see" description="\util\Adapters\IExporter" refers="\util\Adapters\IExporter"/>
+      </docblock>
+      <property final="false" static="false" visibility="private" line="36" namespace="Adapters" package="Default">
+        <name>$_logger</name>
+        <default><![CDATA[]]></default>
+        <docblock line="36">
+          <description><![CDATA[The logger]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="36" name="var" description="" type="\Logger">
+            <type by_reference="false">\Logger</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="private" line="44" namespace="Adapters" package="Default">
+        <name>$_classes</name>
+        <default><![CDATA[array('http://www.w3.org/ns/radion#Repository' => '\\RADion\\Repository', 'http://www.w3.org/ns/radion#Asset' => '\\RADion\\Asset', 'http://www.w3.org/ns/radion#Distribution' => '\\RADion\\Distribution', 'http://purl.org/dc/terms/Agent' => '\\RADion\\Agent', 'http://purl.org/dc/terms/Location' => '\\RADion\\GeographicCoverage', 'http://purl.org/dc/terms/LinguisticSystem' => '\\RADion\\Language', 'http://purl.org/dc/terms/FileFormat' => '\\RADion\\File Format', 'http://purl.org/dc/terms/LicenseDocument' => '\\RADion\\License', 'http://www.w3.org/2004/02/skos/core#Concept' => '\\RADion\\Code', 'http://www.w3.org/2004/02/skos/core#Concept' => '\\ADMS\\AssetType', 'http://www.w3.org/ns/adms#ContactInformation' => '\\ADMS\\ContactInformation', 'http://xmlns.com/foaf/0.1/Document' => '\\ADMS\\Documentation', 'http://www.w3.org/ns/adms#Identifier' => '\\ADMS\\Identifier', 'http://www.w3.org/2004/02/skos/core#Concept' => '\\ADMS\\InteroperabilityLevel', 'http://www.w3.org/ns/adms#Item' => '\\ADMS\\Item', 'http://purl.org/dc/terms/PeriodOfTime' => '\\ADMS\\PeriodOfTime', 'http://www.w3.org/2004/02/skos/core#Concept' => '\\ADMS\\RepresentationTechnique', 'http://www.w3.org/ns/adms#SemanticAsset' => '\\ADMS\\SemanticAsset', 'http://www.w3.org/ns/adms#SemanticAssetDistribution' => '\\ADMS\\SemanticAssetDistribution', 'http://www.w3.org/ns/adms#SemanticAssetRepository' => '\\ADMS\\SemanticAssetRepository', 'http://www.w3.org/2004/02/skos/core#Concept' => '\\ADMS\\Status')]]></default>
+        <docblock line="44">
+          <description><![CDATA[This array is a translation between
+the URI which is the key and
+the Object which is the Name of the class]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="44" name="var" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="private" line="79" namespace="Adapters" package="Default">
+        <name>$_properties</name>
+        <default><![CDATA[array('http://purl.org/dc/terms/alternative' => 'alternativeName', 'http://www.w3.org/1999/xhtml/vocab#last' => 'currentVersion', 'http://purl.org/dc/terms/created' => 'dateCreated', 'http://purl.org/dc/terms/modified' => 'dateModified', 'http://purl.org/dc/terms/description' => 'description', 'http://www.w3.org/ns/radion#distribution' => 'distribution', 'http://www.w3.org/ns/radion#distributionOf' => 'distributionOf', 'http://purl.org/dc/terms/format' => 'format', 'http://purl.org/dc/terms/hasPart' => 'includes', 'http://www.w3.org/ns/radion#keyword' => 'keyword', 'http://www.w3.org/2000/01/rdf-schema#label' => 'label', 'http://www.w3.org/2000/01/rdf-schema#label' => 'name', 'http://purl.org/dc/terms/language' => 'language', 'http://purl.org/dc/terms/license' => 'license', 'http://www.w3.org/1999/xhtml/vocab#next' => 'nextVersion', 'http://www.w3.org/1999/xhtml/vocab#prev' => 'previousVersion', 'http://purl.org/dc/terms/publisher' => 'publisher', 'http://purl.org/dc/terms/relation' => 'relation', 'http://purl.org/dc/terms/isPartOf' => 'repositoryOrigin', 'http://purl.org/dc/terms/spatial' => 'spatialCoverage', 'http://purl.org/dc/terms/subject' => 'theme', 'http://purl.org/dc/terms/type' => 'type', 'http://www.w3.org/ns/radion#version' => 'version', 'http://www.w3.org/ns/radion#versionNotes' => 'versionNotes', 'http://www.w3.org/ns/adms#accessURL' => 'accessURL', 'http://www.w3.org/ns/adms#contactPoint' => 'contactPoint', 'http://www.w3.org/2007/05/powder-s#describedby' => 'documentation', 'http://schema.org/endDate' => 'end', 'http://xmlns.com/foaf/0.1/homepage' => 'homepage', 'http://purl.org/dc/terms/identifier' => 'identifier', 'http://www.w3.org/ns/adms#identifies' => 'identifies', 'http://www.w3.org/ns/adms#includedAsset' => 'includedAsset', 'http://www.w3.org/ns/adms#includedItem' => 'includedItem', 'http://www.w3.org/ns/adms#interoperabilityLevel' => 'interoperabilityLevel', 'http://www.w3.org/ns/adms#metadataDate' => 'metadataDate', 'http://www.w3.org/ns/adms#metadataLanguage' => 'metadataLanguage', 'http://www.w3.org/ns/adms#metadataPublisher' => 'metadataPublisher', 'http://www.w3.org/ns/adms#relatedDocumentation' => 'relatedDocumentation', 'http://www.w3.org/ns/adms#relatedWebPage' => 'relatedWebPage', 'http://www.w3.org/ns/adms#representationTechnique' => 'representationTechnique', 'http://www.w3.org/ns/adms#sample' => 'sample', 'http://www.w3.org/ns/adms#schemeAgency' => 'schemeAgency', 'http://www.w3.org/ns/adms#schemeVersion' => 'schemeVersion', 'http://schema.org/startDate' => 'start', 'http://www.w3.org/ns/adms#status' => 'status', 'http://www.w3.org/ns/adms#supportedSchema' => 'supportedSchema', 'http://purl.org/dc/terms/temporal' => 'temporalCoverage', 'http://www.w3.org/ns/adms#translation' => 'translation', 'http://purl.org/dc/terms/title' => 'title', 'http://www.w3.org/2004/02/skos/core#notation' => 'code', 'http://www.w3.org/2006/vcard/ns#email' => 'email', 'http://www.w3.org/2006/vcard/ns#adr' => 'fullAddress', 'http://www.w3.org/2006/vcard/ns#n' => 'name', 'http://www.w3.org/2006/vcard/ns#tel' => 'telephone')]]></default>
+        <docblock line="79">
+          <description><![CDATA[This array is a translation between
+the URI which is the key and
+the Object which is the Name of the property]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="79" name="var" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="private" line="144" namespace="Adapters" package="Default">
+        <name>$_ignore</name>
+        <default><![CDATA[array('http://www.w3.org/2000/01/rdf-schema#comment', 'http://www.w3.org/2004/02/skos/core#ConceptScheme', 'http://purl.org/dc/terms/MediaTypeOrExtent')]]></default>
+        <docblock line="144">
+          <description><![CDATA[This table is an ignore list for properties which are not neccessary to be
+implemented]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="144" name="var" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Adapters" line="154" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="154">
+          <description><![CDATA[This method is the constructor of the class
+it uses the library for the implementation]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Adapters" line="179" package="Default">
+        <name>load</name>
+        <full_name>load</full_name>
+        <docblock line="179">
+          <description><![CDATA[This method loads a table of AdmsObject from an RDF XML file]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="179" name="param" description="the path to the file which should be loaded" type="mixed" variable="$object">
+            <type by_reference="false">mixed</type>
+          </tag>
+          <tag line="179" name="return" description="a table of AdmsObject" type="\obj">
+            <type by_reference="false">\obj</type>
+          </tag>
+        </docblock>
+        <argument line="179">
+          <name>$object</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Adapters" line="332" package="Default">
+        <name>export</name>
+        <full_name>export</full_name>
+        <docblock line="332">
+          <description><![CDATA[This function needs to be implemented in order to export the data]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="332" name="param" description="data the data (AdmsObject table) which should be exported" type="\adms:AdmsObject[]" variable="$data">
+            <type by_reference="false">\adms:AdmsObject[]</type>
+          </tag>
+          <tag line="332" name="param" description="output another output than the simple boolean value" type="string" variable="$output">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="332" name="throws" description="" type="\DomainException">
+            <type by_reference="false">\DomainException</type>
+          </tag>
+          <tag line="332" name="throws" description="" type="\InvalidArgumentException">
+            <type by_reference="false">\InvalidArgumentException</type>
+          </tag>
+          <tag line="332" name="return" description="" type="boolean">
+            <type by_reference="false">boolean</type>
+          </tag>
+          <tag line="332" name="access" description="public"/>
+        </docblock>
+        <argument line="332">
+          <name>$data</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="332">
+          <name>$output</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="428" package="Default">
+        <name>_getPropertyFromURI</name>
+        <full_name>_getPropertyFromURI</full_name>
+        <docblock line="428">
+          <description><![CDATA[This function is retrieving the property related to an URI]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="428" name="param" description="The URI which needs to be translated" type="string" variable="$URI">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="428" name="return" description="" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="428" name="throws" description="if the URI doesn't exist" type="\InvalidArgumentException">
+            <type by_reference="false">\InvalidArgumentException</type>
+          </tag>
+          <tag line="428" name="throws" description="if the URI is ignored" type="\DomainException">
+            <type by_reference="false">\DomainException</type>
+          </tag>
+        </docblock>
+        <argument line="428">
+          <name>$URI</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="447" package="Default">
+        <name>_getClassFromURI</name>
+        <full_name>_getClassFromURI</full_name>
+        <docblock line="447">
+          <description><![CDATA[This function is retrieving the class related to an URI]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="447" name="param" description="The URI which needs to be translated" type="string" variable="$URI">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="447" name="return" description="" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="447" name="throws" description="if the URI doesn't exist" type="\InvalidArgumentException">
+            <type by_reference="false">\InvalidArgumentException</type>
+          </tag>
+          <tag line="447" name="throws" description="if the URI is ignored" type="\DomainException">
+            <type by_reference="false">\DomainException</type>
+          </tag>
+        </docblock>
+        <argument line="447">
+          <name>$URI</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="465" package="Default">
+        <name>_getURIFromProperty</name>
+        <full_name>_getURIFromProperty</full_name>
+        <docblock line="465">
+          <description><![CDATA[This function is retrieving the URI related to a property]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="465" name="param" description="The property which needs to be translated" type="string" variable="$property">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="465" name="return" description="" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="465" name="throws" description="if the property is not referenced" type="\InvalidArgumentException">
+            <type by_reference="false">\InvalidArgumentException</type>
+          </tag>
+        </docblock>
+        <argument line="465">
+          <name>$property</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="481" package="Default">
+        <name>_getURIFromClass</name>
+        <full_name>_getURIFromClass</full_name>
+        <docblock line="481">
+          <description><![CDATA[This function is retrieving the URI related to a class]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="481" name="param" description="The class which needs to be translated" type="string" variable="$class">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="481" name="return" description="" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="481" name="throws" description="if the property is not referenced" type="\InvalidArgumentException">
+            <type by_reference="false">\InvalidArgumentException</type>
+          </tag>
+        </docblock>
+        <argument line="481">
+          <name>$class</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="500" package="Default">
+        <name>_getClassNameFromResource</name>
+        <full_name>_getClassNameFromResource</full_name>
+        <docblock line="500">
+          <description><![CDATA[Get the classname of an object from its ressource definition
+(e.g. adms:SemanticAssetRepository => \ADMS\SemanticAssetRepository )]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="500" name="param" description="" type="string" variable="$ressource">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="500" name="return" description="" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="500">
+          <name>$ressource</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="520" package="Default">
+        <name>_getResourceFromClassName</name>
+        <full_name>_getResourceFromClassName</full_name>
+        <docblock line="520">
+          <description><![CDATA[Get the ressource name of an object from its class name
+(e.g. \ADMS\SemanticAssetRepository => adms:SemanticAssetRepository )]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="520" name="param" description="" type="string" variable="$classname">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="520" name="return" description="" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="520">
+          <name>$classname</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="Adapters" line="538" package="Default">
+        <name>_isShortResource</name>
+        <full_name>_isShortResource</full_name>
+        <docblock line="538">
+          <description><![CDATA[This method is used to check if the string passed is a resource]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="538" name="param" description="" type="string" variable="$resource">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="538">
+          <name>$resource</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+    </class>
+  </file>
+  <file path="ADMS\AssetType.php" hash="ba33ceaf7d200e196e44d47a83477bdf" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="27" package="Default">
+      <extends>Common\Object</extends>
+      <name>AssetType</name>
+      <full_name>\ADMS\AssetType</full_name>
+      <docblock line="27">
+        <description><![CDATA[class AssetType]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="33" namespace="ADMS" package="Default">
+        <name>$code</name>
+        <default><![CDATA[]]></default>
+        <docblock line="33">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="33" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="38" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="38">
+          <description><![CDATA[Default constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+    </class>
+    <parse_markers>
+      <critical line="33" code="50019">No short description for property $code</critical>
+    </parse_markers>
+  </file>
+  <file path="ADMS\ContactInformation.php" hash="4552372d4dc58bfe676672a445a862c4" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="29" package="Default">
+      <extends>Common\Object</extends>
+      <name>ContactInformation</name>
+      <full_name>\ADMS\ContactInformation</full_name>
+      <docblock line="29">
+        <description><![CDATA[Part of the vocabulary that corresponds to the vCard electronic
+business card profile defined by RFC 2426 used in ADMS v1.00]]></description>
+        <long-description><![CDATA[]]></long-description>
+        <tag line="29" name="see" description="\ADMS\http://www.w3.org/TR/vcard-rdf/" refers="\ADMS\http://www.w3.org/TR/vcard-rdf/"/>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="35" namespace="ADMS" package="Default">
+        <name>$email</name>
+        <default><![CDATA[]]></default>
+        <docblock line="35">
+          <description><![CDATA[Resources that are Email Addresses]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="35" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="41" namespace="ADMS" package="Default">
+        <name>$fullAdress</name>
+        <default><![CDATA[]]></default>
+        <docblock line="41">
+          <description><![CDATA[A postal or street address of a person]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="41" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="47" namespace="ADMS" package="Default">
+        <name>$name</name>
+        <default><![CDATA[]]></default>
+        <docblock line="47">
+          <description><![CDATA[The components of the name of a person]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="47" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="53" namespace="ADMS" package="Default">
+        <name>$telephone</name>
+        <default><![CDATA[]]></default>
+        <docblock line="53">
+          <description><![CDATA[Resources that are Telephone numb]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="53" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="59" namespace="ADMS" package="Default">
+        <name>$homepage</name>
+        <default><![CDATA[]]></default>
+        <docblock line="59">
+          <description><![CDATA[Not exists in the VCard norm]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="59" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="64" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="64">
+          <description><![CDATA[Default constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+    </class>
+  </file>
+  <file path="ADMS\Documentation.php" hash="90fab6ee02c28f03e327b178e821da4c" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="29" package="Default">
+      <extends>Common\Object</extends>
+      <name>Documentation</name>
+      <full_name>\ADMS\Documentation</full_name>
+      <docblock line="29">
+        <description><![CDATA[Used in ADMS specifically for the class of documents that further describe
+a Semantic Asset or give guidelines for its use.]]></description>
+        <long-description><![CDATA[<p>ADMS expects all documents to have a title.
+class Documentation</p>]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="35" namespace="ADMS" package="Default">
+        <name>$title</name>
+        <default><![CDATA[]]></default>
+        <docblock line="35">
+          <description><![CDATA[The title of a document]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="35" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="40" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="40">
+          <description><![CDATA[Default constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+    </class>
+  </file>
+  <file path="ADMS\InteroperabilityLevel.php" hash="c1e6ecddc4df44e36836377db81c6aab" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="27" package="Default">
+      <extends>Common\Object</extends>
+      <name>InteroperabilityLevel</name>
+      <full_name>\ADMS\InteroperabilityLevel</full_name>
+      <docblock line="27">
+        <description><![CDATA[class IntertoperabilityLevel]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="public" line="33" namespace="ADMS" package="Default">
+        <name>$code</name>
+        <default><![CDATA[]]></default>
+        <docblock line="33">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="33" name="access" description="public"/>
+        </docblock>
+      </property>
+    </class>
+    <parse_markers>
+      <critical line="33" code="50019">No short description for property $code</critical>
+    </parse_markers>
+  </file>
+  <file path="ADMS\Item.php" hash="5e00b50b3609ab82562fc6c20c94d071" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="29" package="Default">
+      <extends>Common\Object</extends>
+      <name>Item</name>
+      <full_name>\ADMS\Item</full_name>
+      <docblock line="29">
+        <description><![CDATA[An item that is contained inside an Asset, e.g. an individual
+term in a vocabulary, an individual code in a code list or
+some other ‘atomic’ element of an Asset
+class Item]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="36" namespace="ADMS" package="Default">
+        <name>$description</name>
+        <default><![CDATA[]]></default>
+        <docblock line="36">
+          <description><![CDATA[Used in RADion to provide descriptive text for
+the Repository, Asset or Distribution.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="36" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="43" namespace="ADMS" package="Default">
+        <name>$name</name>
+        <default><![CDATA[]]></default>
+        <docblock line="43">
+          <description><![CDATA[RADion uses this to provide the name or label of any class.]]></description>
+          <long-description><![CDATA[<p>For technical compatibility, we need to use $name attribute</p>]]></long-description>
+          <tag line="43" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="48" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="48">
+          <description><![CDATA[Default constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+    </class>
+  </file>
+  <file path="ADMS\PeriodOfTime.php" hash="e3add4e871459b97034dd4c72a1dd480" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="26" package="Default">
+      <extends>Common\Object</extends>
+      <name>PeriodOfTime</name>
+      <full_name>\ADMS\PeriodOfTime</full_name>
+      <docblock line="26">
+        <description><![CDATA[class PeriodOfTime]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="32" namespace="ADMS" package="Default">
+        <name>$start</name>
+        <default><![CDATA[]]></default>
+        <docblock line="32">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="32" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="38" namespace="ADMS" package="Default">
+        <name>$end</name>
+        <default><![CDATA[]]></default>
+        <docblock line="38">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="38" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="43" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="43">
+          <description><![CDATA[Default constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+    </class>
+    <parse_markers>
+      <critical line="32" code="50019">No short description for property $start</critical>
+      <critical line="38" code="50019">No short description for property $end</critical>
+    </parse_markers>
+  </file>
+  <file path="ADMS\RepresentationTechnique.php" hash="973fe087c01408a695fa3105fd8cafaa" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="27" package="Default">
+      <extends>Common\Object</extends>
+      <name>RepresentationTechnique</name>
+      <full_name>\ADMS\RepresentationTechnique</full_name>
+      <docblock line="27">
+        <description><![CDATA[class RepresentationTechnique]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="public" line="33" namespace="ADMS" package="Default">
+        <name>$code</name>
+        <default><![CDATA[]]></default>
+        <docblock line="33">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="33" name="access" description="public"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="38" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="38">
+          <description><![CDATA[Default constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+    </class>
+    <parse_markers>
+      <critical line="33" code="50019">No short description for property $code</critical>
+    </parse_markers>
+  </file>
+  <file path="ADMS\SemanticAsset.php" hash="7b6d2159ee84e2860aff93c2dc8abab4" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="37" package="Default">
+      <extends>RADion\Asset</extends>
+      <name>SemanticAsset</name>
+      <full_name>\ADMS\SemanticAsset</full_name>
+      <docblock line="37">
+        <description><![CDATA[A Semantic Asset in the model is an abstract entity that reflects
+the intellectual content of the asset and represents those characteristics
+of the asset that are independent of its physical embodiment.]]></description>
+        <long-description><![CDATA[<p>This abstract entity combines the FRBR entities work
+(a distinct intellectual or artistic creation) and expression
+(the intellectual or artistic realization of a work).
+Assets can be versioned.
+Every time the intellectual content of an asset changes,
+the result is considered to be a new asset that can be linked to previous
+and next versions of the Asset. The physical embodiment of an Asset
+is called a Distribution. A particular Asset may have zero or more Distributions.
+class SemanticAsset</p>]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="43" namespace="ADMS" package="Default">
+        <name>$contactPoint</name>
+        <default><![CDATA[]]></default>
+        <docblock line="43">
+          <description><![CDATA[Links a Semantic Asset to relevant Contact Information which is provided using VCard.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="43" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="49" namespace="ADMS" package="Default">
+        <name>$documentation</name>
+        <default><![CDATA[]]></default>
+        <docblock line="49">
+          <description><![CDATA[Used in ADMS to link to the main documentation or specification of the Asset.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="49" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="55" namespace="ADMS" package="Default">
+        <name>$homepage</name>
+        <default><![CDATA[]]></default>
+        <docblock line="55">
+          <description><![CDATA[Used in ADMS to link to a Web page that is fully dedicated to the Asset.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="55" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="61" namespace="ADMS" package="Default">
+        <name>$identifier</name>
+        <default><![CDATA[]]></default>
+        <docblock line="61">
+          <description><![CDATA[ADMS uses this to provide any identifier for the Asset.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="61" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="68" namespace="ADMS" package="Default">
+        <name>$includedAsset</name>
+        <default><![CDATA[]]></default>
+        <docblock line="68">
+          <description><![CDATA[Links to a Semantic Asset that is contained in the Asset being described,
+e.g. when there are several vocabularies defined in a single document.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="68" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="75" namespace="ADMS" package="Default">
+        <name>$includedItem</name>
+        <default><![CDATA[]]></default>
+        <docblock line="75">
+          <description><![CDATA[Links a Semantic Asset to an item that is contained within it
+(e.g. a concept in a controlled vocabulary).]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="75" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="83" namespace="ADMS" package="Default">
+        <name>$interoperabilityLevel</name>
+        <default><![CDATA[]]></default>
+        <docblock line="83">
+          <description><![CDATA[Links a resource to its adms:InteroperabilityLevel .]]></description>
+          <long-description><![CDATA[<p>Since this is encoded using skos:Concept,
+that is the defined range for this property.</p>]]></long-description>
+          <tag line="83" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="89" namespace="ADMS" package="Default">
+        <name>$metadataDate</name>
+        <default><![CDATA[]]></default>
+        <docblock line="89">
+          <description><![CDATA[The date of the most recent update of the metadata for the Asset]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="89" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="97" namespace="ADMS" package="Default">
+        <name>$metadataLanguage</name>
+        <default><![CDATA[]]></default>
+        <docblock line="97">
+          <description><![CDATA[Links to the language of the metadata for the Asset.]]></description>
+          <long-description><![CDATA[<p>The range of adms:metadataLanguage is dcterms:LinguisticSystem
+which is used by RADion (and therefore ADMS) to represent the Language class.</p>]]></long-description>
+          <tag line="97" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="105" namespace="ADMS" package="Default">
+        <name>$metadataPublisher</name>
+        <default><![CDATA[]]></default>
+        <docblock line="105">
+          <description><![CDATA[Links to the organisation making the metadata for the Asset available.]]></description>
+          <long-description><![CDATA[<p>The range of adms:metadataPublisher as dcterms:Agent which is used by RADion,
+and therefore ADMS, for the Publisher class.</p>]]></long-description>
+          <tag line="105" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="112" namespace="ADMS" package="Default">
+        <name>$relatedDocumentation</name>
+        <default><![CDATA[]]></default>
+        <docblock line="112">
+          <description><![CDATA[Links to documentation that contains information related to the asset.]]></description>
+          <long-description><![CDATA[<p>The range of adms:relatedDocumentation is foaf:Document</p>]]></long-description>
+          <tag line="112" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="118" namespace="ADMS" package="Default">
+        <name>$relatedWebPage</name>
+        <default><![CDATA[]]></default>
+        <docblock line="118">
+          <description><![CDATA[Links to a Web page that contains information related to the asset.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="118" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="125" namespace="ADMS" package="Default">
+        <name>$sample</name>
+        <default><![CDATA[]]></default>
+        <docblock line="125">
+          <description><![CDATA[Links to a sample of the Semantic Asset
+(which is itself a Semantic Asset, i.e the range is adms:Asset).]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="125" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="133" namespace="ADMS" package="Default">
+        <name>$status</name>
+        <default><![CDATA[]]></default>
+        <docblock line="133">
+          <description><![CDATA[Links to the status of the Asset or Distribution in the context of a
+particular workflow process.]]></description>
+          <long-description><![CDATA[<p>Since Status is defined using a skos:Concept, that is the defined range for this property.</p>]]></long-description>
+          <tag line="133" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="139" namespace="ADMS" package="Default">
+        <name>$temporalCoverage</name>
+        <default><![CDATA[]]></default>
+        <docblock line="139">
+          <description><![CDATA[Used in ADMS to link to the Period of Time class.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="139" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="146" namespace="ADMS" package="Default">
+        <name>$translation</name>
+        <default><![CDATA[]]></default>
+        <docblock line="146">
+          <description><![CDATA[Links to a translation of the Semantic Asset
+(which is itself a Semantic Asset, i.e the range is adms:Asset).]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="146" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="152" namespace="ADMS" package="Default">
+        <name>$type</name>
+        <default><![CDATA[]]></default>
+        <docblock line="152">
+          <description><![CDATA[Used in ADMS to link an Asset to its Asset Type.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="152" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="154" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+      </method>
+    </class>
+    <parse_markers>
+      <error line="154" code="50010">No DocBlock was found for method __construct()</error>
+    </parse_markers>
+  </file>
+  <file path="ADMS\SemanticAssetDistribution.php" hash="5be112e9b46c04d7dcd6bbef450c54b3" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="27" package="Default">
+      <extends>RADion\Distibution</extends>
+      <name>SemanticAssetDistribution</name>
+      <full_name>\ADMS\SemanticAssetDistribution</full_name>
+      <docblock line="27">
+        <description><![CDATA[class SemanticAssetDistribution]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="34" namespace="ADMS" package="Default">
+        <name>$accessURL</name>
+        <default><![CDATA[]]></default>
+        <docblock line="34">
+          <description><![CDATA[The URL of the Distribution.]]></description>
+          <long-description><![CDATA[<p>The range of adms:accessURL is xsd:anyURI</p>]]></long-description>
+          <tag line="34" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="40" namespace="ADMS" package="Default">
+        <name>$representationTechnique</name>
+        <default><![CDATA[]]></default>
+        <docblock line="40">
+          <description><![CDATA[Links an adms:Distribution to a skos:Concept that is its Representation Technique.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="40" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="48" namespace="ADMS" package="Default">
+        <name>$status</name>
+        <default><![CDATA[]]></default>
+        <docblock line="48">
+          <description><![CDATA[Links to the status of the Asset or Distribution in the context of a
+particular workflow process. Since Status is defined using a skos:Concept,
+that is the defined range for this property.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="48" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="50" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+      </method>
+    </class>
+    <parse_markers>
+      <error line="50" code="50010">No DocBlock was found for method __construct()</error>
+    </parse_markers>
+  </file>
+  <file path="ADMS\SemanticAssetRepository.php" hash="de43f0145dde02d9035b47638320da51" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="27" package="Default">
+      <extends>RADion\Repository</extends>
+      <name>SemanticAssetRepository</name>
+      <full_name>\ADMS\SemanticAssetRepository</full_name>
+      <docblock line="27">
+        <description><![CDATA[class SemanticAssetReposirtory]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="34" namespace="ADMS" package="Default">
+        <name>$accessURL</name>
+        <default><![CDATA[]]></default>
+        <docblock line="34">
+          <description><![CDATA[The URL of the Repository or Distribution.]]></description>
+          <long-description><![CDATA[<p>The range of adms:accessURL is xsd:anyURI</p>]]></long-description>
+          <tag line="34" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="41" namespace="ADMS" package="Default">
+        <name>$supportedSchema</name>
+        <default><![CDATA[]]></default>
+        <docblock line="41">
+          <description><![CDATA[A schema according to which the Repository can provide data about its content
+e.g. ADMS]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="41" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="49" namespace="ADMS" package="Default">
+        <name>$theme</name>
+        <default><![CDATA[]]></default>
+        <docblock line="49">
+          <description><![CDATA[The theme relationship associates an Asset with
+a specific Theme and theme taxonomy does the same job
+for the repository as a whole.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="49" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="54" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="54">
+          <description><![CDATA[Constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="59" package="Default">
+        <name>getProperties</name>
+        <full_name>getProperties</full_name>
+      </method>
+    </class>
+    <parse_markers>
+      <error line="59" code="50010">No DocBlock was found for method getProperties()</error>
+    </parse_markers>
+  </file>
+  <file path="ADMS\Status.php" hash="746a3cc4ef78a40b4b91868308d429bf" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="26" package="Default">
+      <extends>Common\Object</extends>
+      <name>Status</name>
+      <full_name>\ADMS\Status</full_name>
+      <docblock line="26">
+        <description><![CDATA[class Status]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="32" namespace="ADMS" package="Default">
+        <name>$code</name>
+        <default><![CDATA[]]></default>
+        <docblock line="32">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="32" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="37" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="37">
+          <description><![CDATA[Default constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+    </class>
+    <parse_markers>
+      <critical line="32" code="50019">No short description for property $code</critical>
+    </parse_markers>
+  </file>
+  <file path="Common\LiteralProperty.php" hash="b8c5c0c317aa8cbf40cc2ed790fc923b" package="Default">
+    <class final="false" abstract="false" namespace="Common" line="28" package="Default">
+      <extends>Common\Property</extends>
+      <name>LiteralProperty</name>
+      <full_name>\Common\LiteralProperty</full_name>
+      <docblock line="28">
+        <description><![CDATA[This property is a specialisation of the Property class]]></description>
+        <long-description><![CDATA[]]></long-description>
+        <tag line="28" name="see" description="\Common\Property" refers="\Common\Property"/>
+        <tag line="28" name="access" description="public"/>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="34" namespace="Common" package="Default">
+        <name>$language</name>
+        <default><![CDATA['']]></default>
+        <docblock line="34">
+          <description><![CDATA[The language of the literal property]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="34" name="var" description="" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="40" namespace="Common" package="Default">
+        <name>$datatype</name>
+        <default><![CDATA['']]></default>
+        <docblock line="40">
+          <description><![CDATA[The datatype of the literal property]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="40" name="var" description="" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Common" line="48" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="48">
+          <description><![CDATA[Default Constructor based on the parent's one]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="48" name="param" description="" type="string" variable="$value">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="48" name="param" description="" type="string" variable="$language">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="48" name="param" description="" type="string" variable="$dataype">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="48">
+          <name>$value</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="48">
+          <name>$language</name>
+          <default><![CDATA[NULL]]></default>
+          <type/>
+        </argument>
+        <argument line="48">
+          <name>$dataype</name>
+          <default><![CDATA[NULL]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Common" line="68" package="Default">
+        <name>__get</name>
+        <full_name>__get</full_name>
+        <docblock line="68">
+          <description><![CDATA[Magic function]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="68" name="param" description="" type="string" variable="$attribute">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="68" name="return" description="" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="68" name="throws" description="" type="\ErrorException">
+            <type by_reference="false">\ErrorException</type>
+          </tag>
+        </docblock>
+        <argument line="68">
+          <name>$attribute</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Common" line="88" package="Default">
+        <name>__set</name>
+        <full_name>__set</full_name>
+        <docblock line="88">
+          <description><![CDATA[Magic function]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="88" name="param" description="" type="string" variable="$attribute">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="88" name="param" description="" type="mixed" variable="$value">
+            <type by_reference="false">mixed</type>
+          </tag>
+          <tag line="88" name="throws" description="" type="\ErrorException">
+            <type by_reference="false">\ErrorException</type>
+          </tag>
+        </docblock>
+        <argument line="88">
+          <name>$attribute</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="88">
+          <name>$value</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+    </class>
+  </file>
+  <file path="Common\Object.php" hash="f9dd5e23a6b5a6526c7ae4a21e2d0ec7" package="Default">
+    <class final="false" abstract="false" namespace="Common" line="28" package="Default">
+      <extends/>
+      <name>Object</name>
+      <full_name>\Common\Object</full_name>
+      <docblock line="28">
+        <description><![CDATA[This class is depicting an Adms Object in order to set up generic methods
+to all this kind of object
+class AdmsObject]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="private" line="35" namespace="Common" package="Default">
+        <name>$_params</name>
+        <default><![CDATA[array()]]></default>
+        <docblock line="35">
+          <description><![CDATA[This array contains the parameters which should be translated]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="35" name="access" description="private"/>
+          <tag line="35" name="var" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="private" line="42" namespace="Common" package="Default">
+        <name>$_types</name>
+        <default><![CDATA[array()]]></default>
+        <docblock line="42">
+          <description><![CDATA[This array contains the type of object which should be instantiated]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="42" name="access" description="private"/>
+          <tag line="42" name="var" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="49" namespace="Common" package="Default">
+        <name>$id</name>
+        <default><![CDATA[]]></default>
+        <docblock line="49">
+          <description><![CDATA[The identifier of the object]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="49" name="var" description="" type="mixed">
+            <type by_reference="false">mixed</type>
+          </tag>
+          <tag line="49" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="55" namespace="Common" package="Default">
+        <name>$weight</name>
+        <default><![CDATA[]]></default>
+        <docblock line="55">
+          <description><![CDATA[The weigt of the object in order to be sorted]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="55" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="61" namespace="Common" package="Default">
+        <name>$object</name>
+        <default><![CDATA[]]></default>
+        <docblock line="61">
+          <description><![CDATA[The object represented]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="61" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="68" namespace="Common" package="Default">
+        <name>$tStatus</name>
+        <default><![CDATA[]]></default>
+        <docblock line="68">
+          <description><![CDATA[The technical status is depicting the state of the object regarding the
+synchronisation]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="68" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="74" namespace="Common" package="Default">
+        <name>$_logger</name>
+        <default><![CDATA[]]></default>
+        <docblock line="74">
+          <description><![CDATA[Set the logger]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="74" name="access" description="public"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Common" line="79" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="79">
+          <description><![CDATA[Default constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Common" line="88" package="Default">
+        <name>__get</name>
+        <full_name>__get</full_name>
+        <docblock line="88">
+          <description><![CDATA[Getter, "magic" function]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="88" name="param" description="the value of the attribute" type="\type" variable="$attribute">
+            <type by_reference="false">\type</type>
+          </tag>
+          <tag line="88" name="return" description="" type="mixed">
+            <type by_reference="false">mixed</type>
+          </tag>
+        </docblock>
+        <argument line="88">
+          <name>$attribute</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Common" line="97" package="Default">
+        <name>__set</name>
+        <full_name>__set</full_name>
+        <docblock line="97">
+          <description><![CDATA[Setter, "magic" function]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="97" name="param" description="" type="mixed" variable="$attribute">
+            <type by_reference="false">mixed</type>
+          </tag>
+          <tag line="97" name="param" description="" type="mixed" variable="$value">
+            <type by_reference="false">mixed</type>
+          </tag>
+        </docblock>
+        <argument line="97">
+          <name>$attribute</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="97">
+          <name>$value</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Common" line="130" package="Default">
+        <name>addParameter</name>
+        <full_name>addParameter</full_name>
+        <docblock line="130">
+          <description><![CDATA[This method is used for the intermediary parameter
+(to be used with @translate())]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="130" name="param" description="" type="mixed" variable="$attribute">
+            <type by_reference="false">mixed</type>
+          </tag>
+          <tag line="130" name="param" description="" type="mixed" variable="$value">
+            <type by_reference="false">mixed</type>
+          </tag>
+        </docblock>
+        <argument line="130">
+          <name>$attribute</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="130">
+          <name>$value</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Common" line="167" package="Default">
+        <name>addType</name>
+        <full_name>addType</full_name>
+        <docblock line="167">
+          <description><![CDATA[This method is used for the intermediary types
+(to be used with @translate())]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="167" name="param" description="the type of the object to be instantiated" type="string" variable="$type">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="167" name="throws" description="if the type is already registered" type="\ErrorException">
+            <type by_reference="false">\ErrorException</type>
+          </tag>
+        </docblock>
+        <argument line="167">
+          <name>$type</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Common" line="183" package="Default">
+        <name>translate</name>
+        <full_name>translate</full_name>
+        <docblock line="183">
+          <description><![CDATA[This method is translating the current object into an array of other object]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="183" name="return" description="an array of instantiated object" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </method>
+    </class>
+    <parse_markers>
+      <notice line="88" code="50017">The type for the @param tag in __get() is "type"; isn't this an IDE default?</notice>
+    </parse_markers>
+  </file>
+  <file path="Common\Property.php" hash="9af97fe85bc908db73976dd5bfa10e78" package="Default">
+    <constant namespace="Common" line="22" package="Default">
+      <name>COMMON_PROPERTY_TYPE_RESOURCE</name>
+      <full_name>\Common\COMMON_PROPERTY_TYPE_RESOURCE</full_name>
+      <value><![CDATA[0]]></value>
+    </constant>
+    <constant namespace="Common" line="23" package="Default">
+      <name>COMMON_PROPERTY_TYPE_LITERAL</name>
+      <full_name>\Common\COMMON_PROPERTY_TYPE_LITERAL</full_name>
+      <value><![CDATA[1]]></value>
+    </constant>
+    <class final="false" abstract="false" namespace="Common" line="30" package="Default">
+      <extends/>
+      <name>Property</name>
+      <full_name>\Common\Property</full_name>
+      <docblock line="30">
+        <description><![CDATA[The property is the type of value used by the Objects of the ADMS & RADion
+libraries. It simplifies the management of the export and import]]></description>
+        <long-description><![CDATA[]]></long-description>
+        <tag line="30" name="access" description="public"/>
+      </docblock>
+      <property final="false" static="false" visibility="public" line="36" namespace="Common" package="Default">
+        <name>$type</name>
+        <default><![CDATA[]]></default>
+        <docblock line="36">
+          <description><![CDATA[The type of property based on an enumeration (might be Literal or Resource)]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="36" name="var" description="" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="36" name="access" description="public"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="43" namespace="Common" package="Default">
+        <name>$value</name>
+        <default><![CDATA[]]></default>
+        <docblock line="43">
+          <description><![CDATA[The value of the property]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="43" name="var" description="" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="43" name="access" description="public"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="52" namespace="Common" package="Default">
+        <name>$additionalParameter</name>
+        <default><![CDATA[]]></default>
+        <docblock line="52">
+          <description><![CDATA[The additional parameter which may be required by the property
+(e.g. the language, the type of data)
+It is a key/value pairs]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="52" name="var" description="" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="52" name="access" description="public"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="Common" line="60" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="60">
+          <description><![CDATA[Constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="60" name="param" description="the value of the property" type="string" variable="$value">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="60" name="param" description="(optional) the type of the property" type="string" variable="$type">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="60" name="param" description="(optional) additional parameter" type="array" variable="$additionalParameter">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="60">
+          <name>$value</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="60">
+          <name>$type</name>
+          <default><![CDATA[COMMON_PROPERTY_TYPE_RESOURCE]]></default>
+          <type/>
+        </argument>
+        <argument line="61">
+          <name>$additionalParameter</name>
+          <default><![CDATA[array()]]></default>
+          <type/>
+        </argument>
+      </method>
+    </class>
+  </file>
+  <file path="RADion\Agent.php" hash="95451af29a2e744b52cfcb8f6bdea873" package="Default">
+    <class final="false" abstract="false" namespace="RADion" line="28" package="Default">
+      <extends>Common\Object</extends>
+      <name>Agent</name>
+      <full_name>\RADion\Agent</full_name>
+      <docblock line="28">
+        <description><![CDATA[The dcterms:Agent class (or a sub class of it) is used in
+RADion to represent the publisher of a Repository or its components.]]></description>
+        <long-description><![CDATA[<p>class Agent</p>]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="34" namespace="RADion" package="Default">
+        <name>$name</name>
+        <default><![CDATA[]]></default>
+        <docblock line="34">
+          <description><![CDATA[RADion uses this to provide the name or label of any class.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="34" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="40" namespace="RADion" package="Default">
+        <name>$type</name>
+        <default><![CDATA[]]></default>
+        <docblock line="40">
+          <description><![CDATA[Used in RADion to link a Licence or Publisher to its type.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="40" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="RADion" line="45" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="45">
+          <description><![CDATA[Default constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+    </class>
+  </file>
+  <file path="RADion\Asset.php" hash="1fb4cec9bfa6b1c2436d10120314bda7" package="Default">
+    <class final="false" abstract="false" namespace="RADion" line="28" package="Default">
+      <extends>Common\Object</extends>
+      <name>Asset</name>
+      <full_name>\RADion\Asset</full_name>
+      <docblock line="28">
+        <description><![CDATA[An Asset represents the conceptual content of a resource.]]></description>
+        <long-description><![CDATA[<p>A particular Asset may have zero or more Distributions in different formats.
+class Asset</p>]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="37" namespace="RADion" package="Default">
+        <name>$alternativeName</name>
+        <default><![CDATA[]]></default>
+        <docblock line="37">
+          <description><![CDATA[Used in RADion to provide an alternative name for the Asset:
+this information may be used to provide additional access points,
+e.g. allowing indexing of any acronyms, nicknames, shorthand notations
+or other identifying information that a user might expect to find the Asset under.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="37" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="44" namespace="RADion" package="Default">
+        <name>$currentVersion</name>
+        <default><![CDATA[]]></default>
+        <docblock line="44">
+          <description><![CDATA[RADion uses the XHTML 'last' property to link an Asset to the most recent
+(i.e. current) version.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="44" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="53" namespace="RADion" package="Default">
+        <name>$dateCreated</name>
+        <default><![CDATA[]]></default>
+        <docblock line="53">
+          <description><![CDATA[RADion uses this to provide the creation date of this version of
+the Repository, Asset or Distribution.]]></description>
+          <long-description><![CDATA[<p>RADion expects a datatyped value and for it to be conformant with ISO 8601,
+preferably using an xsd data type.</p>]]></long-description>
+          <tag line="53" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="62" namespace="RADion" package="Default">
+        <name>$dateModified</name>
+        <default><![CDATA[]]></default>
+        <docblock line="62">
+          <description><![CDATA[RADion uses this to provide the date of latest update of the Repository,
+Asset or Distribution.]]></description>
+          <long-description><![CDATA[<p>RADion expects a datatyped value and for it to be conformant with ISO 8601,
+preferably using an xsd data type</p>]]></long-description>
+          <tag line="62" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="69" namespace="RADion" package="Default">
+        <name>$description</name>
+        <default><![CDATA[]]></default>
+        <docblock line="69">
+          <description><![CDATA[Used in RADion to provide descriptive text for
+the Repository, Asset or Distribution.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="69" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="76" namespace="RADion" package="Default">
+        <name>$distribution</name>
+        <default><![CDATA[]]></default>
+        <docblock line="76">
+          <description><![CDATA[The distribution relationship associates an Asset (its domain)
+with a Distribution (its range). It is the inverse of distributionOf]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="76" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="82" namespace="RADion" package="Default">
+        <name>$keyword</name>
+        <default><![CDATA[]]></default>
+        <docblock line="82">
+          <description><![CDATA[A word or phrase used to succinctly descibe the Asset]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="82" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="88" namespace="RADion" package="Default">
+        <name>$language</name>
+        <default><![CDATA[]]></default>
+        <docblock line="88">
+          <description><![CDATA[RADion uses this to provide the language of the Asset.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="88" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="94" namespace="RADion" package="Default">
+        <name>$name</name>
+        <default><![CDATA[]]></default>
+        <docblock line="94">
+          <description><![CDATA[RADion uses this to provide the name]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="94" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="101" namespace="RADion" package="Default">
+        <name>$nextVersion</name>
+        <default><![CDATA[]]></default>
+        <docblock line="101">
+          <description><![CDATA[RADion uses the XHTML 'next' property to link an Asset to the next
+most recent version.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="101" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="108" namespace="RADion" package="Default">
+        <name>$previousVersion</name>
+        <default><![CDATA[]]></default>
+        <docblock line="108">
+          <description><![CDATA[RADion uses the XHTML 'previous' property to link an Asset to the
+previous version.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="108" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="115" namespace="RADion" package="Default">
+        <name>$publisher</name>
+        <default><![CDATA[]]></default>
+        <docblock line="115">
+          <description><![CDATA[Used in RADion to link to the organisation responsible for
+the publication of the Asset, Repository or Distribution.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="115" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="122" namespace="RADion" package="Default">
+        <name>$relation</name>
+        <default><![CDATA[]]></default>
+        <docblock line="122">
+          <description><![CDATA[Used in RADion to link any Asset to any other related Asset.]]></description>
+          <long-description><![CDATA[<p>RADion expects the object to be of type rad:Asset.</p>]]></long-description>
+          <tag line="122" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="128" namespace="RADion" package="Default">
+        <name>$repositoryOrigin</name>
+        <default><![CDATA[]]></default>
+        <docblock line="128">
+          <description><![CDATA[RADion uses dcterms:isPartOf to link an Asset to a Repository.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="128" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="135" namespace="RADion" package="Default">
+        <name>$spatialCoverage</name>
+        <default><![CDATA[]]></default>
+        <docblock line="135">
+          <description><![CDATA[RADion uses this to link to the geographic region or jurisdiction that
+the Asset or Repository applies to]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="135" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="143" namespace="RADion" package="Default">
+        <name>$theme</name>
+        <default><![CDATA[]]></default>
+        <docblock line="143">
+          <description><![CDATA[The theme relationship associates an Asset with a specific Theme.]]></description>
+          <long-description><![CDATA[<p>Themes are typically, but not necessarily, encoded as a skos:Concept,
+arranged in a skos:ConceptScheme.</p>]]></long-description>
+          <tag line="143" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="150" namespace="RADion" package="Default">
+        <name>$version</name>
+        <default><![CDATA[]]></default>
+        <docblock line="150">
+          <description><![CDATA[The version number or other designation of the Asset;
+the value should be a free text string]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="150" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="156" namespace="RADion" package="Default">
+        <name>$versionNotes</name>
+        <default><![CDATA[]]></default>
+        <docblock line="156">
+          <description><![CDATA[Notes on the particular version of the Asset.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="156" name="access" description="protected"/>
+        </docblock>
+      </property>
+    </class>
+  </file>
+  <file path="RADion\Code.php" hash="666bdd822d912ced6d3c5e5c3281b75f" package="Default">
+    <class final="false" abstract="false" namespace="RADion" line="30" package="Default">
+      <extends/>
+      <name>Code</name>
+      <full_name>\RADion\Code</full_name>
+      <docblock line="30">
+        <description><![CDATA[The Conceptual Model includes a 'Code' datatype that is used by several classes.]]></description>
+        <long-description><![CDATA[<p>This is expressed using the SKOS vocabulary with a particular 'code'
+usually being a skos:Concept that is part of a scheme.
+The intention is that the skos:Concept class be used as follows;
+class code</p>]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="public" line="36" namespace="RADion" package="Default">
+        <name>$content</name>
+        <default><![CDATA[]]></default>
+        <docblock line="36">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="36" name="access" description="public"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="42" namespace="RADion" package="Default">
+        <name>$list</name>
+        <default><![CDATA[]]></default>
+        <docblock line="42">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="42" name="access" description="public"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="48" namespace="RADion" package="Default">
+        <name>$listAgency</name>
+        <default><![CDATA[]]></default>
+        <docblock line="48">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="48" name="access" description="public"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="54" namespace="RADion" package="Default">
+        <name>$listVersion</name>
+        <default><![CDATA[]]></default>
+        <docblock line="54">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="54" name="access" description="public"/>
+        </docblock>
+      </property>
+    </class>
+    <parse_markers>
+      <critical line="36" code="50019">No short description for property $content</critical>
+      <critical line="42" code="50019">No short description for property $list</critical>
+      <critical line="48" code="50019">No short description for property $listAgency</critical>
+      <critical line="54" code="50019">No short description for property $listVersion</critical>
+    </parse_markers>
+  </file>
+  <file path="RADion\Distibution.php" hash="3e146669c127223862a259ea2de838aa" package="Default">
+    <class final="false" abstract="false" namespace="RADion" line="30" package="Default">
+      <extends>Common\Object</extends>
+      <name>Distibution</name>
+      <full_name>\RADion\Distibution</full_name>
+      <docblock line="30">
+        <description><![CDATA[A Distribution is a particular representation or concretisation of an Asset
+in the form of a downloadable computer file that implements the intellectual
+content of an Asset. A particular Distribution is typically
+associated with one Asset.]]></description>
+        <long-description><![CDATA[<p>class Distibution</p>]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="37" namespace="RADion" package="Default">
+        <name>$dateCreated</name>
+        <default><![CDATA[]]></default>
+        <docblock line="37">
+          <description><![CDATA[RADion uses this to provide the creation date of this Distribution.]]></description>
+          <long-description><![CDATA[<p>RADion expects a datatyped value and for it to be conformant with ISO 8601</p>]]></long-description>
+          <tag line="37" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="44" namespace="RADion" package="Default">
+        <name>$dateModified</name>
+        <default><![CDATA[]]></default>
+        <docblock line="44">
+          <description><![CDATA[RADion uses this to provide the date of latest update of the Distribution.]]></description>
+          <long-description><![CDATA[<p>RADion expects a datatyped value and for it to be conformant with ISO 8601</p>]]></long-description>
+          <tag line="44" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="50" namespace="RADion" package="Default">
+        <name>$description</name>
+        <default><![CDATA[]]></default>
+        <docblock line="50">
+          <description><![CDATA[Used in RADion to provide descriptive text for the Distribution.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="50" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="58" namespace="RADion" package="Default">
+        <name>$distributionOf</name>
+        <default><![CDATA[]]></default>
+        <docblock line="58">
+          <description><![CDATA[The distributionOf relationship associates a Distribution (its domain)
+with the Asset (its range) of which it is a Distribution.]]></description>
+          <long-description><![CDATA[<p>It is the inverse of distribution</p>]]></long-description>
+          <tag line="58" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="65" namespace="RADion" package="Default">
+        <name>$format</name>
+        <default><![CDATA[]]></default>
+        <docblock line="65">
+          <description><![CDATA[Used in RADion to link to the format that the Distribution is available in
+(e.g. PDF, XML, RDF/XML, HTML) which is provided as a property of dcterms:FileFormat]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="65" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="72" namespace="RADion" package="Default">
+        <name>$license</name>
+        <default><![CDATA[]]></default>
+        <docblock line="72">
+          <description><![CDATA[Used in RADion to link to the conditions or restrictions for (re-use)
+of the Distribution. Note that the range is dcterms:LicenseDocument]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="72" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="78" namespace="RADion" package="Default">
+        <name>$name</name>
+        <default><![CDATA[]]></default>
+        <docblock line="78">
+          <description><![CDATA[RADion uses this to provide the name of the class]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="78" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="86" namespace="RADion" package="Default">
+        <name>$publisher</name>
+        <default><![CDATA[]]></default>
+        <docblock line="86">
+          <description><![CDATA[Used in RADion to link to the organisation responsible for the publication
+of the Asset, Repository or Distribution.]]></description>
+          <long-description><![CDATA[<p>Note that the range is dcterms:Agent.</p>]]></long-description>
+          <tag line="86" name="access" description="protected"/>
+        </docblock>
+      </property>
+    </class>
+  </file>
+  <file path="RADion\FileFormat.php" hash="aeaf3da05aa60bae80ee972454fcb460" package="Default">
+    <class final="false" abstract="false" namespace="RADion" line="27" package="Default">
+      <extends>Common\Object</extends>
+      <name>FileFormat</name>
+      <full_name>\RADion\FileFormat</full_name>
+      <docblock line="27">
+        <description><![CDATA[class FileFormat]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="public" line="33" namespace="RADion" package="Default">
+        <name>$code</name>
+        <default><![CDATA[]]></default>
+        <docblock line="33">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="33" name="access" description="public"/>
+        </docblock>
+      </property>
+    </class>
+    <parse_markers>
+      <critical line="33" code="50019">No short description for property $code</critical>
+    </parse_markers>
+  </file>
+  <file path="RADion\GeographicCoverage.php" hash="7ad4fd60be34b94df44ef808c42f325c" package="Default">
+    <class final="false" abstract="false" namespace="RADion" line="27" package="Default">
+      <extends>Common\Object</extends>
+      <name>GeographicCoverage</name>
+      <full_name>\RADion\GeographicCoverage</full_name>
+      <docblock line="27">
+        <description><![CDATA[class GeographicCoverage]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="34" namespace="RADion" package="Default">
+        <name>$description</name>
+        <default><![CDATA[]]></default>
+        <docblock line="34">
+          <description><![CDATA[Used in RADion to provide descriptive text for
+the Repository, Asset or Distribution.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="34" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="41" namespace="RADion" package="Default">
+        <name>$name</name>
+        <default><![CDATA[]]></default>
+        <docblock line="41">
+          <description><![CDATA[RADion uses this to provide the name or label of any class.]]></description>
+          <long-description><![CDATA[<p>For technical compatibility, we need to use $name attribute</p>]]></long-description>
+          <tag line="41" name="access" description="protected"/>
+        </docblock>
+      </property>
+    </class>
+  </file>
+  <file path="RADion\Language.php" hash="cc74ca9a7e3694a259207ede686f114a" package="Default">
+    <class final="false" abstract="false" namespace="RADion" line="27" package="Default">
+      <extends>Common\Object</extends>
+      <name>Language</name>
+      <full_name>\RADion\Language</full_name>
+      <docblock line="27">
+        <description><![CDATA[class Language]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="public" line="33" namespace="RADion" package="Default">
+        <name>$code</name>
+        <default><![CDATA[]]></default>
+        <docblock line="33">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="33" name="access" description="public"/>
+        </docblock>
+      </property>
+    </class>
+    <parse_markers>
+      <critical line="33" code="50019">No short description for property $code</critical>
+    </parse_markers>
+  </file>
+  <file path="RADion\License.php" hash="57942038e85d7e1c56aee205f47dad2d" package="Default">
+    <class final="false" abstract="false" namespace="RADion" line="31" package="Default">
+      <extends>Common\Object</extends>
+      <name>License</name>
+      <full_name>\RADion\License</full_name>
+      <docblock line="31">
+        <description><![CDATA[Used in RADion to provide the conditions or restrictions that apply to the
+use of a Distribution, e.g. whether it is in the public domain,
+or that some restrictions apply like in cases attribution is required,
+or the Asset can only be used for non-commercial purposes etc.]]></description>
+        <long-description><![CDATA[<p>class License</p>]]></long-description>
+        <tag line="31" name="access" description="public"/>
+      </docblock>
+      <property final="false" static="false" visibility="public" line="37" namespace="RADion" package="Default">
+        <name>$name</name>
+        <default><![CDATA[]]></default>
+        <docblock line="37">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="37" name="access" description="public"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="43" namespace="RADion" package="Default">
+        <name>$description</name>
+        <default><![CDATA[]]></default>
+        <docblock line="43">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="43" name="access" description="public"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="49" namespace="RADion" package="Default">
+        <name>$type</name>
+        <default><![CDATA[]]></default>
+        <docblock line="49">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="49" name="access" description="public"/>
+        </docblock>
+      </property>
+    </class>
+    <parse_markers>
+      <critical line="37" code="50019">No short description for property $name</critical>
+      <critical line="43" code="50019">No short description for property $description</critical>
+      <critical line="49" code="50019">No short description for property $type</critical>
+    </parse_markers>
+  </file>
+  <file path="RADion\Repository.php" hash="f2f55d5934f5ff6258282ea97a8fbc1a" package="Default">
+    <class final="false" abstract="false" namespace="RADion" line="31" package="Default">
+      <extends>Common\Object</extends>
+      <name>Repository</name>
+      <full_name>\RADion\Repository</full_name>
+      <docblock line="31">
+        <description><![CDATA[A Repository is a system or service that provides facilities for storage and
+maintenance of descriptions of Assets and Distributions.]]></description>
+        <long-description><![CDATA[<p>A Repository will typically contain descriptions of several Assets and
+functionality that allows users to search and access these descriptions.
+The Distributions - the actual files themselves - will typically
+be available from the Repository or elsewhere on the World Wide Web.</p>]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="40" namespace="RADion" package="Default">
+        <name>$dateCreated</name>
+        <default><![CDATA[]]></default>
+        <docblock line="40">
+          <description><![CDATA[RADion uses this to provide the creation date of this version of
+the Repository, Asset or Distribution.]]></description>
+          <long-description><![CDATA[<p>RADion expects a datatyped value and for it to be conformant with ISO 8601,
+preferably using an xsd data type.</p>]]></long-description>
+          <tag line="40" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="49" namespace="RADion" package="Default">
+        <name>$dateModified</name>
+        <default><![CDATA[]]></default>
+        <docblock line="49">
+          <description><![CDATA[RADion uses this to provide the date of latest update of the Repository,
+Asset or Distribution.]]></description>
+          <long-description><![CDATA[<p>RADion expects a datatyped value and for it to be conformant with ISO 8601,
+preferably using an xsd data type</p>]]></long-description>
+          <tag line="49" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="56" namespace="RADion" package="Default">
+        <name>$description</name>
+        <default><![CDATA[]]></default>
+        <docblock line="56">
+          <description><![CDATA[Used in RADion to provide descriptive text for
+the Repository, Asset or Distribution.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="56" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="62" namespace="RADion" package="Default">
+        <name>$includes</name>
+        <default><![CDATA[]]></default>
+        <docblock line="62">
+          <description><![CDATA[The assets which are included into this repository]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="62" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="68" namespace="RADion" package="Default">
+        <name>$name</name>
+        <default><![CDATA[]]></default>
+        <docblock line="68">
+          <description><![CDATA[RADion uses this to provide the name]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="68" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="75" namespace="RADion" package="Default">
+        <name>$publisher</name>
+        <default><![CDATA[]]></default>
+        <docblock line="75">
+          <description><![CDATA[Used in RADion to link to the organisation responsible for
+the publication of the Asset, Repository or Distribution.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="75" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="83" namespace="RADion" package="Default">
+        <name>$themeTaxonomy</name>
+        <default><![CDATA[]]></default>
+        <docblock line="83">
+          <description><![CDATA[The theme relationship associates an Asset with
+a specific Theme and theme taxonomy does the same job
+for the repository as a whole.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="83" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="protected" line="90" namespace="RADion" package="Default">
+        <name>$spatialCoverage</name>
+        <default><![CDATA[]]></default>
+        <docblock line="90">
+          <description><![CDATA[RADion uses this to link to the geographic region or jurisdiction that
+the Asset or Repository applies to]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="90" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="RADion" line="95" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="95">
+          <description><![CDATA[Default constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+    </class>
+  </file>
+  <file path="RADion\Theme.php" hash="3a476af9a87624153fdc3d0a62735a00" package="Default">
+    <class final="false" abstract="false" namespace="ADMS" line="27" package="Default">
+      <extends>Common\Object</extends>
+      <name>Theme</name>
+      <full_name>\ADMS\Theme</full_name>
+      <docblock line="27">
+        <description><![CDATA[class Theme]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="protected" line="33" namespace="ADMS" package="Default">
+        <name>$code</name>
+        <default><![CDATA[]]></default>
+        <docblock line="33">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="33" name="access" description="protected"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="ADMS" line="35" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+      </method>
+    </class>
+    <parse_markers>
+      <critical line="33" code="50019">No short description for property $code</critical>
+      <error line="35" code="50010">No DocBlock was found for method __construct()</error>
+    </parse_markers>
+  </file>
+  <file path="RADion\ThemeTaxonomy.php" hash="3f0501fb1b6eee05821289c44a0ff481" package="Default">
+    <class final="false" abstract="false" namespace="RADion" line="27" package="Default">
+      <extends>Common\Object</extends>
+      <name>ThemeTaxonomy</name>
+      <full_name>\RADion\ThemeTaxonomy</full_name>
+      <docblock line="27">
+        <description><![CDATA[class ThemeTaxonomy]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="public" line="32" namespace="RADion" package="Default">
+        <name>$code</name>
+        <default><![CDATA[]]></default>
+        <docblock line="32">
+          <description><![CDATA[]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="32" name="access" description="public"/>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="RADion" line="34" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+      </method>
+    </class>
+    <parse_markers>
+      <critical line="32" code="50019">No short description for property $code</critical>
+      <error line="34" code="50010">No DocBlock was found for method __construct()</error>
+    </parse_markers>
+  </file>
+  <package name="Default" full_name="Default"/>
+  <namespace name="ADMS" full_name="ADMS"/>
+  <namespace name="Adapters" full_name="Adapters"/>
+  <namespace name="Common" full_name="Common"/>
+  <namespace name="RADion" full_name="RADion"/>
+  <marker count="3">todo</marker>
+  <marker count="0">fixme</marker>
+  <deprecated count="0"/>
+</project>

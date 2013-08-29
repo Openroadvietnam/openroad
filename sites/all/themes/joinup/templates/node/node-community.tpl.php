@@ -54,9 +54,6 @@
 <div id="node-<?php print $node->nid; ?>" class="node node-type-<?php print $node->type ?> <?php if ($sticky) { print ' sticky'; } ?> <?php if (!$status) { print ' node-unpublished'; } ?> clear-block">
 	<div class="node-content">
       <?php if ($page): ?>
-		<?php if ($flags_view): ?>
-			<div class="field field-flags-view"><?php print $flags_view ?></div>
-		<?php endif; ?>
 		<?php if ($submitted): ?>
 			<div class="field field-submitted"><?php print $submitted ?></div>
 		<?php endif; ?>
@@ -64,12 +61,12 @@
 			<div class="field field-vote-rating"><?php print $vote_rating; ?></div>
 		<?php endif; ?>
 		<div class="field field-mission-description">
-			<h3><?php print t('Description'); ?></h3>
+			<h3 class="page-subtitle-content"><?php print t('Description'); ?></h3>
 			<?php print $node->content['og_mission']['#value']; ?>
 		</div>
 		<?php if (!empty($field_community_expectations['0']['value'])): ?>
 			<div class="field field-expectations">
-				<h3><?php print t('Expectations'); ?></h3>
+				<h3 class="page-subtitle-content"><?php print t('Expectations'); ?></h3>
 				<?php print $field_community_expectations['0']['value']; ?>
 			</div>
 		<?php endif; ?>
@@ -77,7 +74,7 @@
         <?php if ($edit_link): ?><div class="edit-link"><?php print $edit_link; ?> </div><?php endif; ?>
       <?php endif; ?>
 		<div id="node-information" class="box information">
-			<h3 class="accessibility-info"><?php print t('Information'); ?></h3>
+			<h3 class="page-subtitle-content"><?php print t('Information'); ?></h3>
 			<div class="odd nodes-row-first nodes-row-last clearfix">
 				<dl class="colspans-4-4 first last fields">
 					<?php if (!empty($field_community_sponsor_logo['0']['view'])): ?>
@@ -102,6 +99,14 @@
 						<dt class="field field-existing-url-term"><?php print t('Existing URL on the Internet') ?>:</dt>
 						<dd class="field field-existing-url-description"><?php print $field_community_url['0']['view']; ?></dd>
 					<?php endif; ?>
+					<?php if(!empty($taxonomy_terms)):?>
+						<?php foreach ($taxonomy_terms as $vocab => $terms): ?>
+							<?php if ($terms): ?>
+								<dt class="field field-taxonomy-<?php print strtolower($vocab); ?>-term"><?php print t($vocab); ?>:</dt>
+								<dd class="field field-taxonomy-<?php print strtolower($vocab); ?>-description"><?php print $terms; ?></dd>
+							<?php endif; ?>
+						<?php endforeach; ?>
+					<?php endif;?>
 				</dl>
 			</div>
 		</div>

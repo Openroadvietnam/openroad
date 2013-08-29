@@ -93,6 +93,8 @@ function subscriptions_settings_form(&$form_state) {
 /*  user screens: display, edit functions                  */
 /* ******************************************************* */
 
+//ISAICP-103
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-103
 /**
  * Theme subscriptions page controls table.
  *
@@ -103,15 +105,15 @@ function theme_subscriptions_form_table($element) {
   $rows = array();
   drupal_add_js(drupal_get_path('module', 'subscriptions') .'/subscriptions_tableselect.js', 'module', 'header', FALSE, TRUE, FALSE);
   $columns['checkboxes']      = array('data' => '', 'width' => '1%', 'class' => 'subscriptions-table select-all');
-  $columns['labels']          = array('data' => t('Subscription'), 'width' => '18%');
+  $columns['labels']          = array('data' => t('Subscription')/*, 'width' => '18%'*/);
   if (isset($element['send_interval']) && $element['send_interval']['#access']) {
-    $columns['send_interval'] = array('data' => t('Send interval'), 'width' => '20%');
+    $columns['send_interval'] = array('data' => t('Send interval')/*, 'width' => '20%'*/);
   }
   if (isset($element['send_updates']) && $element['send_updates']['#access']) {
-    $columns['send_updates']  = array('data' => t('On&nbsp;updates'), 'width' => '10%');
+    $columns['send_updates']  = array('data' => t('On updates')/*, 'width' => '10%'*/);
   }
   if (isset($element['send_comments']) && $element['send_comments']['#access'] && module_exists('comment')) {
-    $columns['send_comments'] = array('data' => t('On&nbsp;comments'), 'width' => '10%');
+    $columns['send_comments'] = array('data' => t('On comments')/*, 'width' => '10%'*/);
   }
 
   // check whether we have an Author column
@@ -120,7 +122,7 @@ function theme_subscriptions_form_table($element) {
       foreach (element_children($element['checkboxes'][$key]) as $key1) {
         if ($key1 != -1) {
           $tr = 't';
-          $columns['author'] = array('data' => $tr('Author'), 'width' => '20%');
+          $columns['author'] = array('data' => $tr('Author')/*, 'width' => '20%'*/);
         }
       }
     }

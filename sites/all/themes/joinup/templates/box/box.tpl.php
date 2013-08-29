@@ -20,7 +20,7 @@
 
 ?>
 <?php if ($title): ?>
- 	<h3 id="comment-form-title" class="new-comment"><?php print $title ?></h3>
+ 	<h3 id="comment-form-title" class="page-subtitle-content new-comment"><?php print $title ?></h3>
 <?php endif; ?>
 <div class="node box-id-<?php print $id; ?>">
 	<div class="node-content">

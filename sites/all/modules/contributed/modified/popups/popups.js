@@ -104,7 +104,7 @@ Popups.defaultOptions = {
   reloadOnError: false, // Force the entire page to reload if the popup href is unaccessable.
   noMessage: false, // Don't show drupal_set_message messages.
   skipDirtyCheck: false, // If true, this popup will not check for edits on the originating page.
-  hijackDestination: true // Use the destiination param to force a form submit to return to the originating page.
+  hijackDestination: false // Use the destiination param to force a form submit to return to the originating page.
 };
 
 // ***************************************************************************
@@ -235,6 +235,10 @@ Popups.Popup.prototype.isDone = function(path) {
     else {
        // Test if we are back to the original page's path.
       done = (path === Popups.originalSettings.popups.originalPath);
+      /*var originalDestination = decodeURIComponent(popups_reference_get_cookie_value('OriginalDestination'));
+      if(!done && (originalDestination === path)){
+        done = true;
+      }*/
     }
   };
   return done;
@@ -500,10 +504,24 @@ Popups.open = function(popup, title, body, buttons, width){
  */
 Popups.resizeAndCenter = function(popup) {
   var $popup = popup.$popup();
-
-  // center on the screen, adding in offsets if the window has been scrolled
-  var popupWidth = $popup.width();
-  var windowWidth = Popups.windowWidth();
+  //ISAICP-103
+  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-103  
+  var title = $('.popups-title .title').text();
+  if(title == 'Subscriptions'){
+	  $popup.css('width', 'auto'); // Reset width
+	  var popupWidth = $popup.width();
+	  $popup.width(popupWidth);
+	  var windowWidth = Popups.windowWidth();
+	  if (popupWidth > 0.9 * windowWidth ) { // Must fit in 90% of windowWidth.
+		    popupWidth = 0.9 * windowWidth;
+		    $popup.width(popupWidth);
+	  }
+  }else{
+	  var popupWidth = $popup.width();
+	  var windowWidth = Popups.windowWidth();
+  }
+  
+  //center on the screen, adding in offsets if the window has been scrolled
   var left = (windowWidth / 2) - (popupWidth / 2) + Popups.scrollLeft();
 
   // Get popups's height on the page.
@@ -851,6 +869,9 @@ Popups.openPath = function(element, options, parent) {
     else { // No parent, so bring flow back to original page.
       returnPath = Popups.originalSettings.popups.originalPath;
     }
+    if (popups_reference_get_cookie_value('OriginalDestination') != undefined) {
+      returnPath = popups_reference_get_cookie_value('OriginalDestination');
+    }
     href = href.replace(/destination=[^;&]*[;&]?/, ''); // Strip out any existing destination param.
     params.destination = returnPath; // Set the destination to return to the parent's path.
   }
@@ -1017,11 +1038,14 @@ Popups.formSuccess = function(popup, data) {
             var $c = $(popup.targetLayerSelector()).find(t_old).html(new_content); // Inject the new content into the original page.
 
             Drupal.attachBehaviors($c);
+            console.log(new_content);
+            console.log($c);
           });
         }
         else { // Put the entire new content into default content area.
           var $c = $(popup.targetLayerSelector()).find(Popups.originalSettings.popups.defaultTargetSelector).html(data.content);
-          Drupal.attachBehaviors($c);
+          if($c.length > 0)
+            Drupal.attachBehaviors($c);
         }
       }
 

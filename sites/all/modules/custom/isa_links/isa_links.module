@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @defgroup isa_links
  * @brief Create the buttons on the right side and the menus on the left
@@ -6,7 +7,6 @@
  * Modules main file
  * @ingroup isa_links
  */
-
 require('isa_links_buttons_datas.inc');
 require('isa_links_menus_datas.inc');
 
@@ -21,12 +21,12 @@ require('isa_links_menus_datas.inc');
 function isa_links_theme($existing, $type, $theme, $path) {
   $items = array();
   $items['block_buttons'] = array(
-      'arguments' => array('buttons' => NULL, 'links' => NULL),
-      'template' => 'block-buttons',
+    'arguments' => array('buttons' => NULL, 'links' => NULL),
+    'template' => 'block-buttons',
   );
   $items['block_left_menu'] = array(
-      'arguments' => array('menus' => NULL),
-      'template' => 'block-left-menu',
+    'arguments' => array('menus' => NULL),
+    'template' => 'block-left-menu',
   );
   return $items;
 }
@@ -39,14 +39,16 @@ function isa_links_theme($existing, $type, $theme, $path) {
 function isa_links_get_links($type) {
   if ($type == 'buttons') {
     $all_buttons = isa_links_buttons_datas();
-  }
-  elseif ($type == 'menus') {
+  } elseif ($type == 'menus') {
     $all_buttons = isa_links_menus_datas();
   }
+  
   foreach ($all_buttons as $path => $buttons) {
     $path_ini = $path;
     // We check if the path correspond to the key.
-    $regexp = '/^(' . preg_replace(array('/(\r\n?|\n)/', '/\\\\\*/', '/(^|\|)\\\\<front\\\\>($|\|)/'), array('|', '.*', '\1' . preg_quote(variable_get('site_frontpage', 'node'), '/') . '\2'), preg_quote($path, '/')) . ')$/';
+    $regexp = '/^(' . preg_replace(array('/(\r\n?|\n)/', '/\\\\\*/', '/(^|\|)\\\\<front\\\\>($|\|)/'),
+        array('|', '.*', '\1' . preg_quote(variable_get('site_frontpage', 'node'), '/') . '\2'),
+        preg_quote($path, '/')) . ')$/';
     // Compare with the internal and path alias (if any).
     $page_match = preg_match($regexp, $_GET['q']);
     if (!$page_match && function_exists('drupal_get_path_alias')) {
@@ -56,40 +58,289 @@ function isa_links_get_links($type) {
       }
     }
     if ($page_match) {
+      
       eval('$buttons = ' . $buttons . ';');
       return $buttons;
     }
   }
 }
 
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-841
+//Home buttons
+/**
+ * Create the more about joinup buttons content and class
+ * @return button html content
+ */
+function isa_links_hb_create_more_about_joinup_array_button_content($button_data) {
+	$array_buttons['content'] = "<a href='" . base_path() .  $button_data['href'] ."' class='action " . $button_data['class'] ."' title='" . $button_data['tooltips'] ."'>" . $button_data['title'] . "</a>";
+	if($button_data['class'] == 'our-services'){
+		$array_buttons['class'] = 'icon-exchange pull-left icon';
+		
+	}
+	if($button_data['class'] == 'subscribe-newsletter'){
+		$array_buttons['class'] = 'icon-envelope-alt pull-left icon';
+	}
+		
+	return $array_buttons;
+}
+
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-841
+//Home buttons
+/**
+ * Create the more about joinup buttons
+ */
+function isa_links_hb_create_more_about_joinup_array_buttons($buttons_data) {
+	$array_buttons = array();
+	foreach ($buttons_data as $button_data){
+		$button = isa_links_hb_create_more_about_joinup_array_button_content($button_data);
+		array_push($array_buttons, $button);
+	}
+	return $array_buttons;
+}
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-841
+//Home buttons
+/**
+ * Fill the home buttons regions
+ * @return structure region_header
+ */
+function isa_links_hb_fill_region_header($region_header) {
+	$region_structure =
+	"<div class='home-button-region-header'>"
+			. $region_header .
+	"</div>";
+	return $region_structure;
+}
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-841
+//Home buttons
+/**
+ * Fill the home buttons content of the buttons
+ * @return structure simple button
+ */
+function isa_links_hb_fill_simple_button($button) {
+	$button_structure =
+	"<div class='rounded-box con " . $button['wrapper_class'] . "'>
+	        <div class='rounded-box-wrapper con'>
+				<i class='" . $button['class'] . "'></i><div>" . $button['content'] . "</div>
+			</div>
+	    <div class='corner topLeft'></div>
+	    <div class='corner topRight'></div>
+	    <div class='corner bottomLeft'></div>
+	    <div class='corner bottomRight'></div>
+	</div>";
+	return $button_structure;
+}
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-841
+//Home buttons
+/**
+ * Create the home buttons region
+ * @return region (union of header + buttons)
+ */
+function isa_links_hb_create_region($region_header, $array_buttons) {
+	$region = NULL;
+	$region_buttons = NULL;
+	foreach($array_buttons as $button){//Join the diferent buttons in to one single html
+		$region_buttons .= isa_links_hb_fill_simple_button($button);
+	}
+	$region = isa_links_hb_fill_region_header($region_header) . $region_buttons;//Create the region by joinning header and buttons
+	return $region;
+}
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-841
+//Home buttons
+/**
+ * Join the home buttons regions
+ * @return The block (union of regions)
+ */
+function isa_links_hb_join_regions($array_regions) {
+	$block_regions = NULL;
+	foreach($array_regions as $region){//Join the diferent regions in to one single html
+		$block_regions .= $region;
+	}
+	return $block_regions;
+}
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-841
+//Home buttons
+/**
+ * Create the home buttons block
+ * @return array The block (content + subject)
+ */
+function isa_links_hb_create_block() {
+	//$block['subject'] = t('Home buttons');
+
+	//Get array with all buttons
+	$all_buttons = isa_links_get_links('buttons'); 
+	//Prepare 'propose your...' button html content
+	$button_propose_array['quick_action'] = $all_buttons['quick_action'];
+	$button_propose_array['bottom_action'][0] = $all_buttons['bottom_action'][0];
+	$button_propose_content = isa_links_create_button_propose($button_propose_array);
+	$button_propose['content'] = $button_propose_content;
+	$button_propose['class'] = 'icon-plus-sign pull-left icon';
+	$button_propose['wrapper_class'] = 'propose-button';
+		
+	//Prepare 'share this' button html content	
+	$button_share_this_array['bottom_action']['share-this'] = $all_buttons['bottom_action'][1];
+	$button_share_this_content = isa_links_create_button_share_this($button_share_this_array);
+	$button_share_this['content'] = $button_share_this_content;
+	$button_share_this['class'] = '';
+	$button_share_this['wrapper_class'] = 'share-this-button';
+	
+	//Build the sharing content region block	
+	$region_sharingcontent_buttons = array($button_propose,$button_share_this);
+	$region_sharingcontent_header = "<div class='title-box-sharing'><span></span><h3><b>Sharing</b> content</h3></div>";
+	$region_sharingcontent = isa_links_hb_create_region($region_sharingcontent_header,$region_sharingcontent_buttons);
+
+	//Prepare 'Our services' and 'Newsletter' buttons html content
+	$more_about_joinup_buttons_array['bottom_action'][0] = $all_buttons['action'][0];
+	$more_about_joinup_buttons_array['bottom_action'][1] = $all_buttons['bottom_action'][1];	//Build the 'more about joinup'  region block
+	$region_more_about_joinup_buttons = isa_links_hb_create_more_about_joinup_array_buttons($more_about_joinup_buttons_array['bottom_action']); //Create the array of button_content
+	$region_more_about_joinup_header = "<div class='title-box-joinup'><h3><span></span><b>More</b> on Joinup</h3></div>";
+	$region_more_about_joinup_buttons[0]['wrapper_class'] = 'services-button';
+	$region_more_about_joinup_buttons[1]['wrapper_class'] = 'newsletter-button';
+	$region_more_about_joinup = isa_links_hb_create_region($region_more_about_joinup_header,$region_more_about_joinup_buttons);
+
+	//Prepare the regions
+	$block_regions = array($region_sharingcontent,$region_more_about_joinup);
+	
+	//Join the regions in to a block
+	$block['content'] = isa_links_hb_join_regions($block_regions);
+	return $block;
+}
+
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-841
+//Home buttons
+/**
+ * Create the 'share this' button
+ * @return array The block (content + subject)
+ */
+function isa_links_create_button_share_this($array_buttons) {
+	foreach ($array_buttons as $button_type => $buttons) {
+		$arguments = '';
+		$script = '';
+		if (isset($buttons['share-this']) && $buttons['share-this']) {
+			drupal_add_js(drupal_get_path('module', 'isa_links') . '/isabookmark/share.js');
+		//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-745
+		//If the page has a short url this is the link to the "Share This on..."
+		if (arg(0) && arg(1) ){
+		$link = url(arg(0) . "/" . arg(1), array('absolute' => TRUE, 'alias' => TRUE));
+		} else {
+		$link = url($_GET['q'], array('absolute' => TRUE, 'alias' => TRUE));
+		}
+		$script = '<div id="share-this" class="share-links"><script type="text/javascript">
+		iBeginShare.attachLink(\'share-this\', {
+				share_text:\'Share this on...\'
+				,  share_size:\'\'
+				,  share_url:\'' . $link . '\'
+				});
+		</script></div>
+		';
+		unset($buttons['share-this']);
+		}
+		
+		$array_buttons[$button_type] = isa_links_theme_buttons($buttons) . $script;
+	}
+	$block['content'] = theme('block_buttons',$array_buttons['bottom_action']);
+	return $block['content'];
+}
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-841
+//Home buttons
+/**
+ * Create 'propose your...' button
+ * @return array The block (content + subject)
+ */
+function isa_links_create_button_propose($array_buttons) {
+	foreach ($array_buttons as $button_type => $buttons) {
+		$arguments = '';
+		foreach ($buttons as $key => $button) {
+				$class = '';
+				if (isset($button['class'])) {
+					$class = ' ' . $button['class'];
+				}
+				$button['attributes'] = array('class' => $button_type . $class);
+				if (isset($button['html'])) {
+					$button['attributes'] = array('class' => $button['class']);
+					$button['title'] = l($button['title'], NULL,
+							array('html' => TRUE, 'attributes' => array('class' => 'action propose-your', 'title' => $button['title']))) . $array_buttons['quick_action'];
+				}
+				$buttons[$key] = $button;
+		}
+		$array_buttons[$button_type] = isa_links_theme_buttons($buttons);
+	}
+	$block['content'] = theme('block_buttons',$array_buttons['bottom_action']);
+	return $block['content'];
+}
+function isa_links_download_button(){
+  global $user;
+  $nid = variable_get('current_group', isa_toolbox_get_community_nid());
+  $node = isa_toolbox_get_original_node(node_load($nid));
+  $path = explode('/', drupal_get_normal_path($_GET['q']));
+  $group_type = isa_toolbox_get_node_type_name($node);
+  $release_id = isa_toolbox_get_last_release($node->nid);
+  $release = NULL;
+  if ($release_id) {
+    $release = node_load($release_id);
+    $download_link = $release->path;
+  } else {
+    if ($node->group_type == ISA_ASSET_TYPE) {
+      $download_link = ($node->group_type . '/' . $node->project['uri'] . '/asset_release/all');
+    } else {
+      $download_link = ($node->group_type . '/' . $node->project['uri'] . '/release/all');
+    }
+  }
+  if(drupal_lookup_path('source', $download_link)){
+    $download_button['download'] = isa_links_get_general_button('download-' . $node->group_type, 'isa_links_node_is_validated', $project, NULL, $download_link, 'Download');
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-974
+    //Link to the distribution section 
+    $block['content'] = isa_links_theme_buttons($download_button, array('class' => 'links'), 'download-links');
+  }else{
+    $block = '';
+  }
+  return $block;
+}
 /**
  * Create the buttons block (on the right of the page)
  * @return array The block (content + subject)
  */
-function isa_links_create_buttons() {
+function isa_links_create_buttons($region) {
   //Get the correct buttons, depending on the path
   $all_buttons = isa_links_get_links('buttons');
   if (!isset($all_buttons['links'])) {
     $all_buttons['links'] = NULL;
   }
+  if('bottom' == $region){
+    unset($all_buttons['push']);
+    unset($all_buttons['links']);
+    unset($all_buttons['action']);
+  }else{
+    unset($all_buttons['bottom_action']);
+    unset($all_buttons['quick_action']);
+  }
+  foreach($all_buttons as $key => $value){
+    if(count($value) <= 0){
+      unset($all_buttons[$key]);
+    }
+  }
   foreach ($all_buttons as $button_type => $buttons) {
     $arguments = '';
-    $script = '';
-    if (isset($buttons['share-this']) && $buttons['share-this']) {
-      drupal_add_js(drupal_get_path('module', 'isa_links') . '/isabookmark/share.js');
-      $script = '<div id="share-this" class="share-links"><script type="text/javascript">
-                  iBeginShare.attachLink(\'share-this\', {
-                     share_text:\'Share this on...\'
-				  ,  share_size:\'\'
-				  });
-                  </script></div>
-                  ';
-      unset($buttons['share-this']);
-    }
-    if (count($buttons) == 0) {
-      continue;
-    }
+    $share_this = '';
     foreach ($buttons as $key => $button) {
+      if ($key == 'share-this' && $button == 1 && $region == 'bottom') {
+        $button = array();
+	drupal_add_js(drupal_get_path('module', 'isa_links') . '/isabookmark/share.js');	
+		  //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-745
+		  //If the page has a short url this is the link to the "Share This on..."
+		  if (arg(0) && arg(1) ){		
+			  $link = url(arg(0) . "/" . arg(1), array('absolute' => TRUE, 'alias' => TRUE));
+		  } else {
+			  $link = url($_GET['q'], array('absolute' => TRUE, 'alias' => TRUE));
+		  }	  
+	$share_this = '<div id="share-this" class="share-links"><script type="text/javascript">
+		    iBeginShare.attachLink(\'share-this\', {
+		       share_text:\'Share this on...\'
+				    ,  share_size:\'\'
+				    ,  share_url:\'' . $link . '\'
+				    });
+		    </script></div>
+		    ';
+      }
       if (isset($button['access_callback'])) {
         $arguments = '';
         if (isset($button['access_arguments'])) {
@@ -98,11 +349,10 @@ function isa_links_create_buttons() {
         eval('$callback = ' . $button['access_callback'] . '($arguments);');
       }
       if ((isset($button['permission']) && !user_access($button['permission'])) ||
-              (isset($button['access_callback']) && !$callback)) {
+        (isset($button['access_callback']) && !$callback)) {
         //Delete the button if the user have not the permission to see it
         unset($buttons[$key]);
-      }
-      else {
+      } else {
         $class = '';
         if (isset($button['class'])) {
           $class = ' ' . $button['class'];
@@ -110,7 +360,8 @@ function isa_links_create_buttons() {
         $button['attributes'] = array('class' => $button_type . $class);
         if (isset($button['html'])) {
           $button['attributes'] = array('class' => $button['class']);
-          $button['title'] = l($button['title'], NULL, array('html' => TRUE, 'attributes' => array('class' => 'action propose-your', 'title' => $button['title']))) . $all_buttons['quick_action'];
+          $button['title'] = l($button['title'], NULL,
+              array('html' => TRUE, 'attributes' => array('class' => 'action propose-your', 'title' => $button['title']))) . $all_buttons['quick_action'];
         }
         //Rewrite the url
         if (isset($button['url_callback'])) {
@@ -120,11 +371,17 @@ function isa_links_create_buttons() {
         $buttons[$key] = $button;
       }
     }
-    $all_buttons[$button_type] = isa_links_theme_buttons($buttons) . $script;
+    if ($share_this) {
+      $buttons['share-this'] = array('title' => $share_this);
+    }
+    else {
+      unset($buttons['share-this']);
+    }
+    $all_buttons[$button_type] = isa_links_theme_buttons($buttons);
   }
   //remove span but causes a lot a of other errors w3c
   //$all_buttons['action'] = ereg_replace('(.*)"><span[^>]*>(.*)</span>(.*)"','\\1 quick-actions">\\2\\3',$all_buttons['action']);
-  $block['content'] = theme('block_buttons', $all_buttons['push'] . $all_buttons['action'], $all_buttons['links']);
+  $block['content'] = theme('block_buttons', $all_buttons['push'] . $all_buttons['action'] . $all_buttons['bottom_action'], $all_buttons['links']);
   return $block;
 }
 
@@ -143,11 +400,10 @@ function isa_links_create_menus() {
         eval('$access_callback = ' . $menus['access_callback'] . '();');
       }
       if ((isset($menus['permission']) && !user_access($menus['permission'])) ||
-              (isset($menus['access_callback']) && !$access_callback)) {
+        (isset($menus['access_callback']) && !$access_callback)) {
         //Delete the menu if the user have not the permission to see it
         unset($all_menus[$menu_name]);
-      }
-      else {
+      } else {
         foreach ($menus['menus'] as $key => $menu) {
           //Check if the menu item should be displayed
           if (isset($menu)) {
@@ -155,11 +411,10 @@ function isa_links_create_menus() {
               eval('$menu_callback = ' . $menu['access_callback'] . '();');
             }
             if ((isset($menu['permission']) && !user_access($menu['permission'])) ||
-                    (isset($menu['access_callback']) && !$menu_callback)) {
+              (isset($menu['access_callback']) && !$menu_callback)) {
               //Delete the menu item if the user have not the permission to see it
               unset($menus['menus'][$key]);
-            }
-            else {
+            } else {
               //Rewrite the url
               if (isset($menu['url_callback'])) {
                 eval('$url_callback = ' . $menu['url_callback'] . '();');
@@ -168,14 +423,23 @@ function isa_links_create_menus() {
               if (isset($menu['class'])) {
                 $menu['attributes'] = array('class' => $menu['class']);
               }
+              //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-796
+              //Mark active the contextual menu when searching text
+              $root_path = explode("/", $_GET['q']);
+              $menu_path = explode("/", $menu['href']);
+              if(count($root_path) > count($menu_path)){
+                $root_path_tail = array_pop($root_path);
+                $root_path = implode("/", $root_path);
+                $menu['href'] == $root_path ? $menu['attributes']['class'] = 'active' : FALSE;
+              }
               $menus['menus'][$key] = $menu;
             }
-          }
-          else {
+          } else {
             unset($menus['menus'][$key]);
           }
         }
         if (count($menus['menus']) > 0) {
+
           $menu_theme .= isa_links_theme_menu($menu_name, $menus['menus']);
         }
       }
@@ -199,12 +463,13 @@ function isa_links_get_group_short_name($group = NULL) {
   if ($group) {
     if ($group->type == ISA_COMMUNITY_TYPE) {
       return $group->field_community_short_name[0]['value'];
-    }
-    elseif ($group->type == ISA_PROJECT_TYPE) {
+    } elseif ($group->type == ISA_PROJECT_TYPE) {
       return $group->project['uri'];
+    } elseif ($group->type == ISA_REPOSITORY_TYPE) {
+      $path = explode('/', $group->path);
+      return $path[1];
     }
-  }
-  else {
+  } else {
     return '';
   }
 }
@@ -218,6 +483,8 @@ function isa_links_get_group_short_name($group = NULL) {
  * @return string : the link of the item of the menu
  */
 function isa_links_theme_menu($menu_name, $menu) {
+  //print_R($menu);
+  global $language;
   $initial_path = $_GET['q'];
   $node = menu_get_object();
   if (!$node) {
@@ -226,10 +493,10 @@ function isa_links_theme_menu($menu_name, $menu) {
       $node = node_load($exploded_path[1]);
     }
     if ($exploded_path[0] == 'comment' && is_numeric($exploded_path[2])) {
-      if ($exploded_path[1] == 'edit'){
+      if ($exploded_path[1] == 'edit') {
         $comment = _comment_load($exploded_path[2]);
         $node = node_load($comment->nid);
-      }else{
+      } else {
         $node = node_load($exploded_path[2]);
       }
     }
@@ -241,19 +508,57 @@ function isa_links_theme_menu($menu_name, $menu) {
   //on a node
   if ($node) {
     if ($group) {
-      $path = "{$group->group_type}/{$short_name}/";
+      switch ($group->group_type) {
+        case ISA_REPOSITORY_TYPE:
+          break;
+        default:
+          $path = "{$group->group_type}/{$short_name}/";
+          break;
+      }
     }
-    
     switch ($node->type) {
+      case ISA_ASSET_RELEASE_TYPE:
+        $path .= empty($path) ? 'catalogue/all' : 'asset_release/all';
+        //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-796
+        //Mark Federated Reposotory context menu when accessing an asset_release from its Federated Repository 
+        if(strpos(referer_uri(),'/asset_release/')){
+          $menu['Federated repositories']['attributes']['class'] = 'active';
+          $menu['Catalogue of assets']['language'] = '1';
+        }
+        break;
+      case ISA_DISTRIBUTION_TYPE:
+        $path .= empty($path) ? 'catalogue/all' : 'asset_release/all';
+        break;
+      case 'asset-release':
+        $path .= "catalogue/all";
+        break;
       case ISA_PROJECT_RELEASE_TYPE:
-        $path .= "release/all";
+        $path .= 'release/all';
         break;
       case ISA_ISSUE_TYPE:
-        $path .= "issue/all";
+        $path .= 'issue/all';
         break;
       case ISA_PROJECT_TYPE:
       case ISA_COMMUNITY_TYPE:
         $path = "node/{$node->nid}";
+        break;
+      case ISA_REPOSITORY_TYPE:
+        $path = 'catalogue/repository/all';
+        break;
+      case ISA_LICENCE_TYPE:
+        $path = 'catalogue/licence/all';
+        break;
+      case ISA_DOCUMENTATION_TYPE:
+        $path = 'catalogue/documentation/all';
+        break;
+      case ISA_PUBLISHER_TYPE:
+        $path = 'catalogue/publisher/all';
+        break;
+      case ISA_ITEM_TYPE:
+        $path = 'catalogue/item/all';
+        break;
+      case ISA_CONTACT_POINT_TYPE:
+        $path = 'catalogue/contact_point/all';
         break;
       case ISA_NEWSLETTER_TYPE:
         $path = 'news/newsletter';
@@ -276,7 +581,7 @@ function isa_links_theme_menu($menu_name, $menu) {
       case ISA_WIKI_TYPE:
         //case of license wizard pages
         if (strstr(drupal_get_path_alias($initial_path), 'software/license-wizard')
-                || strstr(drupal_get_path_alias($initial_path), 'node/2048')) {
+          || strstr(drupal_get_path_alias($initial_path), 'node/2048')) {
           $path = 'node/2048';
           break;
         }
@@ -284,13 +589,16 @@ function isa_links_theme_menu($menu_name, $menu) {
         $path .= ( $group) ? 'elibrary/all' : 'elibrary/document';
         break;
       case ISA_PRESENTATION_TYPE:
-          $path .= 'elibrary/presentation';
-          break;
+        $path .= 'elibrary/presentation';
+        break;
       case ISA_CASE_TYPE:
         switch (isa_toolbox_get_case_type($node)) {
-          case 0 : $path .= 'elibrary/case'; break;
-          case 1 : $path .= 'software/studies'; break;
-          case 2 : $path .= 'software/guidelines'; break;
+          case 0 : $path .= 'elibrary/case';
+            break;
+          case 1 : $path .= 'software/studies';
+            break;
+          case 2 : $path .= 'software/guidelines';
+            break;
         }
         break;
       case ISA_FACTSHEET_TYPE:
@@ -328,81 +636,63 @@ function isa_links_theme_menu($menu_name, $menu) {
         break;
       case 'page':
         $path_alias = drupal_get_path_alias($initial_path);
-        if (strpos($path_alias, "asset/page/practice_aids") === 0) {
+        if (strpos($path_alias, 'asset/page/practice_aids') === 0) {
           $path = drupal_lookup_path('source', 'asset/page/practice_aids');
-        }
-        elseif (strpos($path_alias, "software/page/eupl") === 0) {
+        } elseif (strpos($path_alias, 'software/page/eupl') === 0) {
           $path = drupal_lookup_path('source', 'software/page/eupl');
-        }
-        elseif (strpos($path_alias, "software/page/virtual_forge") === 0) {
+        } elseif (strpos($path_alias, 'software/page/virtual_forge') === 0) {
           $path = drupal_lookup_path('source', 'software/page/virtual_forge');
-        }
-        elseif (strpos($path_alias, "software/guidelines") === 0) {
+        } elseif (strpos($path_alias, 'software/guidelines') === 0) {
           $path = 'software/guidelines';
-        }
-        elseif (strpos($path_alias, "software/studies") === 0) {
+        } elseif (strpos($path_alias, 'software/studies') === 0) {
           $path = 'software/studies';
         }
         break;
+      case 'catalogue':
+        $path = 'catalogue/all';
+        break;
     }
-   
-  }
-  else {
+  } else {
     if ($group) {
       //specific pages
       if (strpos($initial_path, "{$group->group_type}/{$short_name}/forum") === 0) {
         $path .= "{$group->group_type}/{$short_name}/forum/all";
-      }
-      elseif (strpos($initial_path, "{$group->group_type}/{$short_name}/legaldocument") === 0) {
+      } elseif (strpos($initial_path, "{$group->group_type}/{$short_name}/legaldocument") === 0) {
         $path .= "{$group->group_type}/{$short_name}/elibrary/all";
-      }
-      elseif (strpos($initial_path, "{$group->group_type}/{$short_name}/asset_assistant") === 0 ||
-              strpos($initial_path, "{$group->group_type}/{$short_name}/issue") === 0) {
+      } elseif (strpos($initial_path, "{$group->group_type}/{$short_name}/asset_assistant") === 0 ||
+        strpos($initial_path, "{$group->group_type}/{$short_name}/issue") === 0) {
         $path .= "{$group->group_type}/{$short_name}/issue/all";
-      }
-      elseif (strpos($initial_path, "{$group->group_type}/{$short_name}/members") === 0) {
+      } elseif (strpos($initial_path, "{$group->group_type}/{$short_name}/members") === 0) {
         $path .= "{$group->group_type}/{$short_name}/members";
 
         // for survey page
-      }
-      elseif (strpos($initial_path, "{$group->group_type}/{$short_name}/release") === 0) {
+      } elseif (strpos($initial_path, "{$group->group_type}/{$short_name}/release") === 0) {
         $path .= "{$group->group_type}/{$short_name}/release/all";
       }
-    }
-    elseif (strpos($initial_path, "admin/infobox") === 0) {
+    } elseif (strpos($initial_path, "admin/infobox") === 0) {
       $path = 'admin/infobox';
-    }
-    elseif (strpos($initial_path, "admin/user/user") === 0) {
+    } elseif (strpos($initial_path, "admin/user/user") === 0) {
       $path = 'admin/user/user';
-    }
-    elseif (strpos($initial_path, "admin/content/taxonomy") === 0) {
+    } elseif (strpos($initial_path, "admin/content/taxonomy") === 0) {
       $path = 'admin/content/taxonomy';
-    }
-    elseif (strpos($initial_path, "admin/content/simplenews/users") === 0) {
+    } elseif (strpos($initial_path, "admin/content/simplenews/users") === 0) {
       $path = 'admin/content/simplenews/users';
-    }
-    elseif (strpos($initial_path, "people/all") === 0) {
+    } elseif (strpos($initial_path, "people/all") === 0) {
       $path = 'people/all';
-    }
-    elseif (strpos($initial_path, "people/experts") === 0) {
+    } elseif (strpos($initial_path, "people/experts") === 0) {
       $path = 'people/experts';
-    }
-    elseif (strpos($initial_path, "people/moderators") === 0) {
+    } elseif (strpos($initial_path, "people/moderators") === 0) {
       $path = 'people/moderators';
-    }
-    elseif (strpos($initial_path, "people/recommended") === 0) {
+    } elseif (strpos($initial_path, "people/recommended") === 0) {
       $path = 'people/recommended';
-    }
-    elseif (strpos($initial_path, "asset/experts") === 0) {
+    } elseif (strpos($initial_path, "asset/experts") === 0) {
       $path = 'asset/experts';
-    }
-    else {
+    } else {
       global $user;
       $exploded_path = explode('/', $initial_path);
       if ($exploded_path[0] == 'user' && is_numeric($exploded_path[1])) {
         $path = "user/{$exploded_path[1]}";
-      }
-      elseif ($exploded_path[0] == 'node' && $exploded_path[1] == 'add') {
+      } elseif ($exploded_path[0] == 'node' && $exploded_path[1] == 'add') {
         switch ($exploded_path[2]) {
           case 'federated-forge':
             $path .= 'software/federated_forge';
@@ -444,14 +734,16 @@ function isa_links_theme_menu($menu_name, $menu) {
           case 'contexthelp-faq':
             $path = 'help_topics';
             break;
+          case ISA_REPOSITORY_TYPE:
+            $path = 'catalogue/repository/all';
+            break;
         }
-      }
-      else {
+      } else {
         $path = $initial_path;
       }
     }
   }
-  
+
   if ($path != '') {
     $_GET['q'] = $path;
   }
@@ -460,6 +752,8 @@ function isa_links_theme_menu($menu_name, $menu) {
   return $menu_theme;
 }
 
+//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-841
+//Home buttons
 /**
  * Implement of hook_block()
  * Creation of both blocks menus and buttons
@@ -473,15 +767,26 @@ function isa_links_block($op = 'list', $delta = 0, $edit = array()) {
     case 'list':
       $blocks['buttons_actions']['info'] = t('Buttons actions');
       $blocks['menus_left']['info'] = t('Menus left');
+      $blocks['home_buttons']['info'] = t('Home buttons');
+      $blocks['buttons_actions_bottom']['info'] = t('Buttons actions bottom');
+      $blocks['download_button']['info'] = t('Download button');
       return $blocks;
       break;
     case 'view':
       if ($delta == 'buttons_actions') {
-        $block = isa_links_create_buttons();
+        $block = isa_links_create_buttons('top');
         return $block;
-      }
-      elseif ($delta == 'menus_left') {
+      } elseif ($delta == 'menus_left') {
         $block = isa_links_create_menus();
+        return $block;
+      } elseif ($delta == 'home_buttons') {
+        $block = isa_links_hb_create_block();
+        return $block;
+      }elseif ($delta == 'buttons_actions_bottom') {
+        $block = isa_links_create_buttons('bottom');
+        return $block;
+      }elseif ($delta == 'download_button') {
+        $block = isa_links_download_button();
         return $block;
       }
   }
@@ -490,10 +795,9 @@ function isa_links_block($op = 'list', $delta = 0, $edit = array()) {
 /**
  * Rewrite theme_links function to resolved W3C error (ul in span)
  */
-function isa_links_theme_buttons($links, $attributes = array('class' => 'links')) {
+function isa_links_theme_buttons($links, $attributes = array('class' => 'links'), $fragment=NULL) {
   global $language;
   $output = '';
-
   if (count($links) > 0) {
     $output = '<ul' . drupal_attributes($attributes) . '>';
 
@@ -510,43 +814,55 @@ function isa_links_theme_buttons($links, $attributes = array('class' => 'links')
         $class .= ' last';
       }
       if (isset($link['href']) && ($link['href'] == $_GET['q'] || ($link['href'] == '<front>' && drupal_is_front_page()))
-              && (empty($link['language']) || $link['language']->language == $language->language)) {
+        && (empty($link['language']) || $link['language']->language == $language->language)) {
         $class .= ' active';
       }
       $output .= '<li' . drupal_attributes(array('class' => $class)) . '>';
-
-      if (isset($link['href'])) {
-        // Pass in $link as $options, they share the same keys.
-        if (isset ($link['tooltips'])){
-          $tooltips = $link['tooltips'];
-        }else{
-         $tooltips = $link['title']; 
-        }
-        $link['attributes']['title'] = $tooltips;
-        $output .= l($link['title'], $link['href'], $link);
-      }
-      elseif (!empty($link['title']) || isset($link['label'])) {
-        // Some links are actually not links, but we wrap these in <span> for adding title and class attributes
-        if (empty($link['html'])) {
-          if (isset($link['label'])) {
-            //case of rate this link
-            $link['title'] = "<label>{$link['label']}</label>" . fivestar_widget_form($link['node']);
-          }
-          else {
-            $link['title'] = check_plain($link['title']);
-          }
-        }
-        $span_attributes = '';
-        if (isset($link['attributes'])) {
-          $span_attributes = drupal_attributes($link['attributes']);
-        }
-        if (isset($link['label'])) {
-          //case of rate this link
-          $output .= $link['title'];
-        }
-        else {
-          $output .= '<div' . $span_attributes . '>' . $link['title'] . '</div>';
-        }
+      if('share-this' === $key){
+	$output .= $link['title'];
+      }else{
+	if (isset($link['href'])) {
+	  // Pass in $link as $options, they share the same keys.
+	  if (isset($link['tooltips'])) {
+	    $tooltips = $link['tooltips'];
+	  } else {
+	    $tooltips = $link['title'];
+	  }
+	  $link['attributes']['title'] = $tooltips;
+	  if (isset($link['target'])) {
+	    if (in_array($link['target'], array('_blank'))) {
+	      $link['attributes']['target'] = $link['target'];
+	      unset($link['target']);
+	    }
+	  }
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-842 
+    //Wrap Button Actions links text with <span>
+    $link['html'] = TRUE;
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-974
+    //Link to the distribution section 
+    $fragment ? $link['fragment'] = $fragment : FALSE;
+	  $output .= l('<span>' . $link['title'] . '</span>', $link['href'], $link);
+	} elseif (!empty($link['title']) || isset($link['label'])) {
+	  // Some links are actually not links, but we wrap these in <span> for adding title and class attributes
+	  if (empty($link['html'])) {
+	    if (isset($link['label'])) {
+	      //case of rate this link
+	      $link['title'] = "<label>{$link['label']}</label>" . fivestar_widget_form($link['node']);
+	    } else {
+	      $link['title'] = check_plain($link['title']);
+	    }
+	  }
+	  $span_attributes = '';
+	  if (isset($link['attributes'])) {
+	    $span_attributes = drupal_attributes($link['attributes']);
+	  }
+	  if (isset($link['label'])) {
+	    //case of rate this link
+	    $output .= $link['title'];
+	  } else {
+	    $output .= '<div' . $span_attributes . '>' . $link['title'] . '</div>';
+	  }
+	}
       }
 
       $i++;
@@ -558,7 +874,6 @@ function isa_links_theme_buttons($links, $attributes = array('class' => 'links')
 
   return $output;
 }
-
 
 /**
  * Return TRUE if we are not in a virtual forge

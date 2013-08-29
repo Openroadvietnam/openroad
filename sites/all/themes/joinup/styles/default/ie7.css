@@ -1,0 +1,61 @@
+body {
+  width:expression( documentElement.clientWidth < 960 ? (documentElement.clientWidth == 0 ? (body.clientWidth < 960 ? "960px" : "auto") : "960px") : "auto" );
+}
+
+ /* HOME*/
+* body .layout-home .editors-choice .news-list{ line-height:0}
+	* body .layout-home .editors-choice .news-list  { line-height:0}
+	* .layout-home .editors-choice .news-list li .news-tab { line-height:1.3; height:60px}
+	* .layout-home .editors-choice .news-list li .news-body  { line-height:1.3}
+	* .layout-home .editors-choice .news-list li .news-body .body-teaser { padding-top:0}
+	* #menu-wrapper { float:none}
+	* .layout-home .layout-wrapper { padding-top:42px }
+	* .rounded-box{ height:34px;}
+	* .views-carousel-overlay .views-carousel-overlay-link.rounded-box { width:110px; height:30px}
+	* .layout-home .title-box-sharing span, .layout-home .title-box-joinup span { bottom:2px}
+	* .layout-home div.block div.buttons  ul.links li a { width:160px; padding-left:15px !important}
+	* .layout-home .views-carousel-overlay .views-carousel-overlay-link.rounded-box { height:20px}
+	
+	* div#footer-region #block-block-12  { display:inline}
+	* .rounded-box.propose-button .rounded-box-wrapper div { background:url(../../images/links/line_corners_f1.png) 20px 0 repeat-y !important}
+	* .layout-home div.block div.buttons  ul.links li a.action { /*padding-left:16px*/}
+	* div#footer-region #block-menu-menu-footer ul li { padding-left:60px;}
+	* #views-exposed-form-Catalogue-page-1  input#edit-keys{ height: 12px;  line-height: 12px; width: 300px}
+	* div#right-sidebar-region #block-isa_links-buttons_actions.block div.buttons  ul.links li{ /*margin-bottom:0*/}
+	* div#right-sidebar-region #block-isa_links-buttons_actions.block div.buttons  ul.links  li.share-this { display:none; }
+	
+/* GENERAL */
+	* .layout-left { margin-top:32px}
+	/**.rounded-box-wrapper a{padding-left:25px}*/
+	*.advanced-search-form-solr .form-submit{margin-top:1px}
+	* #edit-status-wrapper, * #edit-language-wrapper{margin-bottom:0}
+	* .advanced-search-form-solr #advanced-search-link-wrapper{width:100%; float:none; clear:none}
+	* #advanced-search-link-wrapper a{float:right}
+	* .detail-data-search-solr { width:400px;}
+	* #block-isa_blocks-1 .fields-details-after-rating { margin-top:5px}
+	
+	#block-isa_links-buttons_actions.block div.buttons ul.links li a.push.export-metadata { padding-bottom:15px}
+	* div#highlight h2.page-title {width:460px}
+	* q { content: ""; }
+
+/* DASHBOARD */	
+	* div#homebox div.homebox-portlet div.homebox-portlet-inner div.portlet-content div.view div.view-filters form div.views-exposed-widgets div.views-exposed-widget { display:inline;  float:left;width:30%;}
+	* div.view div.view-filters form div.views-exposed-widgets div.views-exposed-widget { display:block;float:left;}
+		* div.view div.view-filters form div.views-exposed-widgets div.views-exposed-widget div#edit-priorities-wrapper { display:block;float:left;border:1px solid white;}
+
+/* POPUP TITLE */
+	* .popups-title{min-height:28px}
+
+/* Sidebar titles list simulating */
+	* .layout-right #right-sidebar-region #block-relevant_content-group_node .subtitle-box span {display:none}
+	
+/* Sub-Header Detail software, asset and community */
+	* .detail-options-title, .detail-options-title-left{float:none;clear:none}
+	
+/* search form */
+div#content-region div.view-project-issue-search-all .view-filters form#views-exposed-form-project-issue-search-all-default div.views-exposed-form{margin-bottom:5px}
+.flag-waiting a {
+	  /* Give an impression of a disabled link. */
+	  opacity: 0.5;
+	  filter: alpha(opacity=50); /* IE */
+	}

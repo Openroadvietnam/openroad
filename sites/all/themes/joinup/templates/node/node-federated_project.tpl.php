@@ -64,24 +64,24 @@
     <div class="field field-vote-rating"><?php print $vote_rating; ?></div>
     <div class="field field-i-use-this-project"><?php print $i_use_this_project ?></div>
     <div class="field field-mission-description">
-      <h3><?php print t('Description'); ?></h3>
+      <h3 class="page-subtitle-content"><?php print t('Description'); ?></h3>
       <?php print $node->content['body']['#value']; ?>
     </div>
     <?php if (!empty($node->field_project_soft_features['0']['value'])): ?>
-      <h3><?php print t('Features'); ?></h3>
+      <h3 class="page-subtitle-content"><?php print t('Features'); ?></h3>
       <div class="field field-features">
   <?php print $node->field_project_soft_features['0']['value']; ?>
       </div>
       <?php endif; ?>
 <?php if (!empty($node->field_project_soft_future_plans['0']['value'])): ?>
-      <h3><?php print t('Future plans'); ?></h3>
+      <h3 class="page-subtitle-content"><?php print t('Future plans'); ?></h3>
       <div class="field field-future-plans">
       <?php print $node->field_project_soft_future_plans['0']['value']; ?>
       </div>
 
       <?php endif; ?>
       <?php if (!empty($node->field_project_soft_get_involved['0']['value'])): ?>
-      <h3><?php print t('Get involved'); ?></h3>
+      <h3 class="page-subtitle-content"><?php print t('Get involved'); ?></h3>
 
       <div class="field field-get-involved">
       <?php print $node->field_project_soft_get_involved['0']['value']; ?>
@@ -89,13 +89,13 @@
 
       <?php endif; ?>
     <?php if (!empty($node->field_project_soft_public_admin['0']['value'])): ?>
-      <h3><?php print t('Public administration reference'); ?></h3>
+      <h3 class="page-subtitle-content"><?php print t('Public administration reference'); ?></h3>
       <div class="field field-public-admin">
   <?php print $node->field_project_soft_public_admin['0']['value']; ?>
       </div>
           <?php endif; ?>
     <div id="node-information" class="box information">
-      <h3 class="accessibility-info"><?php print t('Information'); ?></h3>
+      <h3 class="page-subtitle-content"><?php print t('Information'); ?></h3>
       <div class="odd nodes-row-first nodes-row-last clearfix">
         <dl class="colspans-3-5 first last fields">
           <?php if (!empty($node->field_project_soft_sponsor_logo['0']['view'])): ?>

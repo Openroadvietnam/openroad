@@ -62,7 +62,7 @@
 		<div class="field field-content-body"><?php print $node->content['body']['#value']; ?></div>
         
    		<div id="node-information" class="box information">
-			<h3 class="accessibility-info"><?php print t('Information'); ?></h3>
+			<h3 class="page-subtitle-content"><?php print t('Information'); ?></h3>
 			<div class="odd nodes-row-first nodes-row-last clearfix">
 				<dl class="colspans-3-5 first last fields">
 					<?php foreach ($presentation_info as $vocab => $terms): ?>
@@ -95,7 +95,7 @@
                                    
 		<?php if (isset($field_presentation_upload_files) && !empty ($field_presentation_upload_files) ): ?>
 			<div class="field field-presentationation">
-				<h3><?php print t('Presentation file(s)'); ?></h3>
+				<h3 class="page-subtitle-content"><?php print t('Presentation file(s)'); ?></h3>
 				<ul>
                                     
                                         <?php foreach ($field_presentation_upload_files as $key => $view): 

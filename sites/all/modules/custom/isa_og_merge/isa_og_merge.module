@@ -90,6 +90,15 @@ function isa_og_merge_form_node_delete_confirm_alter(&$form, $form_state) {
       $form['target']['#access'] = FALSE;
     }
     $form['verb']['#default_value'] = OG_DELETE_ORPHANS;
+    if ($node->type == ISA_REPOSITORY_TYPE) {
+      $form['verb']['#options'][OG_DELETE_ORPHANS] = t("Delete all asset releases.");
+      unset($form['verb']['#options'][OG_DELETE_NOTHING]);
+      unset($form['verb']['#options'][OG_DELETE_MOVE_NODES]);
+      unset($form['verb']['#options'][OG_DELETE_MOVE_NODES_MEMBERSHIPS]);
+      unset($form['verb']['#description']);
+      unset($form['target']);
+      unset($form['information']);
+  }
   }
 }
 

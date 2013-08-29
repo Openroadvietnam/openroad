@@ -25,7 +25,7 @@
   */
 ?>
 <?php
-if ($row->{node_data_field_advertisement_url_field_show_title_value}) {
-  print $output;
-}
+  if ( 1 == $row->node_data_field_show_title_field_show_title_value) {
+    print $output;
+  }
 ?>

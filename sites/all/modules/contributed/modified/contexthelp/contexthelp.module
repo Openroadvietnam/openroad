@@ -13,7 +13,17 @@ function contexthelp_init() {
   // Do not do this for users who do not have access to context help
   if (user_access('context help view')) {
     jquery_ui_add('ui.accordion');
-    //drupal_add_js(CONTEXTHELP_PATH .'/jquery.accordion.js');
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-482
+    //Add draggable and resizable attributes to the help box, using the jquery libraries in no conflict mode.
+    if(true == module_exists('isa_jquery_noconflict')){
+      $new_jquery_object_name = isa_jquery_noconflict_include_jquery();//ISAICP-482
+      $box_resizable_draggable = "$new_jquery_object_name(document).ready(function(){
+                                     $new_jquery_object_name('#contextual-help-dialog').draggable();
+                                     $new_jquery_object_name('#contextual-help-dialog').resizable({minHeight: 150, minWidth: 200})
+                                   })";//ISAICP-482
+      drupal_add_js($box_resizable_draggable, 'inline');//ISAICP-482
+    }
+    drupal_add_js(CONTEXTHELP_PATH .'/jquery.accordion.js');
     drupal_add_js(CONTEXTHELP_PATH .'/jquery.modal.js');
     drupal_add_css(CONTEXTHELP_PATH .'/jqModal.css');
     drupal_add_css(CONTEXTHELP_PATH .'/contexthelp.css');

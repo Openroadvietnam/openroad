@@ -1,0 +1,36 @@
+Michele Wickham - Smashing Ideas, Inc. 12/2/2011
+1. Added create_view_block field in installation script. 
+2. Added fields to node add/edit form to enable creation of a block for a specific poll
+3. Updated insert/update queries to save new create_view_block field value
+4. Added views generation to advpoll.views.inc
+5. clear/truncate cache_views table whenever a new poll is created or edited to enable view blocks to be updated.
+6. Created update hook to ensure creation of necessary column in advpoll table for existing users of module
+7. Added a node template to eliminate clickable headline within node views of blocks.
+
+12/8/2011
+1. Added an admin settings page that enables these options:
+	a. vote tracking by cookie
+	b. unlimited voting
+2. Eliminated old variable_get calls. None of them had matching variable_set calls.  Consolidated everything
+   into advpoll_settings variable where appropriate.
+3. Both cookie and unlimited voting behave the same for authenticated and anonymous users.
+4. Cookie voting on the admin form also allows setting of a global duration value.  
+5. Cookies are generated for each poll by node ID.
+6. There is an option in the admin panel to override the native Approval Voting behavior of multiple choice polls
+   and some all votes the same.
+7. Changed vote percentage calculation to float rather than round to prevent a total greater than 100%.
+8. Moved global messaging into admin form so that phrasing can be customized to suit.
+9. Cleaned up install file, removed D5 style update hooks.  
+
+1/25/2012
+1. Overhauled block display - removed dependency on Views for generating blocks of additonal 
+   polls because it did not play well with Varnish and Memcached.  Polls that are marked 
+   to generate a block do so now through the standard hook_block method.
+2. Removed datetimepicker folder as the date fields now use standard Date API display and the
+   included files were not being used.
+
+1/27/2012
+1. Updated write-ins functionality to prevent empty or double results, particularly in 
+   cases where configuration is set to allow unlimited voting.
+2. Implemented optional footer message, updated preprocess and templates to reflect update.
+3. General cleanup - removed some commented out items, variables that weren't being used/set.

@@ -73,6 +73,11 @@
 		<?php endif; ?>
         <?php print $field_release_component_rendered; ?>
 		<div class="field field-project-release-files">
+			<?php 
+				//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-974
+                //Link to the distribution section 
+			?>
+			<h3  class="page-subtitle-content download-link"><a name="download-links"><?php print t('Distributions'); ?></a></h3>
 			<?php print views_embed_view('project_release_files', 'block_1', $node->nid); ?>
 		</div>
 		<div class="field field-content-body"><?php print $node->content['body']['#value']; ?></div>
@@ -93,7 +98,7 @@
                         <?php ?>
                 <?php if ($taxonomy_terms && !empty ($taxonomy_terms)):?>
                   <div id="node-information" class="box information">
-                    <h3 class="accessibility-info"><?php print t('Information'); ?></h3>
+                    <h3 class="page-subtitle-content"><?php print t('Information'); ?></h3>
                       <div class="odd nodes-row-first nodes-row-last clearfix">
                         <dl class="colspans-2-5 push-1 last fields">
                             <?php foreach ($taxonomy_terms as $vocab => $terms): ?>
@@ -109,3 +114,4 @@
 		<?php endif; ?>
 	</div>
 </div>
+

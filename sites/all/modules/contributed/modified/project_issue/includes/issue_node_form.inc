@@ -366,7 +366,7 @@ function _project_issue_form($node, $form_state, $include_metadata_fields = FALS
   $form['issue_details'] = array(
     '#type' => 'fieldset',
     '#title' => t('Issue details'),
-    '#prefix' => '</div><div class="standard">',
+    '#prefix' => '<div class="standard">',
   );
 
   if ($allow_metadata_changes) {

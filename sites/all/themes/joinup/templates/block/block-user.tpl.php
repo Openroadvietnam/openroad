@@ -2,6 +2,9 @@
 /**@file
  * @ingroup block
  */
+if (!empty($block -> subject) && $logged_in){
+	$logged_class = "menu-logged";
+}
 ?>
 
 <!-- BEGIN of the Template: block-user.tpl.php
@@ -14,13 +17,27 @@
 		
 -->
 
-<div id="block-<?php print $block -> module .'-'. $block -> delta; ?>" class="clearfix block">
+<div id="block-<?php print $block -> module .'-'. $block -> delta  ; ?>" class="clearfix block <?php echo $logged_class?>">
 	<h2<?php if ($accessibility_class): print $accessibility_class; endif; ?>><?php print t('Navigation top bar'); ?></h2>
 	<?php if (!empty($block -> subject) && $logged_in): ?>
         <h3><?php print t('Welcome') . ' ' . strip_tags(theme('username',user_load(array('name' => $block -> subject)))); ?></h3>
 	<?php endif;?>
 	<div class="content">
-		<?php print $block -> content; ?>
+	<?php//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-840?>
+	<?php //Added following lines to change the displayed text for Login and sign-up. Considering visitor and logged in user cases ?>
+	<?php if (!empty($block -> subject) && $logged_in): ?>
+	<?php print('<ul class="menu"><li class="leaf first"><a href="'.base_path().'people/dashboard">My Dashboard</a> or</li>
+<li class="leaf last"><a href="'.base_path().'logout" title="">Logout</a></li>
+</ul>')?>
+	<?php endif;?>
+	
+	<?php if (!empty($block -> subject) && !$logged_in): ?>
+	<?php //go to the same page after login ?>	
+	<?php print('<ul class="menu"><li class="leaf first"><a href="'.base_path().'user/login?destination=' . drupal_get_path_alias($_GET['q']) . '" title="">Login</a> or</li>
+<li class="leaf last"><a href="'.base_path().'user/register" title="">Sign up</a></li>
+</ul>')?>
+	<?php endif;?>
+	
 	</div>
 </div>
 

@@ -58,6 +58,11 @@
  * 
 *  @ingroup nodes
 */
+//Hide block if empty
+!empty($node->field_email['0']['view']) || 
+!empty($node->field_city['0']['view'])  || 
+$node->field_source_url['0']['view']    ||
+$taxonomy_terms && !empty ($taxonomy_terms) ? $information = TRUE : $information = FALSE;
 ?>
 <div id="node-<?php print $node->nid; ?>" class="node<?php if ($sticky) { print ' sticky'; } ?><?php if (!$status) { print ' node-unpublished'; } ?> node-type-<?php print $node->type; ?> clear-block">
 	<div class="node-content">
@@ -71,49 +76,45 @@
 		</div>
 		<div class="field field-content-body"><?php print $node->content['body']['#value']; ?></div>
 		<?php 
-    if (isset($documents)): ?>
+    if (isset($field_documentation_rendered) and !empty($field_documentation_rendered)): ?>
 			<div class="field field-documentation">
-				<h3><?php print t('Documentation'); ?></h3>
-				<ul>
-					<?php foreach ($documents as $key => $value): ?>
-						<?php if ($value): ?>
-							<li>
-                <?php print $value; ?>
-              </li>
-						<?php endif; ?>
-					<?php endforeach; ?>
-				</ul>
+				<?php //Hide block if empty ?>
+				<h3 class="page-subtitle-content"><?php print t('Documentation'); ?></h3>
+                <?php print $field_documentation_rendered ?>
 			</div>
 		<?php endif; ?>
-		<div id="node-information" class="box information">
-			<h3 class="accessibility-info"><?php print t('Information'); ?></h3>
-			<div class="odd nodes-row-first nodes-row-last clearfix">
-				<dl class="colspans-2-5 push-1 last fields">
-					<?php if (!empty($node->field_email['0']['view'])): ?>
-						<dt class="field field-email-term"><?php print t('Email contact'); ?>:</dt>
-						<dd class="field field-email-description"><?php print isa_toolbox_protect_email($node->field_email['0']['view']); ?></dd>
-					<?php endif;?>
-					<?php if (!empty($node->field_city['0']['view'])): ?>
-						<dt class="field field-city-term"><?php print t('City/Location'); ?>:</dt>
-						<dd class="field field-city-description"><?php print $node->field_city['0']['view'] ?></dd>
-					<?php endif;?>
-					<?php if ($node->field_source_url['0']['view']): ?>
-						<dt class="field field-source-url-term"><?php print t('Source'); ?>:</dt>
-						<dd class="field field-source-url-description"><?php print $node->field_source_url['0']['view']; ?></dd>
-					<?php endif;?>
-					<?php if ($taxonomy_terms && !empty ($taxonomy_terms)):?>
-					  <?php foreach ($taxonomy_terms as $vocab => $terms): ?>
-					    <?php if ($terms): ?>
-					  	  	<dt class="field field-taxonomy-<?php print strtolower($vocab); ?>-term"><?php print t($vocab); ?>:</dt>
-							<dd class="field field-taxonomy-<?php print strtolower($vocab); ?>-description"><?php print $terms; ?></dd>
+		<?php //Hide block if empty ?>
+		<?php if( TRUE == $information): ?>
+			<div id="node-information" class="box information">
+				<h3 class="page-subtitle-content"><?php print t('Information'); ?></h3>
+				<div class="odd nodes-row-first nodes-row-last clearfix">
+					<dl class="colspans-2-5 push-1 last fields">
+						<?php if (!empty($node->field_email['0']['view'])): ?>
+							<dt class="field field-email-term"><?php print t('Email contact'); ?>:</dt>
+							<dd class="field field-email-description"><?php print isa_toolbox_protect_email($node->field_email['0']['view']); ?></dd>
+						<?php endif;?>
+						<?php if (!empty($node->field_city['0']['view'])): ?>
+							<dt class="field field-city-term"><?php print t('City/Location'); ?>:</dt>
+							<dd class="field field-city-description"><?php print $node->field_city['0']['view'] ?></dd>
+						<?php endif;?>
+						<?php if ($node->field_source_url['0']['view']): ?>
+							<dt class="field field-source-url-term"><?php print t('Source'); ?>:</dt>
+							<dd class="field field-source-url-description"><?php print $node->field_source_url['0']['view']; ?></dd>
+						<?php endif;?>
+						<?php if ($taxonomy_terms && !empty ($taxonomy_terms)):?>
+						  <?php foreach ($taxonomy_terms as $vocab => $terms): ?>
+						    <?php if ($terms): ?>
+						  	  	<dt class="field field-taxonomy-<?php print strtolower($vocab); ?>-term"><?php print t($vocab); ?>:</dt>
+								<dd class="field field-taxonomy-<?php print strtolower($vocab); ?>-description"><?php print $terms; ?></dd>
+							<?php endif; ?>
+						  <?php endforeach; ?>
 						<?php endif; ?>
-					  <?php endforeach; ?>
-					<?php endif; ?>
-				</dl>
+					</dl>
+				</div>
 			</div>
-		</div>
+		<?php endif; ?>
 		<?php if (!empty($node->comment_count)): ?>
-			<h3><?php print t('Comments'); ?></h3>
+			<h3 class="page-subtitle-content"><?php print t('Comments'); ?></h3>
 		<?php endif;?>
 	</div>
 </div>

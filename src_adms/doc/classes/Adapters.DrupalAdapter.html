@@ -1,0 +1,437 @@
+<!DOCTYPE html><html xmlns:date="http://exslt.org/dates-and-times" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+<meta charset="utf-8">
+<title>phpDocumentor » \Adapters\DrupalAdapter</title>
+<meta name="author" content="Mike van Riel">
+<meta name="description" content="">
+<link href="../css/template.css" rel="stylesheet" media="all">
+<script src="../js/jquery-1.7.1.min.js" type="text/javascript"></script><script src="../js/jquery-ui-1.8.2.custom.min.js" type="text/javascript"></script><script src="../js/jquery.mousewheel.min.js" type="text/javascript"></script><script src="../js/bootstrap.js" type="text/javascript"></script><script src="../js/template.js" type="text/javascript"></script><script src="../js/prettify/prettify.min.js" type="text/javascript"></script><link rel="shortcut icon" href="../img/favicon.ico">
+<link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="72x72" href="../img/apple-touch-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="114x114" href="../img/apple-touch-icon-114x114.png">
+</head>
+<body>
+<div class="navbar navbar-fixed-top">
+<div class="navbar-inner"><div class="container">
+<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a><a class="brand" href="../index.html">phpDocumentor</a><div class="nav-collapse"><ul class="nav">
+<li class="dropdown">
+<a href="#api" class="dropdown-toggle" data-toggle="dropdown">
+                                    API Documentation <b class="caret"></b></a><ul class="dropdown-menu"></ul>
+</li>
+<li class="dropdown" id="charts-menu">
+<a href="#charts" class="dropdown-toggle" data-toggle="dropdown">
+                                    Charts <b class="caret"></b></a><ul class="dropdown-menu"><li><a href="../graph_class.html"><i class="icon-list-alt"></i> Class hierarchy diagram</a></li></ul>
+</li>
+<li class="dropdown" id="reports-menu">
+<a href="#reports" class="dropdown-toggle" data-toggle="dropdown">
+                                    Reports <b class="caret"></b></a><ul class="dropdown-menu">
+<li><a href="../errors.html"><i class="icon-remove-sign"></i> Errors 
+                <span class="label label-info">50</span></a></li>
+<li><a href="../markers.html"><i class="icon-map-marker"></i> Markers 
+                <ul><li>todo 
+                <span class="label label-info">3</span>
+</li></ul></a></li>
+<li><a href="../deprecated.html"><i class="icon-stop"></i> Deprecated elements 
+                <span class="label label-info">0</span></a></li>
+</ul>
+</li>
+</ul></div>
+</div></div>
+<div class="go_to_top"><a href="#___" style="color: inherit">Back to top  <i class="icon-upload icon-white"></i></a></div>
+</div>
+<div id="___" class="container">
+<noscript><div class="alert alert-warning">
+                            Javascript is disabled; several features are only available
+                            if Javascript is enabled.
+                        </div></noscript>
+<div class="row">
+<div class="span4">
+<span class="btn-group visibility" data-toggle="buttons-checkbox"><button class="btn public active" title="Show public elements">Public</button><button class="btn protected" title="Show protected elements">Protected</button><button class="btn private" title="Show private elements">Private</button><button class="btn inherited active" title="Show inherited elements">Inherited</button></span><div class="btn-group view pull-right" data-toggle="buttons-radio">
+<button class="btn details" title="Show descriptions and method names"><i class="icon-list"></i></button><button class="btn simple" title="Show only method names"><i class="icon-align-justify"></i></button>
+</div>
+<ul class="side-nav nav nav-list">
+<li class="nav-header">
+<i class="icon-custom icon-method"></i> Methods</li>
+<li class="method public "><a href="#CheckStatus" title="CheckStatus :: "><span class="description">CheckStatus()
+        </span><pre>CheckStatus()</pre></a></li>
+<li class="method public "><a href="#__construct" title="__construct :: "><span class="description">__construct()
+        </span><pre>__construct()</pre></a></li>
+<li class="method public "><a href="#compare_weight" title="compare_weight :: This function is used by the usort function to order the object in the $data array"><span class="description">This function is used by the usort function to order the object in the $data array</span><pre>compare_weight()</pre></a></li>
+<li class="method public "><a href="#export" title="export :: This function needs to be implemented in order to export the data"><span class="description">This function needs to be implemented in order to export the data</span><pre>export()</pre></a></li>
+<li class="method public "><a href="#load" title="load :: This method loads a table of AdmsObject from an RDF XML file"><span class="description">This method loads a table of AdmsObject from an RDF XML file</span><pre>load()</pre></a></li>
+<li class="nav-header private">» Private</li>
+<li class="method private "><a href="#_check_node" title="_check_node :: This method check if a content type is already exisiting in joinup
+or in the file ta treat and create it if possible"><span class="description">This method check if a content type is already exisiting in joinup
+or in the file ta treat and create it if possible</span><pre>_check_node()</pre></a></li>
+<li class="method private "><a href="#_verifURI" title="_verifURI :: This method check if an URI is in the correct format"><span class="description">This method check if an URI is in the correct format</span><pre>_verifURI()</pre></a></li>
+<li class="method private "><a href="#_verifURL" title="_verifURL :: This method check if an URL is in the correct format"><span class="description">This method check if an URL is in the correct format</span><pre>_verifURL()</pre></a></li>
+<li class="method private "><a href="#_verif_node" title="_verif_node :: This method create the drupal node from the data received
+and check if it's correct
+@$item $object to convert into drupal node"><span class="description">This method create the drupal node from the data received
+and check if it's correct
+@$item $object to convert into drupal node</span><pre>_verif_node()</pre></a></li>
+<li class="method private "><a href="#_verif_taxo" title="_verif_taxo :: This function check if at least one term of a vocabulary is fill for the node"><span class="description">This function check if at least one term of a vocabulary is fill for the node</span><pre>_verif_taxo()</pre></a></li>
+<li class="nav-header">
+<i class="icon-custom icon-property"></i> Properties</li>
+<li class="nav-header private">» Private</li>
+<li class="property private "><a href="#%24_asset_nodereference" title="$_asset_nodereference :: "><span class="description">$_asset_nodereference</span><pre>$_asset_nodereference</pre></a></li>
+<li class="property private "><a href="#%24_classes" title="$_classes :: "><span class="description">$_classes</span><pre>$_classes</pre></a></li>
+<li class="property private "><a href="#%24_field_contenttype_asset" title="$_field_contenttype_asset :: "><span class="description">$_field_contenttype_asset</span><pre>$_field_contenttype_asset</pre></a></li>
+<li class="property private "><a href="#%24_field_contenttype_distribution" title="$_field_contenttype_distribution :: "><span class="description">$_field_contenttype_distribution</span><pre>$_field_contenttype_distribution</pre></a></li>
+<li class="property private "><a href="#%24_flexi_asset" title="$_flexi_asset :: "><span class="description">$_flexi_asset</span><pre>$_flexi_asset</pre></a></li>
+<li class="property private "><a href="#%24_taxo_asset" title="$_taxo_asset :: "><span class="description">$_taxo_asset</span><pre>$_taxo_asset</pre></a></li>
+<li class="property private "><a href="#%24_taxo_distribution" title="$_taxo_distribution :: "><span class="description">$_taxo_distribution</span><pre>$_taxo_distribution</pre></a></li>
+<li class="property private "><a href="#%24_taxo_license" title="$_taxo_license :: "><span class="description">$_taxo_license</span><pre>$_taxo_license</pre></a></li>
+<li class="property private "><a href="#%24_taxo_publisher" title="$_taxo_publisher :: "><span class="description">$_taxo_publisher</span><pre>$_taxo_publisher</pre></a></li>
+<li class="property private "><a href="#%24_taxo_repository" title="$_taxo_repository :: "><span class="description">$_taxo_repository</span><pre>$_taxo_repository</pre></a></li>
+<li class="property private "><a href="#%24data" title="$data :: "><span class="description">$data</span><pre>$data</pre></a></li>
+<li class="property private "><a href="#%24data_copy" title="$data_copy :: "><span class="description">$data_copy</span><pre>$data_copy</pre></a></li>
+<li class="property private "><a href="#%24repository_nid" title="$repository_nid :: "><span class="description">$repository_nid</span><pre>$repository_nid</pre></a></li>
+<li class="property private "><a href="#%24repository_uri" title="$repository_uri :: "><span class="description">$repository_uri</span><pre>$repository_uri</pre></a></li>
+<li class="property private "><a href="#%24right_item" title="$right_item :: "><span class="description">$right_item</span><pre>$right_item</pre></a></li>
+<li class="property private "><a href="#%24treatment_type" title="$treatment_type :: "><span class="description">$treatment_type</span><pre>$treatment_type</pre></a></li>
+<li class="property private "><a href="#%24user_id" title="$user_id :: "><span class="description">$user_id</span><pre>$user_id</pre></a></li>
+</ul>
+</div>
+<div class="span8">
+<a name="%5CAdapters%5CDrupalAdapter" id="\Adapters\DrupalAdapter"></a><ul class="breadcrumb">
+<li>
+<a href="../index.html"><i class="icon-custom icon-class"></i></a><span class="divider">\</span>
+</li>
+<li><a href="../namespaces/Adapters.html">Adapters</a></li>
+<li class="active">
+<span class="divider">\</span><a href="../classes/Adapters.DrupalAdapter.html">DrupalAdapter</a>
+</li>
+</ul>
+<div href="../classes/Adapters.DrupalAdapter.html" class="element class">
+<p class="short_description">This class is aimed to export Data from the library into a well structured
+implementation of ADMS into Drupal (see Joinup)
+class DrupalAdapter</p>
+<div class="details">
+<p class="long_description"></p>
+<h3>
+<i class="icon-custom icon-method"></i> Methods</h3>
+<a name="CheckStatus" id="CheckStatus"></a><div class="element clickable method public CheckStatus" data-toggle="collapse" data-target=".CheckStatus .collapse">
+<h2>CheckStatus()
+        </h2>
+<pre>CheckStatus($Input) </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$Input</h4>
+<code></code>
+</div>
+</div></div>
+</div>
+<a name="__construct" id="__construct"></a><div class="element clickable method public __construct" data-toggle="collapse" data-target=".__construct .collapse">
+<h2>__construct()
+        </h2>
+<pre>__construct() </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="compare_weight" id="compare_weight"></a><div class="element clickable method public compare_weight" data-toggle="collapse" data-target=".compare_weight .collapse">
+<h2>This function is used by the usort function to order the object in the $data array</h2>
+<pre>compare_weight(\$object $a, $b) : \-1,0,1</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>public</td>
+</tr></table>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$a</h4>
+<code>\$object</code><p>compare by the usort function</p></div>
+<div class="subelement argument">
+<h4>$b</h4>
+<code></code>
+</div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>\-1,0,1</code>instead of the compare value</div>
+</div></div>
+</div>
+<a name="export" id="export"></a><div class="element clickable method public export" data-toggle="collapse" data-target=".export .collapse">
+<h2>This function needs to be implemented in order to export the data</h2>
+<pre>export(\adms:AdmsObject[] $data, $output, $type) : boolean</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>public</td>
+</tr></table>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$data</h4>
+<code>\adms:AdmsObject[]</code><p>data the data (AdmsObject table) which should be exported</p>
+</div>
+<div class="subelement argument">
+<h4>$output</h4>
+<code></code>
+</div>
+<div class="subelement argument">
+<h4>$type</h4>
+<code></code>
+</div>
+<h3>Exceptions</h3>
+<table class="table table-bordered"><tr>
+<th><code><a href="http://php.net/manual/en/class.exception.php">\Exception</a></code></th>
+<td></td>
+</tr></table>
+<h3>Returns</h3>
+<div class="subelement response"><code>boolean</code></div>
+</div></div>
+</div>
+<a name="load" id="load"></a><div class="element clickable method public load" data-toggle="collapse" data-target=".load .collapse">
+<h2>This method loads a table of AdmsObject from an RDF XML file</h2>
+<pre>load(\$object $object) : \adms:AdmsObject[]</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>public</td>
+</tr></table>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$object</h4>
+<code>\$object</code><p>the path to the file which should be loaded</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>\adms:AdmsObject[]</code>a table of AdmsObject</div>
+</div></div>
+</div>
+<a name="_check_node" id="_check_node"></a><div class="element clickable method private _check_node" data-toggle="collapse" data-target="._check_node .collapse">
+<h2>This method check if a content type is already exisiting in joinup
+or in the file ta treat and create it if possible</h2>
+<pre>_check_node(\$object $uri, $contenttype) : \the</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>private</td>
+</tr></table>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$uri</h4>
+<code>\$object</code><p>the path to the file which should be loaded</p></div>
+<div class="subelement argument">
+<h4>$contenttype</h4>
+<code></code>
+</div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>\the</code>nid of the new node or false if can't create it</div>
+</div></div>
+</div>
+<a name="_verifURI" id="_verifURI"></a><div class="element clickable method private _verifURI" data-toggle="collapse" data-target="._verifURI .collapse">
+<h2>This method check if an URI is in the correct format</h2>
+<pre>_verifURI(\$object $uri) : true</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>private</td>
+</tr></table>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$uri</h4>
+<code>\$object</code><p>the path to the file which should be loaded</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>true</code>or false</div>
+</div></div>
+</div>
+<a name="_verifURL" id="_verifURL"></a><div class="element clickable method private _verifURL" data-toggle="collapse" data-target="._verifURL .collapse">
+<h2>This method check if an URL is in the correct format</h2>
+<pre>_verifURL(\$object $url) : true</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>private</td>
+</tr></table>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$url</h4>
+<code>\$object</code><p>the path to the file which should be loaded</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>true</code>or false</div>
+</div></div>
+</div>
+<a name="_verif_node" id="_verif_node"></a><div class="element clickable method private _verif_node" data-toggle="collapse" data-target="._verif_node .collapse">
+<h2>This method create the drupal node from the data received
+and check if it's correct
+@$item $object to convert into drupal node</h2>
+<pre>_verif_node($item) </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>private</td>
+</tr></table>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$item</h4>
+<code></code>
+</div>
+</div></div>
+</div>
+<a name="_verif_taxo" id="_verif_taxo"></a><div class="element clickable method private _verif_taxo" data-toggle="collapse" data-target="._verif_taxo .collapse">
+<h2>This function check if at least one term of a vocabulary is fill for the node</h2>
+<pre>_verif_taxo(\$object $term_array, $var_taxo, $property, $contenttype) : \-1,0,1</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<table class="table table-bordered"><tr>
+<th>access</th>
+<td>public</td>
+</tr></table>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$term_array</h4>
+<code>\$object</code><p>compare by the usort function</p></div>
+<div class="subelement argument">
+<h4>$var_taxo</h4>
+<code></code>
+</div>
+<div class="subelement argument">
+<h4>$property</h4>
+<code></code>
+</div>
+<div class="subelement argument">
+<h4>$contenttype</h4>
+<code></code>
+</div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>\-1,0,1</code>instead of the compare value</div>
+</div></div>
+</div>
+<h3>
+<i class="icon-custom icon-property"></i> Properties</h3>
+<a name="%24_asset_nodereference" id="$_asset_nodereference"> </a><div class="element clickable property private $_asset_nodereference" data-toggle="collapse" data-target=".$_asset_nodereference .collapse">
+<h2>$_asset_nodereference</h2>
+<pre>$_asset_nodereference </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24_classes" id="$_classes"> </a><div class="element clickable property private $_classes" data-toggle="collapse" data-target=".$_classes .collapse">
+<h2>$_classes</h2>
+<pre>$_classes </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24_field_contenttype_asset" id="$_field_contenttype_asset"> </a><div class="element clickable property private $_field_contenttype_asset" data-toggle="collapse" data-target=".$_field_contenttype_asset .collapse">
+<h2>$_field_contenttype_asset</h2>
+<pre>$_field_contenttype_asset </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24_field_contenttype_distribution" id="$_field_contenttype_distribution"> </a><div class="element clickable property private $_field_contenttype_distribution" data-toggle="collapse" data-target=".$_field_contenttype_distribution .collapse">
+<h2>$_field_contenttype_distribution</h2>
+<pre>$_field_contenttype_distribution </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24_flexi_asset" id="$_flexi_asset"> </a><div class="element clickable property private $_flexi_asset" data-toggle="collapse" data-target=".$_flexi_asset .collapse">
+<h2>$_flexi_asset</h2>
+<pre>$_flexi_asset </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24_taxo_asset" id="$_taxo_asset"> </a><div class="element clickable property private $_taxo_asset" data-toggle="collapse" data-target=".$_taxo_asset .collapse">
+<h2>$_taxo_asset</h2>
+<pre>$_taxo_asset </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24_taxo_distribution" id="$_taxo_distribution"> </a><div class="element clickable property private $_taxo_distribution" data-toggle="collapse" data-target=".$_taxo_distribution .collapse">
+<h2>$_taxo_distribution</h2>
+<pre>$_taxo_distribution </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24_taxo_license" id="$_taxo_license"> </a><div class="element clickable property private $_taxo_license" data-toggle="collapse" data-target=".$_taxo_license .collapse">
+<h2>$_taxo_license</h2>
+<pre>$_taxo_license </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24_taxo_publisher" id="$_taxo_publisher"> </a><div class="element clickable property private $_taxo_publisher" data-toggle="collapse" data-target=".$_taxo_publisher .collapse">
+<h2>$_taxo_publisher</h2>
+<pre>$_taxo_publisher </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24_taxo_repository" id="$_taxo_repository"> </a><div class="element clickable property private $_taxo_repository" data-toggle="collapse" data-target=".$_taxo_repository .collapse">
+<h2>$_taxo_repository</h2>
+<pre>$_taxo_repository </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24data" id="$data"> </a><div class="element clickable property private $data" data-toggle="collapse" data-target=".$data .collapse">
+<h2>$data</h2>
+<pre>$data </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24data_copy" id="$data_copy"> </a><div class="element clickable property private $data_copy" data-toggle="collapse" data-target=".$data_copy .collapse">
+<h2>$data_copy</h2>
+<pre>$data_copy </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24repository_nid" id="$repository_nid"> </a><div class="element clickable property private $repository_nid" data-toggle="collapse" data-target=".$repository_nid .collapse">
+<h2>$repository_nid</h2>
+<pre>$repository_nid </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24repository_uri" id="$repository_uri"> </a><div class="element clickable property private $repository_uri" data-toggle="collapse" data-target=".$repository_uri .collapse">
+<h2>$repository_uri</h2>
+<pre>$repository_uri </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24right_item" id="$right_item"> </a><div class="element clickable property private $right_item" data-toggle="collapse" data-target=".$right_item .collapse">
+<h2>$right_item</h2>
+<pre>$right_item </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24treatment_type" id="$treatment_type"> </a><div class="element clickable property private $treatment_type" data-toggle="collapse" data-target=".$treatment_type .collapse">
+<h2>$treatment_type</h2>
+<pre>$treatment_type </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24user_id" id="$user_id"> </a><div class="element clickable property private $user_id" data-toggle="collapse" data-target=".$user_id .collapse">
+<h2>$user_id</h2>
+<pre>$user_id </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="row"><footer class="span12">
+            Template is built using <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap 2</a> and icons provided by <a href="http://glyphicons.com/">Glyphicons</a>.<br>
+            Documentation is powered by <a href="http://www.phpdoc.org/">phpDocumentor 2.0.0a6</a> and<br>
+            generated on 2012-06-19T14:36:09+02:00.<br></footer></div>
+</div>
+</body>
+</html>

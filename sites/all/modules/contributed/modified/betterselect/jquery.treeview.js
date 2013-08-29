@@ -14,7 +14,7 @@
  *
  */
 
-;(function($) {
+(function($) {
 
 	// TODO rewrite as a widget, removing all the extra plugins
 	$.extend($.fn, {
@@ -56,16 +56,16 @@
 		prepareBranches: function(settings) {
 			if (!settings.prerendered) {
 				// mark last tree items
-				this.filter(":last-child:not(ul)").addClass(CLASSES.last);
+				this.filter(":last-child:not(div.ul)").addClass(CLASSES.last);
 				// collapse whole tree, or only those marked as closed, anyway except those marked as open
-				this.filter((settings.collapsed ? "" : "." + CLASSES.closed) + ":not(." + CLASSES.open + ")").find(">ul").hide();
+				this.filter((settings.collapsed ? "" : "." + CLASSES.closed) + ":not(." + CLASSES.open + ")").find(">div.ul").hide();
 			}
 			// return all items with sublists
-			return this.filter(":has(>ul)");
+			return this.filter(":has(>div.ul)");
 		},
 		applyClasses: function(settings, toggler) {
 			// TODO use event delegation
-			this.filter(":has(>ul):not(:has(>a))").find(">span").unbind("click.treeview").bind("click.treeview", function(event) {
+			this.filter(":has(>div.ul):not(:has(>a))").find(">div.ul").unbind("click.treeview").bind("click.treeview", function(event) {
 				// don't handle click events on children, eg. checkboxes
 				if ( this == event.target )
 					toggler.apply($(this).next());
@@ -73,12 +73,12 @@
 			
 			if (!settings.prerendered) {
 				// handle closed ones first
-				this.filter(":has(>ul:hidden)")
+				this.filter(":has(>div.ul:hidden)")
 						.addClass(CLASSES.expandable)
 						.replaceClass(CLASSES.last, CLASSES.lastExpandable);
 						
 				// handle open ones
-				this.not(":has(>ul:hidden)")
+				this.not(":has(>div.ul:hidden)")
 						.addClass(CLASSES.collapsable)
 						.replaceClass(CLASSES.last, CLASSES.lastCollapsable);
 						
@@ -146,7 +146,7 @@
 					.swapClass( CLASSES.collapsable, CLASSES.expandable )
 					.swapClass( CLASSES.lastCollapsable, CLASSES.lastExpandable )
 					// find child lists
-					.find( ">ul" )
+					.find( ">div.ul" )
 					// toggle them
 					.heightToggle( settings.animated, settings.toggle );
 				if ( settings.unique ) {
@@ -159,7 +159,7 @@
 						.end()
 						.replaceClass( CLASSES.collapsable, CLASSES.expandable )
 						.replaceClass( CLASSES.lastCollapsable, CLASSES.lastExpandable )
-						.find( ">ul" )
+						.find( ">div.ul" )
 						.heightHide( settings.animated, settings.toggle );
 				}
 			}
@@ -171,7 +171,7 @@
 				}
 				var data = [];
 				branches.each(function(i, e) {
-					data[i] = $(e).is(":has(>ul:visible)") ? 1 : 0;
+					data[i] = $(e).is(":has(>div.ul:visible)") ? 1 : 0;
 				});
 				$.cookie(settings.cookieId, data.join(""), settings.cookieOptions );
 			}
@@ -181,7 +181,7 @@
 				if ( stored ) {
 					var data = stored.split("");
 					branches.each(function(i, e) {
-						$(e).find(">ul")[ parseInt(data[i]) ? "show" : "hide" ]();
+						$(e).find(">div.ul")[ parseInt(data[i]) ? "show" : "hide" ]();
 					});
 				}
 			}
@@ -190,7 +190,7 @@
 			this.addClass("treeview");
 			
 			// prepare branches and find all tree items with child lists
-			var branches = this.find("li").prepareBranches(settings);
+			var branches = this.find("div.li").prepareBranches(settings);
 			
 			switch(settings.persist) {
 			case "cookie":
@@ -209,10 +209,10 @@
 				});
 				if ( current.length ) {
 					// TODO update the open/closed classes
-					var items = current.addClass("selected").parents("ul, li").add( current.next() ).show();
+					var items = current.addClass("selected").parents("div.ul, div.li").add( current.next() ).show();
 					if (settings.prerendered) {
 						// if prerendered is on, replicate the basic class swapping
-						items.filter("li")
+						items.filter("div.li")
 							.swapClass( CLASSES.collapsable, CLASSES.expandable )
 							.swapClass( CLASSES.lastCollapsable, CLASSES.lastExpandable )
 							.find(">.hitarea")

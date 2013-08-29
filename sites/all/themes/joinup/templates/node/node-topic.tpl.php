@@ -86,7 +86,7 @@
 				<div class="field field-created"><?php print $submitted; ?>.</div>
 				<div class="field field-users-company-name">(<?php print $user_company_name; ?>, <?php print $user_countries; ?>)<?php if (isset($joined_group)): ?> - <span class="field field-users-joined"><label><?php print t('Joined') ?>:</label> <?php print $joined_group; endif; ?></span></div>
 				<div class="field field-forum"><?php print $forum; ?></div>
-				<div class="field field-taxonomies"><label><?php print t('Domains'); ?>:</label> <?php print $domains; ?><?php if ($languages): ?> | <label><?php print t('Languages'); ?>:</label> <?php print $languages; ?><?php endif; ?><?php if ($keywords): ?> | <label><?php print t('Keywords'); ?>:</label> <?php print $keywords; ?><?php endif; ?>.</div>
+				<div class="field field-taxonomies"><label><?php print t('Themes'); ?>:</label> <?php print $domains; ?><?php if ($languages): ?> | <label><?php print t('Languages'); ?>:</label> <?php print $languages; ?><?php endif; ?><?php if ($keywords): ?> | <label><?php print t('Keywords'); ?>:</label> <?php print $keywords; ?><?php endif; ?>.</div>
 				<div class="field field-rating"><?php print $vote_rating; ?></div>
 				<div class="field field-type">
 					<div class="quote topic">&quot;</div>
@@ -96,6 +96,6 @@
 		</div>
 	</div>
 	<?php if (!empty($node->comment_count)): ?>
-		<h3><?php print t('Comments'); ?></h3>
+		<h3 class="page-subtitle-content"><?php print t('Comments'); ?></h3>
 	<?php endif;?>
 </div>

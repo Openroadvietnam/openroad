@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @defgroup isa_workflow_buttons
  * @brief Change workflows radio button to submit button
@@ -40,13 +41,13 @@ function isa_workflow_buttons_form_alter(&$form, &$form_state, $form_id) {
     }
     $form['state']['#weight'] = -11;
     $form['button_name'] = array(
-        '#type' => 'textfield',
-        '#title' => t("Button name"),
-        '#size' => '16',
-        '#default_value' => $default_value,
-        '#required' => FALSE,
-        '#description' => t('Define the value for the button name'),
-        '#weight' => -10,
+      '#type' => 'textfield',
+      '#title' => t("Button name"),
+      '#size' => '16',
+      '#default_value' => $default_value,
+      '#required' => FALSE,
+      '#description' => t('Define the value for the button name'),
+      '#weight' => -10,
     );
     $form ['#submit'][] = 'isa_workflow_buttons_admin_add_state_submit';
   }
@@ -57,18 +58,18 @@ function isa_workflow_buttons_form_alter(&$form, &$form_state, $form_id) {
   // add checkbox for activate workflow buttons for this workflow
   if ('workflow_edit_form' == $form_id) {
     $form['workflow_buttons'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Workflow buttons'),
-        '#collapsible' => TRUE,
-        '#collapsed' => FALSE,
+      '#type' => 'fieldset',
+      '#title' => t('Workflow buttons'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
     );
     $default_value = variable_get('use_workflow_buttons_' . $form['wid']['#value'], 0);
     $form['workflow_buttons']['user_workflow_buttons'] = array(
-        '#type' => 'checkbox',
-        '#title' => t("Use workflow button"),
-        '#default_value' => $default_value,
-        '#required' => FALSE,
-        '#description' => t('Check if you want replace the fieldset workflow (with radio buttons) by submit buttons'),
+      '#type' => 'checkbox',
+      '#title' => t("Use workflow button"),
+      '#default_value' => $default_value,
+      '#required' => FALSE,
+      '#description' => t('Check if you want replace the fieldset workflow (with radio buttons) by submit buttons'),
     );
     $form ['#submit'][] = 'isa_workflow_buttons_admin_add_workflow_submit';
   }
@@ -80,7 +81,8 @@ function isa_workflow_buttons_form_alter(&$form, &$form_state, $form_id) {
  */
 function isa_workflow_buttons_admin_add_workflow_submit(&$form, $form_state) {
   if (isset($form_state['values']['user_workflow_buttons'])) {
-    variable_set('use_workflow_buttons_' . $form_state['values']['wid'], $form_state['values']['user_workflow_buttons']);
+    variable_set('use_workflow_buttons_' . $form_state['values']['wid'],
+      $form_state['values']['user_workflow_buttons']);
   }
 }
 
@@ -96,8 +98,7 @@ function isa_workflow_buttons_manage(&$form, $workflow) {
   $weight = 0;
   if ($form['nid']['#value']) {
     $new_node = FALSE;
-  }
-  else {
+  } else {
     $new_node = TRUE;
   }
   $add_button = FALSE;
@@ -106,20 +107,19 @@ function isa_workflow_buttons_manage(&$form, $workflow) {
       $button_name = isa_workflow_buttons_get_button_name('sid', $sid);
       if ($button_name) {
         $button_name = array_shift($button_name);
-      }
-      else {
+      } else {
         $button_name = $value;
       }
 
       if ($form ['workflow'][$workflow_name]['#default_value'] != $sid || $new_node) {
         $state = workflow_get_state($sid);
         $form['buttons'][$value] = array(
-            '#type' => 'submit',
-            '#value' => $button_name,
-            '#access' => TRUE,
-            '#weight' => $state->weight,
-            '#submit' => $button_submit,
-            '#name' => $sid,
+          '#type' => 'submit',
+          '#value' => $button_name,
+          '#access' => TRUE,
+          '#weight' => $state->weight,
+          '#submit' => $button_submit,
+          '#name' => $sid,
         );
         $add_button = TRUE;
       }
@@ -129,8 +129,7 @@ function isa_workflow_buttons_manage(&$form, $workflow) {
     // remove button save if it's node creation form
     if ($new_node && $add_button) {
       unset($form['buttons']['submit']);
-    }
-    else {
+    } else {
       $form['buttons']['submit']['#weight'] = -10;
     }
 
@@ -144,29 +143,28 @@ function isa_workflow_buttons_manage(&$form, $workflow) {
     // display workflow state if the node is created
     if (!$new_node) {
       $form['workflow']['Status'] = array(
-          '#type' => 'item',
-          '#title' => t("Current state"),
-          '#value' => $form ['workflow'][$workflow_name]['#options'][$form['#node']->_workflow],
-          '#weight' => 0,
+        '#type' => 'item',
+        '#title' => t("Current state"),
+        '#value' => $form ['workflow'][$workflow_name]['#options'][$form['#node']->_workflow],
+        '#weight' => 0,
       );
     }
     $form['#validate'][] = 'isa_workflow_buttons_filled_workflow_state';
-  }
-  elseif (!$new_node) {
+  } elseif (!$new_node) {
     //display a node status (workflow state)
     $state = workflow_get_state($form['#node']->_workflow);
     $form['workflow'] = array(
-        '#title' => t('Moderation'),
-        '#type' => t('fieldset'),
-        '#collapsible' => TRUE,
-        '#collapsed' => FALSE,
-        '#weight' => 10000,
+      '#title' => t('Moderation'),
+      '#type' => t('fieldset'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#weight' => 10000,
     );
     $form['workflow']['Status'] = array(
-        '#type' => 'item',
-        '#title' => t('Current state'),
-        '#value' => $state['state'],
-        '#weight' => 0,
+      '#type' => 'item',
+      '#title' => t('Current state'),
+      '#value' => $state['state'],
+      '#weight' => 0,
     );
   }
 }
@@ -190,8 +188,7 @@ function isa_workflow_buttons_filled_workflow_state($form, &$form_state) {
 function isa_workflow_buttons_admin_del_submit(&$form, $form_state) {
   if (isset($form_state['values']['sid'])) {
     isa_workflow_buttons_admin_delete('sid', $form_state['values']['sid']);
-  }
-  elseif (isset($form_state['values']['wid'])) {
+  } elseif (isset($form_state['values']['wid'])) {
     isa_workflow_buttons_admin_delete('wid', $form_state['values']['wid']);
   }
 }
@@ -210,12 +207,10 @@ function isa_workflow_buttons_admin_add_state_submit(&$form, $form_state) {
       if ($button[$form_state['sid']]) {
         $update['sid'] = $form_state['sid'];
         $workflow_button['sid'] = $form_state['sid'];
-      }
-      else {
+      } else {
         $workflow_button['sid'] = $form_state['sid'];
       }
-    }
-    else {
+    } else {
       $sid = workflow_state_save($form_state['values']);
       $workflow_button ['sid'] = $sid;
     }
@@ -256,8 +251,7 @@ function isa_workflow_buttons_admin_save($workflow_button, $update) {
   $query = NULL;
   if (sizeof($update) > 0) {
     $query = drupal_write_record("workflow_buttons", $workflow_button, 'sid');
-  }
-  else {
+  } else {
     $query = drupal_write_record("workflow_buttons", $workflow_button);
   }
 }
