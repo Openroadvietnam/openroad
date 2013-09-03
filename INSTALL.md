@@ -24,7 +24,7 @@ Có một số vấn đề với `include_paths`, lúc nào cũng chỉ là nộ
 
 ### Cài đặt Solr
 
-Solr optional nhưng cần cho ~60% tính năng của joinup. Bản chúng ta sử dụng là 3.6.2 (chưa tìm hiểu 4.4 có hoạt động không nhưng 3.6.2 cùng thời kỳ ra đời với bản joinup hiện tại).
+Solr là hệ thống lập chỉ mục tìm kiếm. Tuy optional nhưng cần cho ~40% tính năng của joinup. Bản chúng ta sử dụng là 3.6.2 (chưa tìm hiểu 4.4 có hoạt động không nhưng 3.6.2 cùng thời kỳ ra đời với bản joinup hiện tại).
 
 
 1. Tải Solr, giải nén ở một thư mục nào đó bất kỳ, gọi thư mục này là `$SOLR`. Backup các file `$SOLR/example/solr/conf/{schema.xml,solrconfig.xml,protwords.txt}` và copy các file tương ứng từ `$JOINUP/sites/all/modules/contributed/apachesolr/` vào thế chỗ.
