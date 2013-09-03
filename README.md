@@ -14,7 +14,7 @@ Xem thêm tại: <https://github.com/Openroadvietnam/openroad/wiki>.
 
 ### Tài liệu
 
-Tài liệu hướng dẫn cài đặt được đặt trong file [INSTALL.md](INSTALL.md). Các tài liệu từ nhóm phát triển châu Âu và Úc được đặt trong thư mục [docs](docs).
+Tài liệu hướng dẫn cài đặt được đặt trong file [INSTALL.md](INSTALL.md). Các tài liệu từ nhóm phát triển châu Âu và Úc được đặt trong thư mục [docs](docs). Tài liệu hướng dẫn bảo trì dự án xem ở [MAINTAINING.md](MAINTAINING.md).
 
 ### Giấy phép sử dụng
 
