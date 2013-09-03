@@ -13,7 +13,7 @@ Quy trình cài đặt Joinup cũng giống như cài đặt một site Drupal b
         mysql > create user joinup;
         mysql > grant all privileges on joinup.* to joinup@"localhost" identified by "<password>";
         mysql > [^D]
-        $ mysql -u joinup -p < V1.4.3.p4_clean_backup.sql
+        $ mysql -u joinup -p joinup < V1.4.3.p4_clean_backup.sql
 
 6. Copy `$JOINUP/sites/default/default.settings.php` -> `$JOINUP/sites/default/settings.php`, thêm thông tin về database mới tạo ở bước trên.
 
