@@ -1,7 +1,7 @@
 ## Quy trình cập nhật phiên bản mới từ Joinup vào Openroad
 
 Joinup có một kho svn công cộng ở địa chỉ sau:
-<https://joinup.ec.europa.eu/svn/joinup>. Nhánh `trunk` không sử dụng, thay vào đó, mỗi bản release mới sẽ được tạo một nhánh trong `tags`.
+<https://joinup.ec.europa.eu/svn/joinup>. Nhánh `trunk` không sử dụng, thay vào đó, mỗi bản release mới sẽ được tạo một nhánh trong `tags` và được thông báo qua mail ở mailing list sau: <http://joinup.ec.europa.eu/mailman/listinfo/joinup-commits>.
 
 Kho này không thực sự là một kho SVN để quản lý các commit thực hiện khi phát triển mà hoàn toàn chỉ dùng để lưu các phiên bản được release ra ngoài nên không khác gì tải tarball. Vì vậy, để cập nhật với upstream không cần phải sử dụng đến git-svn, thậm chí dùng có thể gây thêm một vài lỗi khó hiểu. Quy trình merge phiên bản upstream như sau (quy ước `$OPENROAD` là git repository của Openroad và `$SVN` là tên thư mục svn tải về):
 
