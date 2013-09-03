@@ -27,4 +27,4 @@ Nhập commit message theo mẫu sau:
     SVN log line:
     r20 | mmedinam | 2013-08-30 23:02:37 +0700 (Fri, 30 Aug 2013)
 
-Thông tin về revision và log line lấy ở lệnh `svn log` thực thi trong thư mục $SVN. Sau khi merge có thể xóa thư mục $SVN (không thể tái sử dụng do mỗi lần release Joinup lại tạo một tag mới).
+Thông tin về revision và log line lấy ở lệnh `svn log` thực thi trong thư mục `$SVN`. Sau khi merge có thể xóa thư mục `$SVN` (không thể tái sử dụng do mỗi lần release Joinup lại tạo một tag mới).
