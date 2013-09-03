@@ -29,7 +29,7 @@
  * @see theme_comment()
  * 
  * @ingroup comment
- */
+ */ 
 ?>
 <div class="node comment-id-<?php print $id; ?> <?php print ($comment->new) ? ' comment-new' : ''; print ' '. $status ?>">
 	<div class="node-content">
@@ -38,13 +38,24 @@
 				<div class="field field-users-photo"><?php print $comment->picture; ?></div>
 			</div>
 			<div class="colspan-7 last fields views-field-topic-infos">
-				<div class="field field-comment-links"><?php print $links; ?></div>
+				
 				<div class="field field-title"><strong><?php print $title ?></strong></div>
 				<div class="field field-created"><?php print $submitted; ?></div>
 				<div class="field field-type">
 					<div class="quote topic">&quot;</div>
 				</div>
 				<div class="field field-body"><?php print $content; ?></div>
+				<?php 
+				//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-123
+				// A user should be able to report an abuse
+				$url = (!empty($_SERVER['HTTPS'])) ? "https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'] : "http://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
+				$query = array('query'	=> array(
+											'abuse'	=> 'true',
+											'page'	=> $url.'#comment-'.$comment->cid,
+								));
+				?>
+				<div class="field field-comment-links"><?php print $links; ?></div>
+				<div class="link-abuse"><?php print l(t('Report abusive content'), 'contact', $query);?></div>
 			</div>
 		</div>
 	</div>

@@ -36,10 +36,10 @@
 				<div class="field field-users-photo"><?php print $comment->picture; ?></div>
 			</div>
 			<div class="colspan-7 last fields views-field-topic-infos">
-				<div class="field field-comment-links"><?php print $links; ?></div>
 				<div class="field field-title"><strong><?php print $title ?></strong></div>
 				<div class="field field-created"><?php print $submitted; ?></div>
 				<div class="field field-body"><?php print $content; ?></div>
+				<div class="field field-comment-links"><?php print $links; ?></div>
 			</div>
 		</div>
 	</div>

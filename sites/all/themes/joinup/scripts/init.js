@@ -134,10 +134,10 @@ $(document).ready(
 
 	//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-840
 	//Apply only to the expandable sections in semantic asset an semantic repository node, to avoid the same behaviour in the menu system
-        $('.togglable > .expanded').hide();
+		$('.togglable > .expanded').hide();
         $(".togglable").click(function(){
             $(this).parent().children("div").slideToggle("slow");
-            if (!$(this).find(".expanded").is(":visible")) {
+            if (!$(this).find(".expanded").is(":visible") ) {
                 $(this).find(".expanded").show();
                 $(this).find(".collapsed").hide();
             }
@@ -147,7 +147,24 @@ $(document).ready(
             }
             return false;
         });
-    
+		// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-909
+		// User request - Federated repository page
+		// The list of asset releases should be by default "unfolded". 
+		
+		$('.togglable-expanded > .collapsed').hide();
+        $(".togglable-expanded").click(function(){
+            $(this).parent().children("div").slideToggle("slow");
+            if (!$(this).find(".collapsed").is(":visible") ) {
+                $(this).find(".collapsed").show();
+                $(this).find(".expanded").hide();
+            }
+            else {
+                $(this).find(".collapsed").hide();
+                $(this).find(".expanded").show();
+            }
+            return false;
+        });
+		
     
         
     }

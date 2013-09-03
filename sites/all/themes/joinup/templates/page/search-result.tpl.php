@@ -84,7 +84,9 @@ switch ($node->type) {
        $update_message = t('Event date');
     break;
   default:
-       $update_message = t('Last update');
+		//ISAICP-995
+		//Wrong label for dates in the newsletter archive page
+       $update_message = t('Published');
     break;
 }
 ?>
@@ -127,8 +129,11 @@ switch ($node->type) {
   <?php 
         //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
         //Show download number only if there is any download available
+		
+		//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-960
+		//The default sort of asset releases in catalogue/all not 'by number of downloads' but by 'date' 
    ?>
-  <?php if(is_numeric($downloads) and ($node->download or $downloads > 0)): ?>
+  <?php if(is_numeric($downloads) and $node->download and $downloads > 0): ?>
     <div class="detail-data-search-solr-downloads">    
     <?php print  "<strong>" . $downloads . "</strong> " . t('downloads') ?>
     </div>

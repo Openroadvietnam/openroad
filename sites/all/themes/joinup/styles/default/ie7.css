@@ -37,6 +37,9 @@ body {
 	#block-isa_links-buttons_actions.block div.buttons ul.links li a.push.export-metadata { padding-bottom:15px}
 	* div#highlight h2.page-title {width:460px}
 	* q { content: ""; }
+	* .detail-data-search-solr-downloads { width:120px; text-align:right}
+	*.detail-options  .detail-options-title-left { clear:both}
+	* .federated-forge-list  .views-field-title, * .federated-forge-list  .views-field-nid { float:left; min-width:50px}
 
 /* DASHBOARD */	
 	* div#homebox div.homebox-portlet div.homebox-portlet-inner div.portlet-content div.view div.view-filters form div.views-exposed-widgets div.views-exposed-widget { display:inline;  float:left;width:30%;}

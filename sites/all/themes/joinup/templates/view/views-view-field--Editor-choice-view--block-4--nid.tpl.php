@@ -26,7 +26,11 @@
 		<h3 class="body-title"><?php echo $body_title?></h3>
 	</div>
 	<div class="body-type <?php echo str_replace("_", "-" , $row->node_type) ?>-icon"><?php echo node_get_types('name', $row->node_type) ?></div>	
-	<div class="body-fivestars"><?php echo theme('fivestar_static', $row->votingapi_cache_node_value * 10);?></div>
+	<?php 
+	// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-982
+	// Incorrect rating for Editor's pick on the home page
+	?>
+	<div class="body-fivestars"><?php echo theme('fivestar_static', $row->votingapi_cache_node_percent_vote_average_value);?></div>
     <div class="body-teaser"><?php echo trim($body)  ?>;</div>
     <div class="body-more"><?php echo l( t('Read more') , 'node/' . $row->nid )?></div>
 </div>

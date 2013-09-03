@@ -63,7 +63,6 @@ function isa_ml_mailhandler($node, $unused, $unused, $header, $mailbox) {
   if ($mailbox['authentication'] != 'isa_handler') {
     return $node;
   }
-
   $forum_tid = variable_get('isa_ml_forum_tid', ISA_ML_DEFAULT_FORUM_TID);
   if ($forum_tid != -1) {
     if (!is_array($node->taxonomy)) {
@@ -81,8 +80,12 @@ function isa_ml_mailhandler($node, $unused, $unused, $header, $mailbox) {
       $node->og_groups = array();
     }
     $node->og_groups[$parent_nid] = $parent_nid;
+    $node->language = 'en';
+  }else{
+    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-985
+    //Don't create node if belongs to no og group
+    unset($node);
   }
-  $node->language = 'en';
   return $node;
 }
 

@@ -253,7 +253,8 @@ function joinup_preprocess_page(&$vars) {
                     || $node_type == 'dashboard' || $node_type == 'federatedproject'
                     || $node_type == 'federatedforge' || $node_type == ISA_DOCUMENT_TYPE
                     || $node_type == 'advertisement'
-                    || $node_type == ISA_PRESENTATION_TYPE
+                    || $node_type == ISA_REPOSITORY_TYPE
+					|| $node_type == ISA_PRESENTATION_TYPE
                     || $node_type == ISA_CASE_TYPE || $node_type == ISA_EVENT_TYPE
                     || $node_type == ISA_FACTSHEET_TYPE || $node_type == ISA_VIDEO_TYPE
                     || $node_type == ISA_NEWS_TYPE || $node_type == ISA_BLOG_TYPE

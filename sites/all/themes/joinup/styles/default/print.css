@@ -13,7 +13,7 @@ body { margin:0; padding:0px; width:100%; font-size:12px;}
 #path, #block-isa_links-buttons_actions, .layout-left, #menu-wrapper, #additional-tools , #user-box, .language-selector-close, #block-isa_links-home_buttons, div#block-isa_links-menus_left , 
 div#right-sidebar-region, .view-filters, .views-carousel-overlay .views-carousel-overlay-link a, 
 .layout-home .editors-choice .news-list li .news-body .body-more , .layout-home #before-content-region .advertisement-banners .views-field-view-node, #introduction .detail-options-title, .learn-more, .read-more, 
-#content #tabs-wrapper   { display:none !important}
+#content #tabs-wrapper , .advanced-search-form-solr  { display:none !important}
 #header #banner-image-title{margin-top:-15px}
 
 /* LAYOUT ELEMENTS */
@@ -43,3 +43,7 @@ div.view div.view-content div.odd, div.view div.view-content div.even { float:le
 .advanced-search-form-solr .form-submit, .detail-data-search-solr-down .download{color:#FFF !important}
 .advanced-search-form-solr{background:none}
 
+.view-Forges-list ul {width:90%;}
+.federated-forge-list .details-info { width:60%}
+
+#content.view-header, #content h2 { width:90%; }

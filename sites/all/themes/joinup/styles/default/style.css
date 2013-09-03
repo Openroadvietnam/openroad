@@ -133,10 +133,30 @@ div#before-content-region div.block.editors-choice  .field-title a { font-size:1
 div#before-content-region div.block.editors-choice .field-data-event-dates-event-dates-value { font-size:100%; margin-bottom:5px}
 div#before-content-region #block-views-AllNews_view-block_4.editors-choice  .field-title { font-size:100%; padding-bottom:0}
 
+
+/*
+	 https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-909
+	 User request - Federated repository page
+	 3. When hoovering over the text of "Additional Information" or "Included assets" it should be clear to the user that he can unfold it.
+	 
+*/
+
 /* Content > asset_release h4 togglable (Additional information) */
-h4.togglable { margin-bottom:10px} 
+h4.togglable { margin-bottom:10px; cursor:pointer;} 
 h4.togglable img.collapsed { margin-left: 5px;}
 h4.togglable img.expanded { margin-left: 5px; position:relative; top:-2px; margin-left : 2px;}
+
+/*
+	 https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-909
+	 User request - Federated repository page
+	 1. The list of asset releases should be by default "unfolded". 
+	 3. When hoovering over the text of "Additional Information" or "Included assets" it should be clear to the user that he can unfold it.
+	 
+*/
+h4.togglable-expanded { margin-bottom:10px; cursor:pointer;} 
+h4.togglable-expanded img.collapsed { margin-left: 5px;}
+h4.togglable-expanded img.expanded { margin-left: 5px; position:relative; top:-2px; margin-left : 2px;}
+
 div.node div.node-content div.boxes div.box,
 div.node div.node-content div.toggle-wrapper div.box { margin-bottom: 5px; }
 div.boxes h5, div.toggle-wrapper h5 { font-size:100%; }
@@ -350,6 +370,14 @@ div.block div.buttons ul.links li a  { width:200px}
 .field-presentationation, .field-documentation { margin-bottom:10px}
 .field-presentationation h3, .field-documentation h3 { margin-bottom:10px}
 .togglable  img.collapsed, .togglable  img.expanded { cursor:pointer; margin-left:5px}
+
+/*
+	https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-909
+	User request - Federated repository page
+	1. The list of asset releases should be by default "unfolded". 
+*/
+.togglable-expanded  img.collapsed, .togglable-expanded  img.expanded { cursor:pointer; margin-left:5px}
+
 
 /* VIEWS */
 .view-faq-topics  .views-field-teaser p { padding:0 0 15px}
@@ -1078,8 +1106,10 @@ h3.project-release { font-weight:bold; font-size:120%; padding-bottom:0; border-
 	/* Sidebar titles list simulating */
 	.layout-right #block-views-AllNews_view-block_2, .layout-right #block-views-most_active_user-block_1 { margin-top:20px; border-bottom:1px solid #ddd}
 	#block-relevant_content-group_node { margin-top:20px} /* related content */
-	#block-views-isa_activity_user-block_1 h3
-	{ display:block; padding-bottom:8px !important; font-size:130%; color:#005999; 
+	.layout-right #block-views-AllNews_view-block_2 h3 { margin-top:20px; color:#005999 !important; background:url(../../images/headings/heading_line_content_01.gif) 0 100% no-repeat }
+	#block-views-AllNews_view-block_2 .view-AllNews-view  .views-row-last { border-bottom:0}
+	
+	#block-views-isa_activity_user-block_1 h3 { display:block; padding-bottom:8px !important; font-size:130%; color:#005999; 
 		/*background:url(../../images/headings/heading_line_content_01.gif) 0 100% no-repeat*/}
 	.layout-right #block-relevant_content-group_node h3,  /* most active related content*/ .layout-right #right-sidebar-region #block-isa_blocks-38 h3 /* available translations */
 	{ display:block; padding-bottom:8px !important; margin-bottom:6px; font-size:125%; color:#005999; 
@@ -1306,9 +1336,63 @@ DIV#homebox-buttons #homebox-minimize-to-save { color:#333 !important}
 .font-size-3 #menu-wrapper ul li a { padding:12px 10px 0; height:36px}
 .font-size-3 #menu-wrapper ul li.first a { width:30px}
 
+/* Report abusive content */
+/*
+div.node div.node-content div.fields div.field.field-comment-links  { float:left !important; margin:7px 0 0; }
+.field-comment-links a { color:#1c3f95}
+.link-abuse { float:right; margin:5px 5px 0 0; font-size:90%; }
+.comment-unpublished { margin:0 0 10px; padding:10px 0 0 10px}*/
+div.node div.node-content div.fields div.field.field-comment-links  { clear:both; float:left !important; margin:7px 0 0; }
+div.node div.node-content div.fields div.field.field-comment-links li { display:inline-block; padding-right:15px; background:url(../../images/icons/sep.png) 0 5px no-repeat}
+div.node div.node-content div.fields div.field.field-comment-links li.first, 
+div.node div.node-content div.fields div.field.field-comment-links li.first a  { background:none; padding:0}
+div.node div.node-content div.fields div.field.field-comment-links a { color:#1c3f95; padding-left:15px}
+
+#node-information { clear:both;}
+.link-abuse { float:right; margin:5px 5px 0 0; padding-left:23px; font-size:95%; background:url(../../images/icons/icons_lists.png) 0 -2588px no-repeat}
+.link-abuse a { display:block;}
+.views-field-topic-infos .link-abuse { margin-right:10px}
+.comment-unpublished { margin:0 0 10px; padding:10px 0 0 10px}
+.toggable-asset-repository { position:relative}
+.toggable-asset-repository .togglable-expanded { margin-bottom:0 !important}
+#advanced-search-repository {position:absolute; top:5px; right:10px;  margin:5px 5px 0 0; padding-left:23px; font-size:100%; background:url(../../images/icons/icons_lists.png) 0 -2467px no-repeat }
+
+/* fivestar widget */
+#block-isa_links-buttons_actions.block div.links ul.links li .fivestar-widget a { padding:0}
+#block-isa_links-buttons_actions .rate { background:#fff}
+/*div.fivestar-widget-static .star div.on { background-image: url(star.png)}
+div.fivestar-widget-static .star div.on { background:url(../widgets/default/star.png) 0 -16px no-repeat }*/
+div.fivestar-widget-static .star div.on {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /*background: url(../sites/all/modules/contributed/modified/fivestar/widgets/basic/star.png) no-repeat 0 -16px; */
+   background: url(../../images/icons/star.png) no-repeat 0 -16px; 
+}
+
+/* Federated forge list */
+.view-Forges-list ul { float:left; width:100%; margin:10px 0 30px; padding-top:5px; border-top:1px solid #D6D6D6}	
+.view-Forges-list .item-list ul li{ float:left; width:100%; padding:5px 0 10px; margin:0 0 5px; list-style-type:none; border-bottom: 1px solid #CCCCCC}
+.view-Forges-list .item-list ul li a { text-decoration:none} 
+
+.federated-forge-list .views-field-field-forges-logo-fid { float:left; width:85px; padding:8px 0}
+.federated-forge-list .views-field-body  { padding-top:10px}
+.federated-forge-list .details-info { float: left; max-width: 420px; width: 100%;} 
+.federated-forge-list .details-info.full { max-width:100%}
+.federated-forge-list  .views-field-title { padding-right:10px}
+.federated-forge-list  .views-field-title, .federated-forge-list  .views-field-nid { display:inline-block}
+.federated-forge-list  .views-field-title a { font-weight:bold; text-decoration:none; font-size: 110%; line-height: 1.3;}
+.federated-forge-list .views-field-nid { }
+.federated-forge-list .views-field-body { margin-bottom:10px}
+.federated-forge-list  .views-field-type {  clear:left; float:left; width:94px; padding: 2px 0 0 26px; font-size:11px; background:url(../../images/icons/icons_lists.png) no-repeat scroll 0 -644px transparent}
+.federated-forge-list  .views-field-changed { float:left; font-size:11px; width:200px; padding:3px}
+.federated-forge-list  .views-field-changed  .views-label-changed, .federateg-forge-list  .views-field-changed  .field-content { display:inline-block; padding:2px 0} 
+
 /* Hide font resize */
 #additional-tools li.font-decrease{display:none}
 #additional-tools li.font-increase{display:none}
 
 div#homebox div.homebox-portlet div.homebox-portlet-inner div.portlet-content div.view div.view-content table.views-table td.views-field div.field-type div.node-type { height:18px; width:25px; background:transparent url(../../images/wiews/bg_flags.png) no-repeat; }
 div#homebox div.homebox-portlet div.homebox-portlet-inner div.portlet-content div.view div.view-content table.views-table td.views-field div.field-type div.node-type .Repository {}
+
+

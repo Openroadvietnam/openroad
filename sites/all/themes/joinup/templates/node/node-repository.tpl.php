@@ -62,18 +62,22 @@ if (!$status) {
   print ' node-unpublished';
 }
 ?> node-type-<?php print $node->type; ?> clear-block">
+	<div class="node-content">	
 	<div class="field field-repository-picture"><?php print $picture; ?></div>
-  <div class="node-content"><?php if ($flags_view): ?>
-      <div class="field field-flags-view"><?php print $flags_view; ?></div>
-      <?php endif; ?>
+	<div class="detail-options clearfix">
+		<div class="field field-title"><h2><?php print $title ?></h2></div>
+		<?php if ($flags_view): ?>
+			<div class="field field-flags-view"><?php print $flags_view; ?></div>
+		<?php endif; ?>
       <div class="field field-submitted"><?php print $submitted; ?></div>
       <div class="field field-vote-rating"><?php print $vote_rating; ?></div>
-
+	</div>
       <div class="field field-repository-content field-content-body">
         <h3 class="page-subtitle-content"><?php print t('Description'); ?></h3>
         <div class='field-item'><?php print $description; ?></div>
       </div>
 
+	<br class="clear" />
       <div><?php
 		//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-793
 		//Change 'Know More' label 'Additional information'
@@ -93,14 +97,37 @@ if (!$status) {
           <?php endforeach; ?>
         </div>
       </div>
-
-      <div>
-        <h4 class="togglable"><?php print t('Asset releases') .
+	  <?php
+		// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-909
+		// User request - Federated repository page
+		// The list of asset releases should be by default "unfolded". 
+	  ?>
+      <div class="toggable-asset-repository">
+        <h4 class="togglable-expanded"><?php print t('Asset releases') .
         '<img class="collapsed" src="' . $base_url . '/' . path_to_theme(). '/images/forms/fieldset/menu-collapsed-blue.png"
           alt="Additional information" title="Additional information"/>
         <img class="expanded" src="' . $base_url . '/' . path_to_theme(). '/images/forms/fieldset/menu-expanded-blue.png"
           alt="Hide more information" title="Hide more information"/>' ; ?></h4>
-          <div class="toggle-wrapper" style="display:none;">
+          <div class="toggle-wrapper" style="display:block;">
+			<?php
+		// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-909
+		// User request - Federated repository page
+		// 2. We should also add a button with direct link to the facetted search from the repository page
+		$params = array(
+                    'query' => array(
+                                'retain-filters' 		=> 1,
+                                'hidden_type' 			=> 1,
+								'filters'				=> 'sm_facetbuilder_facet_node_type:"facet_node_type:facet_24" is_repository_origin:'.$node->nid,
+                            ),
+                    'attributes' => array('id' => 'advanced_search_link')
+                );
+		$default = '';
+		?>
+	  
+	  <div id="advanced-search-repository" class="form-item">
+		<?php print l(t('Explore this repository'),'search/apachesolr_search/' . $default, $params);?>
+	  </div>
+
 			<?php print views_embed_view('asset_release', 'block_1', $node->nid); ?>
           </div>
       </div>

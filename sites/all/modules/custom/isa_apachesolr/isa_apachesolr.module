@@ -229,7 +229,8 @@ function isa_apachesolr_apachesolr_update_index(&$document, $node) {
                 $merged_config[$value] = array_unique($merged_config[$value]);
             }
         });
-    }  
+    } 
+	
     //Add filter values to nodes, using the configuration array [sort_types,additional_filters]
     array_walk($merged_config, function($val,$key) use (&$document,&$node){
         //////////////////////////////////////////////////////////SORT TYPES
@@ -356,12 +357,17 @@ function isa_apachesolr_apachesolr_update_index(&$document, $node) {
         //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-950
         //Count downloads using distribution  nodes from the node
         if(in_array('node_downloads', $val)){
-            $sql = "SELECT count FROM isa_download_statistics_count WHERE nid=%d";
+			//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-967
+			//ISAICP-967
+			//Joinup: [TECH] Project downloads counter not working
+            //$sql = "SELECT count FROM isa_download_statistics_count WHERE nid=%d";
+			$sql = "SELECT SUM(COUNT) FROM isa_download_statistics_count WHERE nid=%d";
             $file_downloads = (int) db_result(db_query($sql, $node->nid));
             $sql = "SELECT COUNT(dsid) FROM isa_download_external_statics WHERE nid=%d";
             $url_downloads = (int) db_result(db_query($sql, $node->nid));
             $document->addField('is_node_downloads',$url_downloads + $file_downloads);
-        }
+		}
+		
         //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
         //Use profile name instead of username
         if(in_array('name', $val)){
@@ -418,10 +424,7 @@ function isa_apachesolr_apachesolr_update_index(&$document, $node) {
         		$filename = $node->{$val}[0]['filename'];
     	    }
     	    if(imageapi_image_open($path)){
-        		imagecache_create_path('profile_photo', $path);
-        		$preset = imagecache_preset_by_name('profile_photo');
-        		$dst = imagecache_create_path('profile_photo', $path);
-        		imagecache_build_derivative($preset['actions'], $path, $dst);
+                //Removed code since derivatives are built when first accessed
         		$img = base_path() ."sites/default/files/imagecache/profile_photo/".$filename;
         		$document->setField('ss_picture', "<img src='$img' alt='".$node->type."' />");
     	    }
@@ -481,7 +484,8 @@ function isa_apachesolr_apachesolr_facets() {
  */
 function isa_apachesolr_votingapi_results_alter(&$results, $content_type, $content_id) {
     //Set to reindex node after voting
-    apachesolr_nodeapi_update(node_load($content_id));
+	// If the record does not exist in the table does not update apachesolr_search_node therefore not marked for reindexing
+	_isa_apachesolr_update_index(node_load($content_id));
 }
 /**
  * Implementation of hook_userpoints
@@ -490,7 +494,9 @@ function isa_apachesolr_userpoints($op, $params = array()) {
     //Set profile node to reindex after being awarded kudos 
     if ('points after' == $op) {
         $profile = content_profile_load('profile', $params['uid']);
-        apachesolr_nodeapi_update($profile);
+		// If the record does not exist in the table does not update apachesolr_search_node therefore not marked for reindexing
+		_isa_apachesolr_update_index($profile);
+
     }
 }
 /**
@@ -744,7 +750,7 @@ function isa_apachesolr_apachesolr_modify_query(&$query, &$params, $caller) {
     }
     //Filter searches by node type
     $subquery = apachesolr_drupal_query();
-    array_walk($page_config['facet_node_types'], function($val) use (&$subquery){ 
+	array_walk($page_config['facet_node_types'], function($val) use (&$subquery){ 
         //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-797
         //Use facets for simple search 
         $subquery->add_filter('sm_facetbuilder_facet_node_type','facet_node_type:' . _isa_apachesolr_facet_node_type($val));
@@ -1652,6 +1658,23 @@ function _isa_apachesolr_sort_toolbox(){
     });
     return theme('isa_apachesolr_toolbox',  $sort_types_config, $sort_default , $params, $current);
 }
+
+/**
+ *  Function to reindex node
+ * @param int $nid
+ * 
+ */
+function _isa_apachesolr_update_index(&$node){
+    $result = db_result(db_query("select nid from  {apachesolr_search_node}  where nid = %d", $node->nid));
+    if ($result > 0) {
+        // update       
+        apachesolr_nodeapi_update($node);
+    } else {
+        // insert
+        apachesolr_nodeapi($node, 'insert');
+    }
+}
+
 /**
  * Returns the urls configured to use solr search with their configuration
  *
@@ -1659,6 +1682,10 @@ function _isa_apachesolr_sort_toolbox(){
  *
  * @return array
  */
+// ISAICP-963
+// https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-963
+// Sorting is done on "Title" instead of "Date"
+
 function _isa_apachesolr_config($url = FALSE){
     $config = array(
             "community/all" => array(
@@ -1667,7 +1694,7 @@ function _isa_apachesolr_config($url = FALSE){
                                 'facet_node_types' => array('community'),//Facets to use in search
                                 'node_types' => array('community'),//Node types to use in index
                                 'sort_types' => array('default','members','rating','update_date'),//Sort options
-                                'default_sort' => 'default',//Field to order when no sort criteria is set
+                                'default_sort' => 'update_date',//Field to order when no sort criteria is set
                                 'additional_filters' => array('wellcome_community'),//Fixed additional filters for this path
                                 'advanced_search_link' => TRUE//Show advanced search link in search form
                             ),
@@ -1711,7 +1738,7 @@ function _isa_apachesolr_config($url = FALSE){
                                 'advanced_search_link' => TRUE
                             ),
             "catalogue/repository" => array(
-                                'title' => t("Federated Reposotories"),
+                                'title' => t("Federated Repositories"),
                                 'form_callback' => '',
                                 'facet_node_types' => array('repository'),
                                 'node_types' => array('repository'),
@@ -2060,7 +2087,8 @@ function _isa_apachesolr_config($url = FALSE){
                                 'node_types' => array('event'),
                                 'sort_types' => array('default','rating','event_date'),
                                 'default_sort' => 'event_date',
-                                'additional_filters' => array('og_ancestry')
+			// add highlight to the search filter					
+                                'additional_filters' => array('og_ancestry', 'highlight')
                             ),
             "software/%views_arg/newsandblog/all" => array(
                                 'title' => t('Latest News'),
@@ -2069,7 +2097,8 @@ function _isa_apachesolr_config($url = FALSE){
                                 'node_types' => array('blog', 'news'),
                                 'sort_types' => array('default','rating','creation_date'),
                                 'default_sort' => 'creation_date',
-                                'additional_filters' => array('og_ancestry')
+			// add highlight to the search filter					
+                                'additional_filters' => array('og_ancestry', 'highlight')
                             ),
             "software/%views_arg/elibrary/all" => array(
                                 'title' => t('Latest e-Library Items'),
@@ -2116,7 +2145,7 @@ function _isa_apachesolr_config($url = FALSE){
                                 'node_types' => array('blog', 'news'),
                                 'sort_types' => array('default','rating','og_ancestry','creation_date'),
                                 'default_sort' => 'creation_date',
-                                'additional_filters' => array('og_ancestry')
+                                'additional_filters' => array('og_ancestry', 'highlight')
                             ),
             "community/%views_arg/event/all" => array(
                                 'title' => t('Upcoming Events'),
@@ -2125,7 +2154,8 @@ function _isa_apachesolr_config($url = FALSE){
                                 'node_types' => array('event'),
                                 'sort_types' => array('default','rating','event_date'),
                                 'default_sort' => 'event_date',
-                                'additional_filters' => array('og_ancestry')
+			// add highlight to the search filter					
+                                'additional_filters' => array('og_ancestry', 'highlight')
                             ),
             "community/%views_arg/elibrary/all" => array(
                                 'title' => t('Latest e-Library Items'),
@@ -2134,6 +2164,7 @@ function _isa_apachesolr_config($url = FALSE){
                                 'node_types' => array('case','document','factsheet','presentation','video','wiki'),
                                 'sort_types' => array('default','rating','update_date'),
                                 'default_sort' => 'default',
+			// add highlight to the search filter					
                                 'additional_filters' => array('og_ancestry', 'highlight')
                             ),
             "asset/%views_arg/asset_release/all" => array(
@@ -2181,7 +2212,8 @@ function _isa_apachesolr_config($url = FALSE){
                                 'node_types' => array('blog', 'news'),
                                 'sort_types' => array('default','rating','creation_date'),
                                 'default_sort' => 'creation_date',
-                                'additional_filters' => array('og_ancestry')
+			// add highlight to the search filter
+                                'additional_filters' => array('og_ancestry','highlight')
                             ),
             "asset/%views_arg/event/all" => array(
                                 'title' => t('Upcoming Events'),
@@ -2190,7 +2222,8 @@ function _isa_apachesolr_config($url = FALSE){
                                 'node_types' => array('event'),
                                 'sort_types' => array('default','rating','event_date'),
                                 'default_sort' => 'event_date',
-                                'additional_filters' => array('og_ancestry')
+			// add highlight to the search filter					
+                                'additional_filters' => array('og_ancestry', 'highlight')
                             ),
             "asset/%views_arg/elibrary/all" => array(
                                 'title' => t('Latest e-Library Items'),
@@ -2204,3 +2237,8 @@ function _isa_apachesolr_config($url = FALSE){
         );
     return FALSE === $url ? $config : (isset($config[$url]) ? $config[$url] : FALSE);
 }
+
+
+
+
+

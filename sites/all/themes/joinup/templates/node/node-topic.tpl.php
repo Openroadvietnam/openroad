@@ -92,6 +92,16 @@
 					<div class="quote topic">&quot;</div>
 				</div>
 				<div class="field field-body"><?php print $node->content['body']['#value']; ?></div>
+				<?php 
+				//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-123
+				// A user should be able to report an abuse
+				$url = (!empty($_SERVER['HTTPS'])) ? "https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'] : "http://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
+				$query = array('query'	=> array(
+											'abuse'	=> 'true',
+											'page'	=> $url
+								));
+				?>
+				<div class="link-abuse"><?php print l(t('Report abusive content'), 'contact', $query);?></div>
 			</div>
 		</div>
 	</div>

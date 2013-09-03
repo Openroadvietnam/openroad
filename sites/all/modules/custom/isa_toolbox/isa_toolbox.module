@@ -1594,6 +1594,7 @@ function isa_toolbox_static_texts_form() {
         '#default_value' => variable_get('global_site_header', ""),
         '#description' => t('')
     );
+	
     return system_settings_form($form);
 }
 

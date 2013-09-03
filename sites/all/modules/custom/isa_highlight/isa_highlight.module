@@ -109,11 +109,16 @@ function isa_highlight_edit_form(&$form_state, $nid) {
  */
 function isa_highlight_edit_form_submit(&$form, $form_state) {
   global $user;
-
   // add terms NAT to node
   // update isa_highlight table
   $node = node_load($form_state['values']['nid']);
+	// send nid to reindex
+	// If the record does not exist in the table does not update apachesolr_search_node therefore not marked for reindexing
+	apachesolr_nodeapi($node, 'delete');
+	apachesolr_nodeapi($node, 'insert');
 
+	
+	
   foreach ($form_state['values']['tid'] as $tid => $value) {
     $gid = db_result(db_query("SELECT nid FROM {nat} WHERE tid = %d", $tid));
     $highlight = isa_highlight_find($node->nid, $gid);
@@ -125,6 +130,7 @@ function isa_highlight_edit_form_submit(&$form, $form_state) {
     else
       isa_highlight_del($highlight);
   }
+  
   drupal_set_message('Changes were succesfully saved');
 }
 

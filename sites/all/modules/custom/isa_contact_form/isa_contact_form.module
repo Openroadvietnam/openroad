@@ -35,7 +35,6 @@ function isa_contact_form_settings_page_form(&$form) {
   $profile = NULL;
   $attributes = array();
   $form['#attributes'] = array('enctype' => 'multipart/form-data');
-  
   if ($user->uid != 0) {
     if (isset($user->node_profile)) {
       $profile = $user->node_profile;
@@ -81,13 +80,13 @@ function isa_contact_form_settings_page_form(&$form) {
   );
 
 
-  $default_options = array(
+  /*$default_options = array(
       'TECH' => 'Technical problems/bug reporting',
       'USAGE' => 'Questions on usage',
       'FEATURE' => 'Feature requests',
       'LEGAL' => 'Questions on legal issues',
       'OTHER' => 'other',
-  );
+  );*/
   $form['file_upload'] = array(
   		'#type' => 'file',
   		'#title' => t('Attach new file'),
@@ -105,6 +104,19 @@ function isa_contact_form_settings_page_form(&$form) {
       '#required' => TRUE,
       '#default_value' => '',
   );
+	//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-123
+	// A user should be able to report an abuse
+	if($_GET['abuse']){
+		$page = $_GET['page'];
+		$server = (!empty($_SERVER['HTTPS'])) ? "https://".$_SERVER['SERVER_NAME'] : "http://".$_SERVER['SERVER_NAME'];
+		
+		if(substr($page, 0, (strlen($server))) != $server){
+			$page = $server.'/'.$page;
+		}
+		$form['category']['#default_value']	= 'ABUSE';
+		$form['message']['#default_value'] = t('I think that the following content is not appropriate and I send you the link for checking: ' . $page);
+		$form['subject']['#default_value'] = t('I want to report a not appropriate content');
+	}
   $form['categoriy_info'] = array(
       '#type' => 'item',
       '#value' => 'Please select the nature of the problem / request you would like the Joinup team to help with:',
@@ -170,7 +182,6 @@ function contact_form_node_form_validate(&$form, &$form_state) {
 //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-462
 function isa_contact_form_page_submit($form, &$form_state) {
   global $language;
-    
   $values = $form_state['values'];
   // E-mail address of the sender: as the form field is a text field,
   // all instances of \r and \n have been automatically stripped from it.
@@ -181,6 +192,7 @@ function isa_contact_form_page_submit($form, &$form_state) {
   $values['contact'] = $contact;
   $values['subject'] = "[{$values['category']}] " . $values['subject'];
   //$values['to'] = $contact['recipients'];
+
   // Send the e-mail to the recipients using the site default language.
   drupal_mail('isa_contact_form', 'page_mail', $contact['recipients'], language_default(), $values, $from);
 

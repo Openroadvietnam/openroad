@@ -75,13 +75,15 @@ function _event_form_alter(&$form, &$form_state, $form_id) {
  * 
  */
 function _event_form_validate(&$form, &$form_state) {
+
   //Update form_state for the submission of moved field in taxonomy fieldset
-  $form_state['values']['field_event_fees_description'] = $form_state['values']['taxonomy']['field_event_fees_description'];
-  unset($form_state['values']['taxonomy']['field_event_fees_description']);
+    $form_state['values']['field_event_fees_description'] = $form_state['values']['taxonomy']['field_event_fees_description'];
+	unset($form_state['values']['taxonomy']['field_event_fees_description']);
 }
 
 function _event_node_form_ahah(&$form, &$form_state, $form_id) {
   //Modify the form
+  
   if ($_POST['taxonomy'][variable_get('free_event_vid', 59)] == 1575) {
     $form['taxonomy']['field_event_fees_description'][0]['#required'] = TRUE;
     $form['taxonomy']['field_event_fees_description'][0]['#access'] = TRUE;
@@ -97,7 +99,6 @@ function _event_node_form_ahah(&$form, &$form_state, $form_id) {
     '#programmed' => FALSE,
   );
   $form = form_builder($form_id, $form, $form_state);
-  
   if( $_POST['taxonomy'][variable_get('free_event_vid', 59)] == 1575 ){
     return drupal_render($form['taxonomy']['field_event_fees_description']);
   }

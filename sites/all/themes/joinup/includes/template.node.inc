@@ -1078,6 +1078,17 @@ function _joinup_preprocess_news(&$vars) {
 
   //prepare date created
   $vars['created_view'] = date('d/m/Y - G:i', $node->created);
+  
+	//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-123
+	// A user should be able to report an abuse
+	$gid = variable_get('current_group', isa_toolbox_get_community_nid());
+	if ($node->type == ISA_NEWS_TYPE) {
+		if($gid>0){ // this news belongs to a group
+			$node->link_abuse = true;
+		} 
+	}
+	
+  
 }
 
 /**

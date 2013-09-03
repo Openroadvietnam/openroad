@@ -75,6 +75,19 @@ $taxonomy_terms && !empty ($taxonomy_terms) ? $information = TRUE : $information
 			<h2><?php print $title ?></h2>
 		</div>
 		<div class="field field-content-body"><?php print $node->content['body']['#value']; ?></div>
+		
+	<?php 
+	//https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-123
+	// A user should be able to report an abuse
+	if($node->link_abuse){
+		$query = array('query'	=> array(
+											'abuse'	=> 'true',
+											'page'	=> $node->path,
+								));
+	?>
+		<div class="link-abuse"><?php print l(t('Report abusive content'), 'contact', $query);?></div>
+	<?php }?>
+			
 		<?php 
     if (isset($field_documentation_rendered) and !empty($field_documentation_rendered)): ?>
 			<div class="field field-documentation">

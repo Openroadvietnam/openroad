@@ -1680,6 +1680,7 @@ function isa_links_get_elibrary_list_buttons($type = NULL) {
  * @param boolean $edit true if add or edit a node
  * @return array
  */
+ 
 function isa_links_get_node_display_buttons($type, $edit = FALSE) {
   global $user;
   $links = array();

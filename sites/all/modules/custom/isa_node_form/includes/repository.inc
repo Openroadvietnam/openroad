@@ -138,7 +138,11 @@ function _repository_form_alter(&$form, &$form_state, $form_id) {
     drupal_set_title(t('Create Federated Repository'));
   }
   
-  $form['body_field']['body']['#weight'] = 38;
+  // https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-887
+  // ISAICP-887
+  // Issues regarding 'Create Federated Repository' form
+  //$form['body_field']['body']['#weight'] = 38;
+  
   $form['taxonomy'][variable_get('geographic_coverage_vid', 26)]['#required'] = FALSE;
   $form['taxonomy'][variable_get('domains_vid', 27)]['#required'] = FALSE;
   isa_node_form_alter_language_field($form);

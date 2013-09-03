@@ -129,19 +129,19 @@ function isa_private_files_save_statistics($filepath_path) {
   global $user;
   if (is_string($filepath_path)) {
     $query = db_query("
-            SELECT f.fid , prn.nid , prn.pid
-            FROM {files} f
-            INNER JOIN {project_release_file} prf on prf.fid = f.fid
-            INNER JOIN {project_release_nodes} prn on prf.nid = prn.nid
-            WHERE f.filepath LIKE '%s'
-            UNION
             SELECT field_distribution_access_url_fid, cfad.nid, oa.group_nid
             FROM {content_type_distribution} ctd
             INNER JOIN {content_field_asset_distribution} cfad ON cfad.field_asset_distribution_nid = ctd.nid
             INNER JOIN {og_ancestry} oa ON oa.nid = cfad.nid
             INNER JOIN {files} f ON f.fid = ctd.field_distribution_access_url_fid
             WHERE f.filepath LIKE '%s'
+            UNION SELECT f.fid , prn.nid , prn.pid
+            FROM {files} f
+            INNER JOIN {project_release_file} prf on prf.fid = f.fid
+            INNER JOIN {project_release_nodes} prn on prf.nid = prn.nid
+            WHERE f.filepath LIKE '%s' LIMIT 1
             ", $filepath_path, $filepath_path);
+
     //only save download statistics for project release (software) and files distribution (asset)
    //https://webgate.ec.europa.eu/CITnet/jira/browse/ISAICP-950
    //Count the file downloads from asset_releases from project releases 
@@ -149,21 +149,25 @@ function isa_private_files_save_statistics($filepath_path) {
       if ($result->nid) {
         $time = time();
         $sql = "INSERT INTO {isa_download_statistics} (nid, pid, fid, uid, timestamp) VALUES(%d, %d, %d, %d, %d)";
-        db_query($sql, $result->nid, $result->pid, $result->fid, $user->uid, $time);
+        db_query($sql, $result->nid, $result->group_nid, $result->field_distribution_access_url_fid, $user->uid, $time);
 
         // update isa_download_statistics_count table
-        $result_count = db_fetch_object(db_query("SELECT count FROM {isa_download_statistics_count} WHERE nid = %d AND pid = %d AND fid = %d", $result->nid, $result->pid, $result->fid));
+        $result_count = db_fetch_object(db_query("SELECT count FROM {isa_download_statistics_count} WHERE nid = %d AND pid = %d AND fid = %d", $result->nid, $result->group_nid, $result->field_distribution_access_url_fid));
         if ($result_count) {
           $count = $result_count->count;
           $count++;
-          db_query("UPDATE {isa_download_statistics_count} SET count = %d WHERE nid = %d AND pid = %d AND fid = %d", $count, $result->nid, $result->pid, $result->fid);
+          db_query("UPDATE {isa_download_statistics_count} SET count = %d WHERE nid = %d AND pid = %d AND fid = %d", $count, $result->nid, $result->group_nid, $result->field_distribution_access_url_fid);
         }
         else {
-          db_query("INSERT INTO {isa_download_statistics_count} (nid, pid, fid, count) VALUES (%d, %d, %d, 1)", $result->nid, $result->pid, $result->fid);
+          db_query("INSERT INTO {isa_download_statistics_count} (nid, pid, fid, count) VALUES (%d, %d, %d, 1)", $result->nid, $result->group_nid, $result->field_distribution_access_url_fid);
         }
         //Set project/node to reindex after download
-        apachesolr_nodeapi_update(node_load($result->pid));
-        apachesolr_nodeapi_update(node_load($result->nid));
+        // If the record does not exist in the table does not update apachesolr_search_node therefore not marked for reindexing
+
+      _isa_apachesolr_update_index(node_load($result->group_nid));
+      _isa_apachesolr_update_index(node_load($result->nid));
+
+		
       }
     }
   }
@@ -182,6 +186,16 @@ function isa_private_files_views_api() {
 function isa_private_files_get_project_downloads_count($pid) {
   //Correct project download count
   $result = db_result(db_query("SELECT IFNULL(sum(count),0) FROM isa_download_statistics_count WHERE pid=%d", $pid));
+  //Add external downloads to project count
+  $sql = "SELECT COUNT(dsid) 
+         FROM isa_download_external_statics,og_ancestry 
+         WHERE  og_ancestry.group_nid=%d
+         AND og_ancestry.nid=isa_download_external_statics.nid
+  ";
+  $url_downloads = (int) db_result(db_query($sql, $pid));
+  if($url_downloads > 0){
+    return $result + $url_downloads;
+  }
   return $result;
 }
 
@@ -227,7 +241,8 @@ function isa_private_files_menu() {
   $items['system/count_asset_external_downloads'] = array(
     'title'            => t('Count asset external downloads'),
     'page callback'    => 'isa_private_files_add_asset_external_downloads',
-    'access arguments' => array('view content')
+    //Give global access to count external downloads
+    'access arguments' => array('access content')
   );  
   return $items;
 }
@@ -305,5 +320,16 @@ function isa_private_files_add_asset_external_downloads(){
   global $user;
   db_query("INSERT INTO {isa_download_external_statics} (did,nid,uid) VALUES(%d,%d,%d)", $_GET['did'], $_GET['nid'], $user->uid);
   //Set project/node to reindex after download
-  apachesolr_nodeapi_update(node_load($_GET['nid']));
+	// If the record does not exist in the table does not update apachesolr_search_node therefore not marked for reindexing
+	_isa_apachesolr_update_index(node_load($_GET['nid']));
+  //Add external downloads to project count
+   $sql = "SELECT og_ancestry.group_nid 
+         FROM isa_download_external_statics,og_ancestry 
+         WHERE   og_ancestry.nid=isa_download_external_statics.nid
+         AND isa_download_external_statics.nid=%n
+  ";
+  $group = db_result(db_query($sql, $_GET['nid']));
+  if($group > 0){
+    _isa_apachesolr_update_index(node_load($group));
+  }
 }
