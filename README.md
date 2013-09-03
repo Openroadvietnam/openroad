@@ -1,6 +1,6 @@
 ## Openroad
 
-Openroad là một phần mềm tự do nguồn mở phát triển dựa trên [Joinup](https://joinup.ec.europa.eu/), một nền tảng cộng tác và chia sẻ các công nghệ mở nói chung và các ứng dụng nguồn mở nói riêng dành cho khu vực cộng đồng chính phủ Châu Âu.
+Openroad là một phần mềm tự do nguồn mở phát triển dựa trên [Joinup](https://joinup.ec.europa.eu/), một nền tảng cộng tác và chia sẻ các công nghệ mở nói chung và các ứng dụng nguồn mở nói riêng dành cho khu vực cộng đồng chính phủ Châu Âu viết bằng PHP và sử dụng hệ thống quản lý nội dung Drupal.
 
 Openroad cung cấp các dịch vụ cho phép những người tham gia có thể chia sẻ các tài nguyên, kinh nghiệm của họ với công nghệ mở cũng như tìm kiếm, lựa chọn, phát triển và tái sử dụng những dự án đã có sẵn.
 
