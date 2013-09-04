@@ -18,8 +18,9 @@ Quy trình cài đặt Joinup cũng giống như cài đặt một site Drupal b
 6. Copy `$JOINUP/sites/default/default.settings.php` -> `$JOINUP/sites/default/settings.php`, thêm thông tin về database mới tạo ở bước trên.
 
 **NOTES**
-`/var/www/joinup/sites/all/modules/custom/isa_node_form/isa_node_form.module`
-Có một số vấn đề với `include_paths`, lúc nào cũng chỉ là nội dung default, không sử dụng cái trong drupal. -> `src_adms/bootstrap.php` mới lỗi.
+Trong `settings.php` cần thêm một dòng như sau, nhớ thay thế `$JOINUP` thành đường dẫn tuyệt đối phù hợp:
+
+    $conf['adms_lib_path'] = '$JOINUP/src_adms';
 
 
 ### Cài đặt Solr
