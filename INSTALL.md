@@ -44,3 +44,15 @@ Solr phải cài đặt cùng tomcat (chưa hiểu tại sao).
              <Environment name="solr/home" type="java.lang.String" value="/path/to/solr/" override="true"/>
         </Context>
 2. Khởi động tomcat bằng lệnh `$TOMCAT/bin/startup.sh`. Truy cập trang điều khiển Solr từ Tomcat bằng địa chỉ <http://localhost:8080/solr>.
+
+### Kết nối Tomcat, Solr với Joinup
+
+Thêm những dòng sau vào file `settings.php`, sửa cho phù hợp với hệ thống hiện tại:
+
+    $conf['apachesolr_host'] = 'localhost';
+    $conf['apachesolr_port'] = '8080';
+    $conf['apachesolr_path'] = '/solr';
+    $conf['apachesolr_attachments_java'] = '/usr/lib/jvm/java-6-openjdk-i386/';
+    
+Kiểm tra bằng cách vào địa chỉ <http://localhost/admin/settings/apachesolr/settings>, Joinup sẽ hiện thông báo:
+"Apache Solr: Your site has contacted the Apache Solr server."
