@@ -1306,7 +1306,7 @@ function workflow_template_message() {
   );
 
   //template to a new published revision
-  create_template_mail(&$form, 'new_revision', 'new_revision', 'new published revision (mail to moderator)', NULL, true);
+  create_template_mail($form, 'new_revision', 'new_revision', 'new published revision (mail to moderator)', NULL, true);
 
 
   //////////////////////
@@ -1378,7 +1378,7 @@ function workflow_template_message() {
 //      '#default_value' => variable_get("asset_validated_mail_body", ""),
 //      '#description' => t('mail body for the asset release validation notification.')
 //  );
-create_template_mail(&$form, 'asset_release', 'asset_validated', 'Validated', true, true);
+create_template_mail($form, 'asset_release', 'asset_validated', 'Validated', true, true);
   //////////////////////
   //  asset suspended   //
   //////////////////////
@@ -1540,24 +1540,24 @@ create_template_mail(&$form, 'asset_release', 'asset_validated', 'Validated', tr
   //  asset release request deletion  //
   ////////////////////////////////
 
-  create_template_mail(&$form, 'asset_release', 'request_deletion', 'request deletion', true, true);
+  create_template_mail($form, 'asset_release', 'request_deletion', 'request deletion', true, true);
 
 
   ////////////////////////////////
   //  asset release reject request deletion  //
   ////////////////////////////////
-  create_template_mail(&$form, 'asset_release', 'reject_request_deletion', 'reject request deletion', true, true);
+  create_template_mail($form, 'asset_release', 'reject_request_deletion', 'reject request deletion', true, true);
 
   ////////////////////////////////
   //  asset release deletion  //
   ////////////////////////////////
-  create_template_mail(&$form, 'asset_release', 'deleted', 'asset release deleted', true, NULL);
+  create_template_mail($form, 'asset_release', 'deleted', 'asset release deleted', true, NULL);
 
 
 ////////////////////////////////
   //  asset release add to blacklist  //
   ////////////////////////////////
-  create_template_mail(&$form, 'asset_release', 'blacklisted', 'asset release add to blacklist', true, NULL);
+  create_template_mail($form, 'asset_release', 'blacklisted', 'asset release add to blacklist', true, NULL);
   
   
   ////////////////////////////////
@@ -1782,7 +1782,7 @@ function isa_workflow_mail_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  * @param $to_author    create template for author
  * @param $to_moderator  create template for moderator
  */
-function create_template_mail($form, $workflow, $action, $title, $to_author =False, $to_moderator=false) {
+function create_template_mail(&$form, $workflow, $action, $title, $to_author =False, $to_moderator=false) {
   $form[$workflow][$action] = array(
       '#type' => 'fieldset',
       '#title' => t($title),

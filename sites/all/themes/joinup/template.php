@@ -506,6 +506,13 @@ function joinup_preprocess_block(&$vars) {
 	if ($block->subject) {
 		$vars['block_class'] = str_replace(array(" ", "'"), array('-', ''), strtolower($block->subject));
 	}
+
+	# Fix the search block css class
+	# https://github.com/Openroadvietnam/openroad/issues/1
+	if ($block->module == 'search') {
+		$vars['block_class'] = 'search';
+	}
+
 	// Set the accessibility class depending on the block type.
 	if ($block->module == 'search' || $block->module == 'user' || $block->module == 'menu') {
 		$vars['accessibility_class'] = ' class="accessibility-info"';

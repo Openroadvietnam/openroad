@@ -86,7 +86,7 @@ foreach ($view->result as $key => $value){
   <?php if ($rows): ?>
     <div class="search-results apachesolr_search-results">
       <?php foreach ($view->result as $key => $value): ?>
-      <? //print_R($value) ?>
+      <?php //print_R($value) ?>
         <div class="search-result"> 
           <div class="detail-data-search-solr <?php print $full_title; ?>">
             <div class="title">

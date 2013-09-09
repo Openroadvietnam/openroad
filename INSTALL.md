@@ -18,8 +18,9 @@ Quy trình cài đặt Joinup cũng giống như cài đặt một site Drupal b
 6. Copy `$JOINUP/sites/default/default.settings.php` -> `$JOINUP/sites/default/settings.php`, thêm thông tin về database mới tạo ở bước trên.
 
 **NOTES**
-`/var/www/joinup/sites/all/modules/custom/isa_node_form/isa_node_form.module`
-Có một số vấn đề với `include_paths`, lúc nào cũng chỉ là nội dung default, không sử dụng cái trong drupal. -> `src_adms/bootstrap.php` mới lỗi.
+Trong `settings.php` cần thêm một dòng như sau, nhớ thay thế `$JOINUP` thành đường dẫn tuyệt đối phù hợp:
+
+    $conf['adms_lib_path'] = '$JOINUP/src_adms';
 
 
 ### Cài đặt Solr
@@ -43,3 +44,15 @@ Solr phải cài đặt cùng tomcat (chưa hiểu tại sao).
              <Environment name="solr/home" type="java.lang.String" value="/path/to/solr/" override="true"/>
         </Context>
 2. Khởi động tomcat bằng lệnh `$TOMCAT/bin/startup.sh`. Truy cập trang điều khiển Solr từ Tomcat bằng địa chỉ <http://localhost:8080/solr>.
+
+### Kết nối Tomcat, Solr với Joinup
+
+Thêm những dòng sau vào file `settings.php`, sửa cho phù hợp với hệ thống hiện tại:
+
+    $conf['apachesolr_host'] = 'localhost';
+    $conf['apachesolr_port'] = '8080';
+    $conf['apachesolr_path'] = '/solr';
+    $conf['apachesolr_attachments_java'] = '/usr/lib/jvm/java-6-openjdk-i386/';
+    
+Kiểm tra bằng cách vào địa chỉ <http://localhost/admin/settings/apachesolr/settings>, Joinup sẽ hiện thông báo:
+"Apache Solr: Your site has contacted the Apache Solr server."
