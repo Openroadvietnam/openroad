@@ -45,7 +45,7 @@ $flags = flag_get_counts('node', $node->nid);
 				<?php				
 					if ($node->highlights_description) {?>
 						<div class="page-subtitle"><?php print $node->highlights_description; ?></div>
-					<?}
+					<?php }
 				?>
 				<div class="detail-options-title">
 					<div class="detail-options-title-left">

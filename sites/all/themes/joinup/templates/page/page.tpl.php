@@ -46,8 +46,8 @@
 		<div class="layout  <?php echo $extra_layout_css ?>" id="layout">
 			<div id="header" class="clearfix">
 				<div class="header-top clearfix">
-					<img alt="European Commission logo" id="banner-flag" src="<?php echo base_path(). path_to_theme() ?>/images/commission/logo/logo_en.gif" />
-					<h1 id="banner-image-title"><a href="<?php echo base_path() ?>" title="Joinup"  class="title-en logo"><img alt="<?php print $site_name ?> logo" src="<?php echo base_path(). path_to_theme() ?>/images/logo/joinup.png" /></a>
+					<!--<img alt="European Commission logo" id="banner-flag" src="<?php echo base_path(). path_to_theme() ?>/images/commission/logo/logo_en.gif" />-->
+					<h1 id="banner-image-title"><a href="<?php echo base_path() ?>" title="Openroad"  class="title-en logo"><img alt="<?php print $site_name ?> logo" src="<?php echo base_path(). path_to_theme() ?>/images/logo/openroad.png" /></a>
 						<strong><?php echo $global_header_title ?></strong>
 					</h1>
 				
@@ -82,8 +82,8 @@
 			<div id="path">
 				<p class="off-screen"><?php print t('Navigation path') ?></p>
 				 <ul class="reset-list">
-					 <li class="first"><a href="http://ec.europa.eu/"><?php print t('European Commission') ?></a> &#62; </li>
-					 <li><a href="http://ec.europa.eu/isa/"><?php print t('ISA') ?></a> &#62; </li>
+					 <li class="first"><a href="http://openroad.vn/"><?php print t('Openroad') ?></a> &#62; </li>
+					<!--   <li><a href="http://ec.europa.eu/isa/"><?php //print t('ISA') ?></a> &#62; </li>-->
 					 <li><?php if ($breadcrumb): print $breadcrumb; endif; ?></li>
 				</ul>
 			</div>

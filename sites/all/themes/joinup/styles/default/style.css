@@ -332,6 +332,7 @@ text-indent:-9999px;}
 
 
 /* GENERAL STYLES */
+
 a { outline: none;}
 a:visited {color:#CF3B00}
 em{font-style:normal}
@@ -554,7 +555,7 @@ div#highlight-region div#introduction h2.field-title { display:none}
 #header #highlight p {color:#ECECEC; letter-spacing:0.02em}
 #header .language-selector-close, #header .language-selector-open { margin:0 3px 0 0 }
 #header #banner-image-title{ position:absolute; top:0; left:0; width:30%; } 
-#header #banner-image-title .logo { position:absolute; top:38px; left:230px; width:160px; height:80px}
+#header #banner-image-title .logo { position:absolute; top:20px; left:0px; width:160px; height:80px}
 #header #banner-image-title  strong { position:absolute; top:110px; left:240px; font-weight:normal; color:#ECECEC; font-size:16px; width:600px;}
 
 	/* *** BOX SEARCH *** */
@@ -1394,5 +1395,9 @@ div.fivestar-widget-static .star div.on {
 
 div#homebox div.homebox-portlet div.homebox-portlet-inner div.portlet-content div.view div.view-content table.views-table td.views-field div.field-type div.node-type { height:18px; width:25px; background:transparent url(../../images/wiews/bg_flags.png) no-repeat; }
 div#homebox div.homebox-portlet div.homebox-portlet-inner div.portlet-content div.view div.view-content table.views-table td.views-field div.field-type div.node-type .Repository {}
+
+
+/*CSS switch to vietnamese*/
+#header #user-box .block.tìm-ki?m { float:left; width:300px; height:35px; margin-bottom:0;  background:#eee url(../../images/forms/search/bkg_form_text.gif) 0 0  no-repeat}
 
 

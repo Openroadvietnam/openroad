@@ -47,9 +47,9 @@ function isa_node_form_form_alter(&$form, &$form_state, $form_id) {
       }
       // call specific form alter
       $form_alter_name = '_' . $value->type . '_form_alter';
-      if (function_exists($form_alter_name)) {
-        $form_alter_name(&$form, &$form_state, $form_id);
-      }
+      #if (function_exists($form_alter_name)) {
+      #  $form_alter_name(&$form, &$form_state, $form_id);
+      #}
     }
   }
 

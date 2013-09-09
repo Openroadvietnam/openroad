@@ -2788,11 +2788,11 @@ function isa_toolbox_init() {
 	if ( arg(0) == 'software' || arg(0) == 'asset' ){		
 		$nid = db_result(db_query("SELECT nid FROM project_projects WHERE uri='%s'", arg(1)));		
 	}
-	if ($nid && is_null(arg(2))){	
+	if (isset($nid) && is_null(arg(2))){	
 		drupal_goto(arg(0) . '/' . arg(1) . '/description', NULL, NULL, 301);		
 	}
 	
-	if ($nid) {
+	if (isset($nid)) {
 		$opt = arg(count($path) -1);
 		if ( $opt == "newsandblog" || $opt == "release" || $opt == "elibrary" || $opt == "forum" || $opt == "event" 
 			|| $opt == "community" || $opt == "asset" || $opt == "software" || $opt == "issue") {		
